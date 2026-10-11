@@ -12,13 +12,20 @@ use App\Http\Response;
 use App\Http\Router;
 use App\Shared\Database\Connection;
 use App\Shared\Database\TransactionManager;
+use App\Shared\Http\ExceptionHandler;
+use App\Shared\Http\FlashBag;
+use App\Shared\Http\ViewRenderer;
+use App\Shared\Logging\FileLogger;
+use App\Shared\Logging\Logger;
 use PDO;
+use Throwable;
 
 final class App
 {
     private function __construct(
         private readonly Router $router,
         private readonly Container $container,
+        private readonly ExceptionHandler $exceptionHandler,
     ) {
     }
 
@@ -33,11 +40,20 @@ final class App
 
         $container->instance(AppConfig::class, $appConfig);
         $container->instance(DatabaseConfig::class, $databaseConfig);
-        $container->singleton(PDO::class, static fn (): PDO => Connection::create($databaseConfig));
+        $container->singleton(PDO::class, static fn (Container $_): PDO => Connection::create($databaseConfig));
         $container->singleton(
             TransactionManager::class,
             static fn (Container $container): TransactionManager => new TransactionManager($container->get(PDO::class)),
         );
+        $container->singleton(
+            Logger::class,
+            static fn (Container $_): Logger => new FileLogger($projectRoot . '/storage/logs/app.log'),
+        );
+        $container->singleton(
+            ViewRenderer::class,
+            static fn (Container $_): ViewRenderer => new ViewRenderer($projectRoot . '/views'),
+        );
+        $container->singleton(FlashBag::class, static fn (Container $_): FlashBag => new FlashBag());
 
         $session = new SessionBootstrap($appConfig);
         $container->instance(SessionBootstrap::class, $session);
@@ -52,8 +68,10 @@ final class App
         $registerApiRoutes($router);
 
         $container->instance(Router::class, $router);
+        $exceptionHandler = new ExceptionHandler($appConfig, $container->get(Logger::class));
+        $container->instance(ExceptionHandler::class, $exceptionHandler);
 
-        return new self($router, $container);
+        return new self($router, $container, $exceptionHandler);
     }
 
     public function container(): Container
@@ -64,14 +82,28 @@ final class App
     public function run(): void
     {
         try {
-            $response = $this->router->dispatch(Request::fromGlobals());
-        } catch (\Throwable $exception) {
-            $response = Response::json([
-                'error' => 'INTERNAL_ERROR',
-                'message' => 'Ứng dụng chưa thể xử lý yêu cầu.',
-            ], 500);
+            $request = Request::fromGlobals();
+            $response = $this->handle($request);
+        } catch (Throwable $exception) {
+            $request = new Request(
+                strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')),
+                (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/'),
+                requestId: bin2hex(random_bytes(16)),
+            );
+            $response = $this->exceptionHandler->handle($exception, $request);
         }
 
         $response->send();
+    }
+
+    public function handle(Request $request): Response
+    {
+        try {
+            $response = $this->router->dispatch($request);
+        } catch (Throwable $exception) {
+            $response = $this->exceptionHandler->handle($exception, $request);
+        }
+
+        return $response->withHeader('X-Request-ID', $request->requestId);
     }
 }
