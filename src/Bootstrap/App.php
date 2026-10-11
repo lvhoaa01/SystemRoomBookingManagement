@@ -10,6 +10,7 @@ use App\Config\Env;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\Router;
+use App\Http\HealthController;
 use App\Shared\Database\Connection;
 use App\Shared\Database\TransactionManager;
 use App\Shared\Http\ExceptionHandler;
@@ -54,6 +55,10 @@ final class App
             static fn (Container $_): ViewRenderer => new ViewRenderer($projectRoot . '/views'),
         );
         $container->singleton(FlashBag::class, static fn (Container $_): FlashBag => new FlashBag());
+        $container->singleton(
+            HealthController::class,
+            static fn (Container $container): HealthController => new HealthController($container->get(PDO::class)),
+        );
 
         $session = new SessionBootstrap($appConfig);
         $container->instance(SessionBootstrap::class, $session);
@@ -64,8 +69,8 @@ final class App
         $router = new Router();
         $registerWebRoutes = require $projectRoot . '/src/routes/web.php';
         $registerApiRoutes = require $projectRoot . '/src/routes/api.php';
-        $registerWebRoutes($router);
-        $registerApiRoutes($router);
+        $registerWebRoutes($router, $container);
+        $registerApiRoutes($router, $container);
 
         $container->instance(Router::class, $router);
         $exceptionHandler = new ExceptionHandler($appConfig, $container->get(Logger::class));
@@ -85,10 +90,15 @@ final class App
             $request = Request::fromGlobals();
             $response = $this->handle($request);
         } catch (Throwable $exception) {
+            $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');
+            $providedRequestId = (string) ($_SERVER['HTTP_X_REQUEST_ID'] ?? '');
             $request = new Request(
                 strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')),
                 (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/'),
-                requestId: bin2hex(random_bytes(16)),
+                headers: ['accept' => $accept],
+                requestId: preg_match('/^[A-Za-z0-9._-]{8,128}$/', $providedRequestId) === 1
+                    ? $providedRequestId
+                    : bin2hex(random_bytes(16)),
             );
             $response = $this->exceptionHandler->handle($exception, $request);
         }

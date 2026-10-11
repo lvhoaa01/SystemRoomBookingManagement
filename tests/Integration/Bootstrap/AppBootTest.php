@@ -36,4 +36,22 @@ final class AppBootTest extends TestCase
         self::assertSame('NOT_FOUND', $payload['error']['code']);
         self::assertSame('request-app-12345', $response->headers()['X-Request-ID']);
     }
+
+    public function test_health_route_checks_application_and_database(): void
+    {
+        $app = App::boot(dirname(__DIR__, 3));
+
+        $response = $app->handle(new Request(
+            'GET',
+            '/api/health',
+            requestId: 'request-health-123',
+        ));
+        $payload = json_decode($response->body(), true);
+
+        self::assertSame(200, $response->status());
+        self::assertSame('ok', $payload['status']);
+        self::assertSame('up', $payload['checks']['application']);
+        self::assertSame('up', $payload['checks']['database']);
+        self::assertSame('request-health-123', $payload['requestId']);
+    }
 }

@@ -24,5 +24,20 @@ if (is_file($composerAutoload)) {
     });
 }
 
-App::boot($projectRoot)->run();
+try {
+    App::boot($projectRoot)->run();
+} catch (Throwable $exception) {
+    $requestId = bin2hex(random_bytes(16));
+    error_log('APP_BOOT_FAILED requestId=' . $requestId . ' exception=' . $exception::class);
+
+    http_response_code(500);
+    header('Content-Type: text/html; charset=UTF-8');
+    header('X-Request-ID: ' . $requestId);
+    echo '<!doctype html><html lang="vi"><meta charset="utf-8">'
+        . '<title>Hệ thống tạm thời gặp sự cố</title>'
+        . '<h1>Hệ thống tạm thời gặp sự cố</h1>'
+        . '<p>Vui lòng thử lại sau.</p><small>Mã yêu cầu: '
+        . htmlspecialchars($requestId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+        . '</small></html>';
+}
 
