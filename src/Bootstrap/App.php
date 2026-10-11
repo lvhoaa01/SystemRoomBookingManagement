@@ -60,7 +60,7 @@ final class App
             static fn (Container $container): HealthController => new HealthController($container->get(PDO::class)),
         );
 
-        $session = new SessionBootstrap($appConfig);
+        $session = new SessionBootstrap($appConfig, $projectRoot . '/storage/tmp');
         $container->instance(SessionBootstrap::class, $session);
         if (PHP_SAPI !== 'cli') {
             $session->start();

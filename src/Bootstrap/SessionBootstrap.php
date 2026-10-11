@@ -12,8 +12,10 @@ final class SessionBootstrap
     private const CSRF_KEY = '_csrf_token';
     private const LAST_ACTIVITY_KEY = '_last_activity_at';
 
-    public function __construct(private readonly AppConfig $config)
-    {
+    public function __construct(
+        private readonly AppConfig $config,
+        private readonly ?string $savePath = null,
+    ) {
     }
 
     public function start(): void
@@ -30,6 +32,12 @@ final class SessionBootstrap
         ini_set('session.use_strict_mode', '1');
         ini_set('session.use_only_cookies', '1');
         ini_set('session.gc_maxlifetime', (string) $this->config->sessionLifetimeSeconds);
+        if ($this->savePath !== null) {
+            if (!is_dir($this->savePath) || !is_writable($this->savePath)) {
+                throw new RuntimeException('Thư mục lưu session không sẵn sàng.');
+            }
+            session_save_path($this->savePath);
+        }
         session_name($this->config->sessionName);
         session_set_cookie_params([
             'lifetime' => 0,

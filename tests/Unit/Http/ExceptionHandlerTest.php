@@ -8,6 +8,7 @@ use App\Config\AppConfig;
 use App\Http\Request;
 use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\NotFoundHttpException;
+use App\Shared\Http\ConflictHttpException;
 use App\Shared\Logging\NullLogger;
 use DateTimeZone;
 use RuntimeException;
@@ -63,5 +64,18 @@ final class ExceptionHandlerTest extends TestCase
         self::assertSame(404, $response->status());
         self::assertStringContainsString('request-html-123', $response->body());
         self::assertStringNotContainsString('Stack trace', $response->body());
+    }
+
+    public function test_preserves_business_conflict_code_and_details(): void
+    {
+        $response = $this->handler->handle(
+            new ConflictHttpException('PREVIEW_STALE', 'Giá đã thay đổi.', ['refresh' => true]),
+            new Request('POST', '/api/bookings', requestId: 'request-conflict-1'),
+        );
+        $payload = json_decode($response->body(), true);
+
+        self::assertSame(409, $response->status());
+        self::assertSame('PREVIEW_STALE', $payload['error']['code']);
+        self::assertTrue($payload['error']['details']['refresh']);
     }
 }

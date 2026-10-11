@@ -7,6 +7,8 @@ namespace Tests\Unit\Bootstrap;
 use App\Bootstrap\SessionBootstrap;
 use App\Config\AppConfig;
 use DateTimeZone;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use Tests\Support\TestCase;
 
 final class SessionBootstrapTest extends TestCase
@@ -36,5 +38,32 @@ final class SessionBootstrapTest extends TestCase
 
         self::assertFalse($http->usesSecureCookies());
         self::assertTrue($https->usesSecureCookies());
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function test_starts_native_session_with_safe_cookie_settings(): void
+    {
+        $session = new SessionBootstrap(
+            new AppConfig(
+                'test',
+                true,
+                'http://localhost',
+                new DateTimeZone('UTC'),
+                'ota_phase_one_test',
+            ),
+            dirname(__DIR__, 3) . '/storage/tmp',
+        );
+
+        $session->start();
+        $params = session_get_cookie_params();
+
+        self::assertSame(PHP_SESSION_ACTIVE, session_status());
+        self::assertTrue($params['httponly']);
+        self::assertSame('Lax', $params['samesite']);
+        self::assertFalse($params['secure']);
+        self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $session->csrfToken());
+
+        $session->destroy();
     }
 }
