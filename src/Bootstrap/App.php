@@ -11,6 +11,7 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\Router;
 use App\Http\HealthController;
+use App\Http\Middleware\RequestIdMiddleware;
 use App\Shared\Database\Connection;
 use App\Shared\Database\TransactionManager;
 use App\Shared\Http\ExceptionHandler;
@@ -55,6 +56,7 @@ final class App
             static fn (Container $_): ViewRenderer => new ViewRenderer($projectRoot . '/views'),
         );
         $container->singleton(FlashBag::class, static fn (Container $_): FlashBag => new FlashBag());
+        $container->instance(RequestIdMiddleware::class, new RequestIdMiddleware());
         $container->singleton(
             HealthController::class,
             static fn (Container $container): HealthController => new HealthController($container->get(PDO::class)),
