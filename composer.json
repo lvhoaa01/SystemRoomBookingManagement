@@ -5,13 +5,22 @@
   "require": {
     "php": ">=8.2"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^11.5"
+  },
   "autoload": {
     "psr-4": {
       "App\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
   "scripts": {
     "data:generate": "php scripts/data/generate_data.php",
-    "data:validate": "php scripts/data/validate_data.php"
+    "data:validate": "php scripts/data/validate_data.php",
+    "test": "phpunit --configuration phpunit.xml"
   }
 }
