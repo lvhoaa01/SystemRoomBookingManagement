@@ -71,6 +71,39 @@ FROM HangMucDatCho i
 LEFT JOIN (SELECT HangMucDatChoID, SUM(ThanhTien) s FROM GiaDemDatCho GROUP BY HangMucDatChoID) n ON n.HangMucDatChoID=i.HangMucDatChoID
 WHERE i.TongTien <> COALESCE(n.s,0)
 UNION ALL
+SELECT 'booking_item_product_timing_mismatch', COUNT(*)
+FROM HangMucDatCho i
+JOIN DatCho b ON b.DatChoID=i.DatChoID
+JOIN SanPhamPhong p ON p.SanPhamPhongID=i.SanPhamPhongID
+WHERE p.ThoiDiemThanhToan<>b.ThoiDiemThanhToan
+UNION ALL
+SELECT 'pay_online_amount_split_mismatch', COUNT(*)
+FROM DatCho b
+JOIN XemTruocDatCho x ON x.XemTruocDatChoID=b.XemTruocDatChoID
+JOIN ThanhToan p ON p.DatChoID=b.DatChoID
+WHERE b.ThoiDiemThanhToan='PAY_ONLINE'
+  AND (x.SoTienTraNgay<>b.TongTien OR x.SoTienTraTaiCoSo<>0
+       OR p.ThoiDiemThanhToan<>b.ThoiDiemThanhToan OR p.TongPhaiTra<>b.TongTien)
+UNION ALL
+SELECT 'pay_at_property_amount_split_mismatch', COUNT(*)
+FROM DatCho b
+JOIN XemTruocDatCho x ON x.XemTruocDatChoID=b.XemTruocDatChoID
+JOIN ThanhToan p ON p.DatChoID=b.DatChoID
+WHERE b.ThoiDiemThanhToan='PAY_AT_PROPERTY'
+  AND (x.SoTienTraNgay<>0 OR x.SoTienTraTaiCoSo<>b.TongTien
+       OR p.ThoiDiemThanhToan<>b.ThoiDiemThanhToan OR p.TongPhaiTra<>b.TongTien)
+UNION ALL
+SELECT 'preview_json_payment_timing_mismatch', COUNT(*)
+FROM XemTruocDatCho x
+JOIN DatCho b ON b.XemTruocDatChoID=x.XemTruocDatChoID
+WHERE COALESCE(JSON_UNQUOTE(JSON_EXTRACT(x.PhanBoJSON, '$.paymentTiming')), '')<>b.ThoiDiemThanhToan
+UNION ALL
+SELECT 'pay_online_nightly_at_property_nonzero', COUNT(*)
+FROM GiaDemDatCho n
+JOIN HangMucDatCho i ON i.HangMucDatChoID=n.HangMucDatChoID
+JOIN DatCho b ON b.DatChoID=i.DatChoID
+WHERE b.ThoiDiemThanhToan='PAY_ONLINE' AND n.ThuePhiTaiCoSo<>0
+UNION ALL
 SELECT 'preview_room_count_mismatch', COUNT(*)
 FROM XemTruocDatCho p
 JOIN DatCho b ON b.XemTruocDatChoID=p.XemTruocDatChoID
