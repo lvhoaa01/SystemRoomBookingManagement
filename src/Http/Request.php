@@ -41,16 +41,7 @@ final readonly class Request
             }
         }
 
-        $uri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
-        $path = self::normalizePath((string) (parse_url($uri, PHP_URL_PATH) ?: '/'));
-        $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
-        $basePath = str_replace('\\', '/', dirname($scriptName));
-        if (in_array($basePath, ['/', '.', '\\'], true)) {
-            $basePath = '';
-        }
-        if ($basePath !== '' && ($path === $basePath || str_starts_with($path, $basePath . '/'))) {
-            $path = self::normalizePath(substr($path, strlen($basePath)));
-        }
+        $path = self::pathFromServer($_SERVER);
 
         $body = $_POST;
         $contentType = strtolower(explode(';', $headers['content-type'] ?? '')[0]);
@@ -79,6 +70,27 @@ final readonly class Request
             [],
             self::detectClientIp($_SERVER),
             $requestId,
+        );
+    }
+
+    public static function fallbackFromGlobals(): self
+    {
+        $headers = self::headersFromServer($_SERVER);
+        $providedRequestId = $headers['x-request-id'] ?? '';
+
+        return new self(
+            strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')),
+            self::pathFromServer($_SERVER),
+            $_GET,
+            [],
+            $headers,
+            array_map('strval', $_COOKIE),
+            $_FILES,
+            [],
+            self::detectClientIp($_SERVER),
+            preg_match('/^[A-Za-z0-9._-]{8,128}$/', $providedRequestId) === 1
+                ? $providedRequestId
+                : bin2hex(random_bytes(16)),
         );
     }
 
@@ -124,6 +136,22 @@ final readonly class Request
     {
         $path = '/' . ltrim($path, '/');
         return $path === '/' ? '/' : rtrim($path, '/');
+    }
+
+    /** @param array<string, mixed> $server */
+    private static function pathFromServer(array $server): string
+    {
+        $uri = (string) ($server['REQUEST_URI'] ?? '/');
+        $path = self::normalizePath((string) (parse_url($uri, PHP_URL_PATH) ?: '/'));
+        $scriptName = str_replace('\\', '/', (string) ($server['SCRIPT_NAME'] ?? ''));
+        $basePath = str_replace('\\', '/', dirname($scriptName));
+        if (in_array($basePath, ['/', '.', '\\'], true)) {
+            $basePath = '';
+        }
+        if ($basePath !== '' && ($path === $basePath || str_starts_with($path, $basePath . '/'))) {
+            return self::normalizePath(substr($path, strlen($basePath)));
+        }
+        return $path;
     }
 
     /**

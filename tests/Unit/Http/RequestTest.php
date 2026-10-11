@@ -67,4 +67,21 @@ final class RequestTest extends TestCase
 
         Request::fromGlobals('{invalid');
     }
+
+    public function test_builds_normalized_api_fallback_after_parse_failure(): void
+    {
+        $_SERVER = [
+            'REQUEST_METHOD' => 'POST',
+            'REQUEST_URI' => '/DuAnNhom/public/api/bookings',
+            'SCRIPT_NAME' => '/DuAnNhom/public/index.php',
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_REQUEST_ID' => 'fallback-request-123',
+        ];
+
+        $request = Request::fallbackFromGlobals();
+
+        self::assertSame('/api/bookings', $request->path);
+        self::assertSame('fallback-request-123', $request->requestId);
+        self::assertTrue($request->expectsJson());
+    }
 }

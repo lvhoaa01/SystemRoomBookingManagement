@@ -92,16 +92,7 @@ final class App
             $request = Request::fromGlobals();
             $response = $this->handle($request);
         } catch (Throwable $exception) {
-            $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');
-            $providedRequestId = (string) ($_SERVER['HTTP_X_REQUEST_ID'] ?? '');
-            $request = new Request(
-                strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')),
-                (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/'),
-                headers: ['accept' => $accept],
-                requestId: preg_match('/^[A-Za-z0-9._-]{8,128}$/', $providedRequestId) === 1
-                    ? $providedRequestId
-                    : bin2hex(random_bytes(16)),
-            );
+            $request = Request::fallbackFromGlobals();
             $response = $this->exceptionHandler->handle($exception, $request);
         }
 
