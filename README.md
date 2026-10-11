@@ -29,6 +29,7 @@ Lộ trình tự phát triển nằm tại [`huongDan/LO_TRINH_PHAT_TRIEN_THU_CO
 Copy-Item .env.example .env
 composer install
 composer dump-autoload
+composer test
 ```
 
 `.env` đã bị Git bỏ qua. Không commit mật khẩu hoặc cấu hình máy cá nhân.
@@ -79,6 +80,23 @@ http://localhost/DuAnNhom/public/
 ```
 
 Baseline hiện tại hiển thị trang xác nhận bộ khung Modular Monolith đã sẵn sàng. Các chức năng nghiệp vụ được phát triển lần lượt theo lộ trình V2.
+
+Kiểm tra tình trạng ứng dụng và kết nối database:
+
+```text
+http://localhost/DuAnNhom/public/health
+http://localhost/DuAnNhom/public/api/health
+```
+
+Phản hồi hợp lệ có `status = ok`, `application = up` và `database = up`.
+
+## Kiểm thử ứng dụng
+
+```powershell
+C:\DDrive\xampp\php\php.exe vendor\bin\phpunit --configuration phpunit.xml
+```
+
+Test được chia thành `tests/Unit`, `tests/Integration`; các giai đoạn sau bổ sung `Concurrency` và `Contract` theo đúng lộ trình. Log runtime nằm trong `storage/logs/`, session cục bộ nằm trong `storage/tmp/`; cả hai không được commit.
 
 ## Tài khoản seed
 
