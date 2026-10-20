@@ -1,141 +1,51 @@
 # Accommodation Booking
 
-Mini OTA tìm kiếm và đặt chỗ lưu trú đa cơ sở tại Thành phố Hồ Chí Minh. Dự án dùng PHP 8.2+, MySQL 8.x/MariaDB 10.4+ và kiến trúc một khối có chia mô-đun theo chức năng.
+> **Bản nháp:** README này chỉ giới thiệu đặc tả tổng quan của dự án. Nội dung sẽ được hoàn thiện sau khi toàn bộ lộ trình phát triển và nghiệm thu kết thúc.
 
-## Tài liệu chuẩn
+## Giới thiệu
 
-Thứ tự ưu tiên khi có khác biệt:
+Accommodation Booking là hệ thống Mini OTA hỗ trợ tìm kiếm và đặt chỗ lưu trú đa cơ sở tại Thành phố Hồ Chí Minh. Hệ thống hướng đến việc kết nối khách hàng với các cơ sở lưu trú, đồng thời cung cấp công cụ quản trị cho đối tác và quản trị viên nền tảng.
 
-1. [`huongDan/DESCRIPTION_HOTEL_BOOKING_V2.md`](huongDan/DESCRIPTION_HOTEL_BOOKING_V2.md) — nghiệp vụ và 60 tiêu chí chấp nhận;
-2. [`huongDan/DESIGN_HOTEL_BOOKING_V2.md`](huongDan/DESIGN_HOTEL_BOOKING_V2.md) — kiến trúc, dữ liệu và transaction;
-3. [`database/migrations/001_create_schema.sql`](database/migrations/001_create_schema.sql) và validator đã kiểm chứng;
-4. [`huongDan/DFD_HOTEL_BOOKING.md`](huongDan/DFD_HOTEL_BOOKING.md) và [`huongDan/SEQUENCE_DIAGRAM_HOTEL_BOOKING.md`](huongDan/SEQUENCE_DIAGRAM_HOTEL_BOOKING.md);
-5. code đang triển khai.
+## Mục tiêu
 
-Lộ trình tự phát triển nằm tại [`huongDan/LO_TRINH_PHAT_TRIEN_THU_CONG_HOTEL_BOOKING_V2.md`](huongDan/LO_TRINH_PHAT_TRIEN_THU_CONG_HOTEL_BOOKING_V2.md). Schema MVP có chính xác 22 bảng.
+- Cho phép khách hàng tìm kiếm cơ sở lưu trú theo thời gian ở, số phòng và nhóm khách.
+- Hiển thị giá, chính sách, tình trạng phòng và thời điểm thanh toán nhất quán.
+- Hỗ trợ đặt chỗ trả trực tuyến hoặc trả tại cơ sở theo một phương thức thuần nhất cho mỗi booking.
+- Giúp đối tác quản lý cơ sở, loại phòng, sản phẩm phòng, giá, tồn và chính sách.
+- Giúp quản trị viên duyệt cơ sở, quản lý tài khoản, theo dõi audit và báo cáo vận hành.
 
-## Khởi chạy bằng XAMPP trên Windows
+## Vai trò người dùng
 
-### 1. Chuẩn bị
+- **Khách hàng:** tìm kiếm, xem chi tiết, đặt chỗ, thanh toán, hủy và đánh giá.
+- **Đối tác:** quản lý dữ liệu lưu trú trong phạm vi tổ chức của mình.
+- **Quản trị viên:** kiểm duyệt, giám sát và vận hành nền tảng.
 
-- Đặt repository tại `C:\DDrive\xampp\htdocs\DuAnNhom` hoặc điều chỉnh URL tương ứng.
-- Bật Apache và MySQL trong XAMPP.
-- Kiểm tra PHP: `C:\DDrive\xampp\php\php.exe -v`.
-- Cài Composer và bảo đảm lệnh `composer` có trong `PATH`.
+## Phạm vi chức năng dự kiến
 
-### 2. Tạo cấu hình cục bộ
+1. Đăng ký, đăng nhập và phân quyền theo vai trò.
+2. Quản lý cơ sở lưu trú, loại phòng, tiện nghi và hình ảnh.
+3. Quản lý sản phẩm phòng, giá theo ngày, khuyến mại và chính sách hủy.
+4. Quản lý tồn phòng an toàn khi có nhiều yêu cầu đồng thời.
+5. Tìm kiếm, phân bổ phòng và tính giá xác định.
+6. Xem trước booking, đặt chỗ và thanh toán mô phỏng.
+7. Quản lý booking, hủy, hoàn tiền, đổi ngày và no-show.
+8. Đánh giá sau lưu trú, audit và báo cáo quản trị.
 
-```powershell
-Copy-Item .env.example .env
-composer install
-composer dump-autoload
-composer test
-```
+## Nguyên tắc nghiệp vụ cốt lõi
 
-`.env` đã bị Git bỏ qua. Không commit mật khẩu hoặc cấu hình máy cá nhân.
+- Tồn phòng được quản lý theo loại phòng và ngày lưu trú.
+- Một booking chỉ sử dụng một thời điểm thanh toán: `PAY_ONLINE` hoặc `PAY_AT_PROPERTY`.
+- Giá và chính sách của booking được lưu snapshot để không bị thay đổi theo dữ liệu hiện tại.
+- Các thao tác giữ và trả tồn phải bảo đảm transaction, idempotency và không vượt bán.
+- Dữ liệu của đối tác phải luôn được giới hạn theo phạm vi tổ chức.
+- Tiền tệ của MVP là VND và không được tính bằng số thực `float`.
 
-### 3. Import database sạch
+## Kiến trúc định hướng
 
-Có thể chọn lần lượt bảy file dưới đây trong phpMyAdmin, hoặc chạy PowerShell:
+Dự án sử dụng PHP 8.2+, MySQL/MariaDB và kiến trúc Modular Monolith. Mỗi module sở hữu nghiệp vụ riêng; các primitive và contract thực sự dùng chung được đặt trong Shared Kernel.
 
-```powershell
-$mysql = 'C:\DDrive\xampp\mysql\bin\mysql.exe'
-$sqlFiles = @(
-    'database/migrations/001_create_schema.sql',
-    'database/seeds/001_reference.sql',
-    'database/seeds/002_accounts_partners.sql',
-    'database/seeds/003_properties.sql',
-    'database/seeds/004_products_policies.sql',
-    'database/seeds/005_inventory_prices.sql',
-    'database/seeds/006_operational.sql'
-)
+Các module dự kiến gồm Identity, Properties, Commercial, Inventory, Search, Bookings, Reviews và Admin.
 
-foreach ($sqlFile in $sqlFiles) {
-    & $mysql --host=127.0.0.1 --port=3306 --user=root --default-character-set=utf8mb4 `
-        --execute="SOURCE $($sqlFile.Replace('\', '/'));"
-    if ($LASTEXITCODE -ne 0) { throw "Import thất bại: $sqlFile" }
-}
-```
+## Trạng thái
 
-Migration tự tạo database `hotel_booking`. Không import các file trong `database/fixtures/invalid/`; đó là dữ liệu cố ý sai để kiểm thử.
-
-### 4. Kiểm tra dữ liệu
-
-```powershell
-C:\DDrive\xampp\php\php.exe scripts\data\validate_data.php
-
-C:\DDrive\xampp\mysql\bin\mysql.exe `
-    --host=127.0.0.1 --port=3306 --user=root --default-character-set=utf8mb4 `
-    --table --execute="SOURCE database/validation/001_integrity_checks.sql;"
-```
-
-Kết quả hợp lệ phải có đúng 22 bảng, validator file/manifest thành công và mọi dòng `Violations` bằng `0`.
-
-### 5. Mở ứng dụng
-
-Truy cập:
-
-```text
-http://localhost/DuAnNhom/public/
-```
-
-Baseline hiện tại hiển thị trang xác nhận bộ khung Modular Monolith đã sẵn sàng. Các chức năng nghiệp vụ được phát triển lần lượt theo lộ trình V2.
-
-Kiểm tra tình trạng ứng dụng và kết nối database:
-
-```text
-http://localhost/DuAnNhom/public/health
-http://localhost/DuAnNhom/public/api/health
-```
-
-Phản hồi hợp lệ có `status = ok`, `application = up` và `database = up`.
-
-## Kiểm thử ứng dụng
-
-```powershell
-C:\DDrive\xampp\php\php.exe vendor\bin\phpunit --configuration phpunit.xml
-```
-
-Test được chia thành `tests/Unit`, `tests/Integration`; các giai đoạn sau bổ sung `Concurrency` và `Contract` theo đúng lộ trình. Log runtime nằm trong `storage/logs/`, session cục bộ nằm trong `storage/tmp/`; cả hai không được commit.
-
-## Tài khoản seed
-
-- Quản trị viên: `ADMIN001`;
-- Đối tác: `DT001` đến `DT010`;
-- Khách hàng: `KH0001` đến `KH0500`;
-- Mật khẩu chung: `Ntu@123456`.
-
-## Quy mô và nguồn dữ liệu
-
-- 30 cơ sở, 120 loại phòng, 180 sản phẩm phòng;
-- 21.600 dòng tồn theo ngày và 32.400 dòng giá;
-- 2.000 preview và 2.000 booking;
-- tên cơ sở lấy từ danh mục nguồn; địa chỉ là dữ liệu đối chiếu công khai;
-- giá, tồn, booking, review và phần lớn thuộc tính vận hành là dữ liệu tổng hợp phục vụ phát triển;
-- ảnh Hotel Majestic chỉ gắn cho `CS016`; cơ sở khác dùng ảnh minh họa trung tính có nhãn rõ ràng.
-
-Google Places mới là hướng tích hợp sau MVP. Schema chỉ chuẩn bị `GooglePlaceID`, trạng thái đối chiếu và thời điểm xác minh; dữ liệu Google không được coi là master data lâu dài.
-
-## Bất biến phải giữ
-
-- Tồn phòng thuộc `LoaiPhong + NgayLuuTru`, không thuộc sản phẩm phòng.
-- Preview tối đa 15 phút, dùng một lần và không giữ tồn.
-- Counter tồn phải bằng số ledger `ACTIVE`.
-- Mỗi booking chỉ có một thời điểm thanh toán thuần nhất.
-- `PAY_ONLINE` trả toàn bộ ngay; `PAY_AT_PROPERTY` không theo dõi tiền mặt thực tế.
-- Chỉ booking `PENDING_PAYMENT` hoặc `CONFIRMED` được giữ tồn.
-- Hủy, thất bại thanh toán, no-show và hoàn tất phải trả tồn đúng một lần.
-- Không gọi cổng thanh toán khi transaction đang giữ khóa tồn.
-- Mọi truy vấn đối tác phải giới hạn tổ chức ngay trong SQL.
-- Lịch sử booking dùng snapshot, không tính lại từ giá/chính sách hiện tại.
-
-## Sinh lại dữ liệu
-
-Chỉ sinh lại khi thay đổi generator hoặc fixture có chủ đích:
-
-```powershell
-C:\DDrive\xampp\php\php.exe scripts\data\generate_data.php
-C:\DDrive\xampp\php\php.exe scripts\data\validate_data.php
-```
-
-Không sửa tay từng dòng seed và không dùng seed tổng hợp như dữ liệu vận hành thật.
+Dự án đang trong quá trình phát triển. Các chức năng, giao diện và tài liệu vận hành chưa phải phiên bản hoàn chỉnh.

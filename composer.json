@@ -2,6 +2,7 @@
   "name": "student-team/accommodation-booking",
   "description": "MVP marketplace tìm kiếm và đặt chỗ lưu trú đa cơ sở",
   "type": "project",
+  "license": "proprietary",
   "require": {
     "php": ">=8.2"
   },
@@ -19,8 +20,6 @@
     }
   },
   "scripts": {
-    "data:generate": "php scripts/data/generate_data.php",
-    "data:validate": "php scripts/data/validate_data.php",
     "test": "phpunit --configuration phpunit.xml"
   }
 }
