@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Bootstrap;
 
 use App\Config\AppConfig;
+use App\Shared\Clock\ClockInterface;
+use App\Shared\Clock\SystemClock;
+use App\Shared\Security\TokenGenerator;
 use RuntimeException;
 
 final class SessionBootstrap
@@ -12,10 +15,17 @@ final class SessionBootstrap
     private const CSRF_KEY = '_csrf_token';
     private const LAST_ACTIVITY_KEY = '_last_activity_at';
 
+    private readonly ClockInterface $clock;
+    private readonly TokenGenerator $tokenGenerator;
+
     public function __construct(
         private readonly AppConfig $config,
         private readonly ?string $savePath = null,
+        ?ClockInterface $clock = null,
+        ?TokenGenerator $tokenGenerator = null,
     ) {
+        $this->clock = $clock ?? new SystemClock();
+        $this->tokenGenerator = $tokenGenerator ?? new TokenGenerator();
     }
 
     public function start(): void
@@ -74,7 +84,7 @@ final class SessionBootstrap
 
     public function rotateCsrfToken(): string
     {
-        return $_SESSION[self::CSRF_KEY] = bin2hex(random_bytes(32));
+        return $_SESSION[self::CSRF_KEY] = $this->tokenGenerator->generate();
     }
 
     public function destroy(): void
@@ -88,7 +98,7 @@ final class SessionBootstrap
         if (ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
             setcookie(session_name(), '', [
-                'expires' => time() - 42000,
+                'expires' => $this->clock->now()->getTimestamp() - 42000,
                 'path' => $params['path'],
                 'domain' => $params['domain'],
                 'secure' => $params['secure'],
@@ -102,7 +112,7 @@ final class SessionBootstrap
 
     private function ensureSecurityState(): void
     {
-        $now = time();
+        $now = $this->clock->now()->getTimestamp();
         $lastActivity = $_SESSION[self::LAST_ACTIVITY_KEY] ?? null;
         if (is_int($lastActivity) && $now - $lastActivity > $this->config->sessionLifetimeSeconds) {
             $_SESSION = [];

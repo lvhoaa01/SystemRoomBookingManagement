@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Shared\Logging;
 
-use DateTimeImmutable;
-use DateTimeZone;
+use App\Shared\Clock\ClockInterface;
 
 final readonly class FileLogger implements Logger
 {
-    public function __construct(private string $path)
-    {
+    public function __construct(
+        private string $path,
+        private ClockInterface $clock,
+    ) {
     }
 
     public function log(string $level, string $message, array $context = []): void
     {
         $entry = [
-            'timestamp' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z'),
+            'timestamp' => $this->clock->now()->format('Y-m-d\TH:i:s.u\Z'),
             'level' => strtoupper($level),
             'message' => $message,
             'context' => $this->sanitize($context),

@@ -12,6 +12,8 @@ use App\Http\Response;
 use App\Http\Router;
 use App\Http\HealthController;
 use App\Http\Middleware\RequestIdMiddleware;
+use App\Shared\Clock\ClockInterface;
+use App\Shared\Clock\SystemClock;
 use App\Shared\Database\Connection;
 use App\Shared\Database\TransactionManager;
 use App\Shared\Http\ExceptionHandler;
@@ -19,6 +21,8 @@ use App\Shared\Http\FlashBag;
 use App\Shared\Http\ViewRenderer;
 use App\Shared\Logging\FileLogger;
 use App\Shared\Logging\Logger;
+use App\Shared\Security\Hasher;
+use App\Shared\Security\TokenGenerator;
 use PDO;
 use Throwable;
 
@@ -42,6 +46,9 @@ final class App
 
         $container->instance(AppConfig::class, $appConfig);
         $container->instance(DatabaseConfig::class, $databaseConfig);
+        $container->singleton(ClockInterface::class, static fn (Container $_): ClockInterface => new SystemClock());
+        $container->singleton(TokenGenerator::class, static fn (Container $_): TokenGenerator => new TokenGenerator());
+        $container->singleton(Hasher::class, static fn (Container $_): Hasher => new Hasher());
         $container->singleton(PDO::class, static fn (Container $_): PDO => Connection::create($databaseConfig));
         $container->singleton(
             TransactionManager::class,
@@ -49,7 +56,10 @@ final class App
         );
         $container->singleton(
             Logger::class,
-            static fn (Container $_): Logger => new FileLogger($projectRoot . '/storage/logs/app.log'),
+            static fn (Container $container): Logger => new FileLogger(
+                $projectRoot . '/storage/logs/app.log',
+                $container->get(ClockInterface::class),
+            ),
         );
         $container->singleton(
             ViewRenderer::class,
@@ -59,10 +69,18 @@ final class App
         $container->instance(RequestIdMiddleware::class, new RequestIdMiddleware());
         $container->singleton(
             HealthController::class,
-            static fn (Container $container): HealthController => new HealthController($container->get(PDO::class)),
+            static fn (Container $container): HealthController => new HealthController(
+                $container->get(PDO::class),
+                $container->get(ClockInterface::class),
+            ),
         );
 
-        $session = new SessionBootstrap($appConfig, $projectRoot . '/storage/tmp');
+        $session = new SessionBootstrap(
+            $appConfig,
+            $projectRoot . '/storage/tmp',
+            $container->get(ClockInterface::class),
+            $container->get(TokenGenerator::class),
+        );
         $container->instance(SessionBootstrap::class, $session);
         if (PHP_SAPI !== 'cli') {
             $session->start();

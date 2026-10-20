@@ -6,6 +6,9 @@ namespace Tests\Integration\Bootstrap;
 
 use App\Bootstrap\App;
 use App\Http\Request;
+use App\Shared\Clock\ClockInterface;
+use App\Shared\Security\Hasher;
+use App\Shared\Security\TokenGenerator;
 use PDO;
 use Tests\Support\TestCase;
 
@@ -53,5 +56,16 @@ final class AppBootTest extends TestCase
         self::assertSame('up', $payload['checks']['application']);
         self::assertSame('up', $payload['checks']['database']);
         self::assertSame('request-health-123', $payload['requestId']);
+    }
+
+    public function test_registers_shared_kernel_infrastructure_as_singletons(): void
+    {
+        $app = App::boot(dirname(__DIR__, 3));
+        $container = $app->container();
+
+        self::assertSame($container->get(ClockInterface::class), $container->get(ClockInterface::class));
+        self::assertSame('UTC', $container->get(ClockInterface::class)->now()->getTimezone()->getName());
+        self::assertSame($container->get(TokenGenerator::class), $container->get(TokenGenerator::class));
+        self::assertSame($container->get(Hasher::class), $container->get(Hasher::class));
     }
 }
