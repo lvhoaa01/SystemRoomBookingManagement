@@ -32,7 +32,9 @@ final readonly class Request
 
     public static function fromGlobals(?string $rawBody = null): self
     {
+        // $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0' = User-Agent: Mozilla/5.0
         $headers = self::headersFromServer($_SERVER);
+        // Form chỉ lấy 2 method get và post nên cho ra giải pháp với các method còn lại (ghi đè)
         $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
         if ($method === 'POST') {
             $override = $headers['x-http-method-override'] ?? ($_POST['_method'] ?? null);
@@ -42,7 +44,7 @@ final readonly class Request
         }
 
         $path = self::pathFromServer($_SERVER);
-
+        // Khi gửi dữ liệu thô Json, khi gửi json _post rỗng
         $body = $_POST;
         $contentType = strtolower(explode(';', $headers['content-type'] ?? '')[0]);
         if ($contentType === 'application/json' || str_ends_with($contentType, '+json')) {

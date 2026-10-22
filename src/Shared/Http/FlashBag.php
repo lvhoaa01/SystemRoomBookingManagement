@@ -7,13 +7,14 @@ namespace App\Shared\Http;
 final class FlashBag
 {
     private const KEY = '_flash_messages';
-
+    // Thêm tbao vào hàng đợi
     public function add(string $type, string $message): void
     {
         $_SESSION[self::KEY][$type][] = $message;
     }
 
     /** @return list<string> */
+    // Lấy tbao ra, hiển thị, rồi xóa (Dùng cho View)
     public function consume(string $type): array
     {
         $messages = $_SESSION[self::KEY][$type] ?? [];
@@ -23,6 +24,7 @@ final class FlashBag
     }
 
     /** @return array<string, list<string>> */
+    // Lấy toàn bộ thông báo
     public function consumeAll(): array
     {
         $messages = $_SESSION[self::KEY] ?? [];

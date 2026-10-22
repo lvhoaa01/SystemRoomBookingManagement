@@ -132,6 +132,7 @@ final class Router
             throw new RuntimeException("Không tìm thấy route có tên: {$name}");
         }
 
+        // Tùy biến thay thế theo call
         $url = preg_replace_callback(
             '/\{([A-Za-z_][A-Za-z0-9_]*)\}/',
             static function (array $matches) use ($parameters): string {
@@ -159,6 +160,7 @@ final class Router
         $parameters = [];
         foreach ($routeSegments as $index => $routeSegment) {
             $requestSegment = $requestSegments[$index];
+            // matches 0 -- lấy giá trị cả dấy {} // matches 1 -- chỉ lấy giá trị bên trong {}
             if (preg_match('/^\{([A-Za-z_][A-Za-z0-9_]*)\}$/', $routeSegment, $matches) === 1) {
                 $parameters[$matches[1]] = rawurldecode($requestSegment);
                 continue;

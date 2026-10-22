@@ -6,7 +6,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Request;
 use App\Http\Response;
-
+// Đặt id cho request của mỗi user - kiểm soát request 
 final class RequestIdMiddleware implements Middleware
 {
     public function process(Request $request, RequestHandler $next): Response

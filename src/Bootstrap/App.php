@@ -38,22 +38,30 @@ final class App
     public static function boot(string $projectRoot): self
     {
         date_default_timezone_set('UTC');
+        // Nạp env
         Env::load($projectRoot . '/.env');
-
+        //tạo config
         $appConfig = AppConfig::fromEnv();
         $databaseConfig = DatabaseConfig::fromEnv();
-        $container = new Container();
 
+        $container = new Container();
         $container->instance(AppConfig::class, $appConfig);
         $container->instance(DatabaseConfig::class, $databaseConfig);
+
         $container->singleton(ClockInterface::class, static fn (Container $_): ClockInterface => new SystemClock());
         $container->singleton(TokenGenerator::class, static fn (Container $_): TokenGenerator => new TokenGenerator());
-        $container->singleton(Hasher::class, static fn (Container $_): Hasher => new Hasher());
-        $container->singleton(PDO::class, static fn (Container $_): PDO => Connection::create($databaseConfig));
+        $container->singleton(Hasher::class, 
+        static fn (Container $_): Hasher => new Hasher());
+
+        $container->singleton(
+            PDO::class,
+            static fn (Container $_): PDO => Connection::create($databaseConfig),
+        );
         $container->singleton(
             TransactionManager::class,
             static fn (Container $container): TransactionManager => new TransactionManager($container->get(PDO::class)),
         );
+
         $container->singleton(
             Logger::class,
             static fn (Container $container): Logger => new FileLogger(
@@ -61,12 +69,18 @@ final class App
                 $container->get(ClockInterface::class),
             ),
         );
+
         $container->singleton(
             ViewRenderer::class,
             static fn (Container $_): ViewRenderer => new ViewRenderer($projectRoot . '/views'),
         );
-        $container->singleton(FlashBag::class, static fn (Container $_): FlashBag => new FlashBag());
+
+        $container->singleton(
+            FlashBag::class,
+            static fn (Container $_): FlashBag => new FlashBag(),
+        );
         $container->instance(RequestIdMiddleware::class, new RequestIdMiddleware());
+
         $container->singleton(
             HealthController::class,
             static fn (Container $container): HealthController => new HealthController(
@@ -74,18 +88,21 @@ final class App
                 $container->get(ClockInterface::class),
             ),
         );
-
         $session = new SessionBootstrap(
             $appConfig,
             $projectRoot . '/storage/tmp',
             $container->get(ClockInterface::class),
             $container->get(TokenGenerator::class),
         );
-        $container->instance(SessionBootstrap::class, $session);
+        $container->instance(
+            SessionBootstrap::class,
+            $session,
+        );
         if (PHP_SAPI !== 'cli') {
             $session->start();
         }
 
+        // Đăng ký router
         $router = new Router();
         $registerWebRoutes = require $projectRoot . '/src/routes/web.php';
         $registerApiRoutes = require $projectRoot . '/src/routes/api.php';
