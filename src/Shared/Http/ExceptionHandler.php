@@ -26,7 +26,7 @@ final readonly class ExceptionHandler
         $mapped = $this->map($exception);
         $this->logger->log($mapped['status'] >= 500 ? 'error' : 'warning', 'HTTP_REQUEST_FAILED', [
             'requestId' => $request->requestId,
-            'actorId' => $_SESSION['user_id'] ?? null,
+            'actorId' => $_SESSION['_current_user']['id'] ?? null,
             'method' => $request->method,
             'path' => $request->path,
             'status' => $mapped['status'],

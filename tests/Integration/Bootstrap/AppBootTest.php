@@ -6,6 +6,9 @@ namespace Tests\Integration\Bootstrap;
 
 use App\Bootstrap\App;
 use App\Http\Request;
+use App\Modules\Identity\Application\LoginService;
+use App\Modules\Identity\Infrastructure\IdentitySession;
+use App\Modules\Identity\Infrastructure\UserRepository;
 use App\Shared\Clock\ClockInterface;
 use App\Shared\Security\Hasher;
 use App\Shared\Security\TokenGenerator;
@@ -67,5 +70,14 @@ final class AppBootTest extends TestCase
         self::assertSame('UTC', $container->get(ClockInterface::class)->now()->getTimezone()->getName());
         self::assertSame($container->get(TokenGenerator::class), $container->get(TokenGenerator::class));
         self::assertSame($container->get(Hasher::class), $container->get(Hasher::class));
+    }
+
+    public function test_registers_identity_infrastructure_as_singletons(): void
+    {
+        $container = App::boot(dirname(__DIR__, 3))->container();
+
+        self::assertSame($container->get(UserRepository::class), $container->get(UserRepository::class));
+        self::assertSame($container->get(IdentitySession::class), $container->get(IdentitySession::class));
+        self::assertSame($container->get(LoginService::class), $container->get(LoginService::class));
     }
 }

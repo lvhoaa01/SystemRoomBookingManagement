@@ -11,7 +11,19 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\Router;
 use App\Http\HealthController;
+use App\Http\Middleware\AuthMiddleware;
+use App\Http\Middleware\CsrfMiddleware;
+use App\Http\Middleware\PartnerContextMiddleware;
 use App\Http\Middleware\RequestIdMiddleware;
+use App\Modules\Identity\Application\LoginService;
+use App\Modules\Identity\Application\LogoutService;
+use App\Modules\Identity\Application\RegisterCustomerService;
+use App\Modules\Identity\Http\LoginController;
+use App\Modules\Identity\Http\LogoutController;
+use App\Modules\Identity\Http\RegisterController;
+use App\Modules\Identity\Infrastructure\IdentitySession;
+use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
+use App\Modules\Identity\Infrastructure\UserRepository;
 use App\Shared\Clock\ClockInterface;
 use App\Shared\Clock\SystemClock;
 use App\Shared\Database\Connection;
@@ -101,6 +113,91 @@ final class App
         if (PHP_SAPI !== 'cli') {
             $session->start();
         }
+
+        $container->singleton(
+            UserRepository::class,
+            static fn (Container $container): UserRepository => new UserRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            PartnerMembershipRepository::class,
+            static fn (Container $container): PartnerMembershipRepository => new PartnerMembershipRepository(
+                $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            IdentitySession::class,
+            static fn (Container $container): IdentitySession => new IdentitySession(
+                $container->get(SessionBootstrap::class),
+            ),
+        );
+        $container->singleton(
+            RegisterCustomerService::class,
+            static fn (Container $container): RegisterCustomerService => new RegisterCustomerService(
+                $container->get(UserRepository::class),
+                $container->get(TokenGenerator::class),
+            ),
+        );
+        $container->singleton(
+            LoginService::class,
+            static fn (Container $container): LoginService => new LoginService(
+                $container->get(UserRepository::class),
+                $container->get(PartnerMembershipRepository::class),
+                $container->get(IdentitySession::class),
+            ),
+        );
+        $container->singleton(
+            LogoutService::class,
+            static fn (Container $container): LogoutService => new LogoutService(
+                $container->get(IdentitySession::class),
+            ),
+        );
+        $container->singleton(
+            RegisterController::class,
+            static fn (Container $container): RegisterController => new RegisterController(
+                $container->get(RegisterCustomerService::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
+        );
+        $container->singleton(
+            LoginController::class,
+            static fn (Container $container): LoginController => new LoginController(
+                $container->get(LoginService::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
+        );
+        $container->singleton(
+            LogoutController::class,
+            static fn (Container $container): LogoutController => new LogoutController(
+                $container->get(LogoutService::class),
+                $container->get(AppConfig::class),
+            ),
+        );
+        $container->singleton(
+            CsrfMiddleware::class,
+            static fn (Container $container): CsrfMiddleware => new CsrfMiddleware(
+                $container->get(SessionBootstrap::class),
+            ),
+        );
+        $container->singleton(
+            AuthMiddleware::class,
+            static fn (Container $container): AuthMiddleware => new AuthMiddleware(
+                $container->get(IdentitySession::class),
+            ),
+        );
+        $container->singleton(
+            PartnerContextMiddleware::class,
+            static fn (Container $container): PartnerContextMiddleware => new PartnerContextMiddleware(
+                $container->get(IdentitySession::class),
+            ),
+        );
 
         // Đăng ký router
         $router = new Router();
