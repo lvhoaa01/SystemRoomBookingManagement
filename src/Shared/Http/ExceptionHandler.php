@@ -24,9 +24,13 @@ final readonly class ExceptionHandler
     public function handle(Throwable $exception, Request $request): Response
     {
         $mapped = $this->map($exception);
+        $sessionUser = $_SESSION['_current_user'] ?? null;
+        $actorId = is_array($sessionUser) && is_int($sessionUser['id'] ?? null)
+            ? $sessionUser['id']
+            : null;
         $this->logger->log($mapped['status'] >= 500 ? 'error' : 'warning', 'HTTP_REQUEST_FAILED', [
             'requestId' => $request->requestId,
-            'actorId' => $_SESSION['_current_user']['id'] ?? null,
+            'actorId' => $actorId,
             'method' => $request->method,
             'path' => $request->path,
             'status' => $mapped['status'],

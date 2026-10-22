@@ -78,4 +78,17 @@ final class ExceptionHandlerTest extends TestCase
         self::assertSame('PREVIEW_STALE', $payload['error']['code']);
         self::assertTrue($payload['error']['details']['refresh']);
     }
+
+    public function test_corrupted_identity_session_does_not_break_error_handling(): void
+    {
+        $_SESSION['_current_user'] = 'corrupted';
+
+        $response = $this->handler->handle(
+            new NotFoundHttpException(),
+            new Request('GET', '/api/missing', requestId: 'request-corrupt-session'),
+        );
+
+        self::assertSame(404, $response->status());
+        self::assertStringContainsString('request-corrupt-session', $response->body());
+    }
 }

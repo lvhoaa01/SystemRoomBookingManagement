@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 /** @var string|null $currentUserName */
+/** @var string $baseUrl */
 ?>
 <section class="hero">
     <div class="hero__content">
