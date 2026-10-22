@@ -43,18 +43,22 @@ final class AuthFlowTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_auth_forms_are_routed_and_post_requires_csrf(): void
+    public function test_auth_forms_are_routed_and_every_auth_post_requires_csrf(): void
     {
         $form = $this->app->handle(new Request('GET', '/auth/login', requestId: 'auth-form-request'));
-        $rejected = $this->app->handle(new Request('POST', '/auth/login', body: [
-            'identifier' => 'customer0001@example.test',
-            'password' => 'Ntu@123456',
-        ], requestId: 'auth-csrf-request'));
 
         self::assertSame(200, $form->status());
         self::assertStringContainsString('Đăng nhập', $form->body());
-        self::assertSame(403, $rejected->status());
-        self::assertStringContainsString('Phiên biểu mẫu không hợp lệ', $rejected->body());
+
+        foreach (['/auth/register', '/auth/login', '/auth/logout'] as $index => $path) {
+            $rejected = $this->app->handle(new Request(
+                'POST',
+                $path,
+                requestId: 'auth-csrf-request-' . $index,
+            ));
+            self::assertSame(403, $rejected->status(), "Route {$path} phải yêu cầu CSRF.");
+            self::assertStringContainsString('Phiên biểu mẫu không hợp lệ', $rejected->body());
+        }
     }
 
     public function test_login_home_and_logout_complete_the_browser_flow(): void

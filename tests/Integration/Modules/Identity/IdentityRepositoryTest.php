@@ -76,4 +76,27 @@ final class IdentityRepositoryTest extends TestCase
         self::assertGreaterThan(0, $context->id);
         self::assertNotSame('', $context->code);
     }
+
+    public function test_database_rejects_a_second_organization_for_the_same_partner(): void
+    {
+        $membership = $this->pdo->query(
+            'SELECT NguoiDungID, ToChucDoiTacID FROM ThanhVienDoiTac ORDER BY NguoiDungID LIMIT 1'
+        )->fetch(PDO::FETCH_ASSOC);
+        self::assertIsArray($membership);
+        $otherOrganizationId = (int) $this->pdo->query(
+            'SELECT ToChucDoiTacID FROM ToChucDoiTac WHERE ToChucDoiTacID <> '
+            . (int) $membership['ToChucDoiTacID'] . ' ORDER BY ToChucDoiTacID LIMIT 1'
+        )->fetchColumn();
+
+        $statement = $this->pdo->prepare(
+            'INSERT INTO ThanhVienDoiTac (ToChucDoiTacID, NguoiDungID, LaChuSoHuu)
+             VALUES (:organizationId, :userId, 0)'
+        );
+
+        $this->expectException(\PDOException::class);
+        $statement->execute([
+            'organizationId' => $otherOrganizationId,
+            'userId' => (int) $membership['NguoiDungID'],
+        ]);
+    }
 }

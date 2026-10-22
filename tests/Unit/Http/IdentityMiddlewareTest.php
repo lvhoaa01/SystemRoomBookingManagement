@@ -19,7 +19,7 @@ use Tests\Support\TestCase;
 
 final class IdentityMiddlewareTest extends TestCase
 {
-    public function test_role_middleware_allows_only_configured_roles(): void
+    public function test_customer_cannot_enter_partner_or_admin_scope(): void
     {
         $this->putUserInSession(UserAccount::ROLE_CUSTOMER);
         $next = new CallableRequestHandler(static fn (): Response => Response::json(['ok' => true]));
@@ -27,9 +27,15 @@ final class IdentityMiddlewareTest extends TestCase
         $allowed = new RoleMiddleware($this->identitySession(), [UserAccount::ROLE_CUSTOMER]);
         self::assertSame(200, $allowed->process(new Request('GET', '/account'), $next)->status());
 
-        $this->expectException(ForbiddenHttpException::class);
-        (new RoleMiddleware($this->identitySession(), [UserAccount::ROLE_PARTNER]))
-            ->process(new Request('GET', '/partner'), $next);
+        foreach ([UserAccount::ROLE_PARTNER, UserAccount::ROLE_ADMIN] as $role) {
+            try {
+                (new RoleMiddleware($this->identitySession(), [$role]))
+                    ->process(new Request('GET', '/restricted'), $next);
+                self::fail("Customer không được phép vào phạm vi {$role}.");
+            } catch (ForbiddenHttpException $exception) {
+                self::assertSame('FORBIDDEN', $exception->errorCode);
+            }
+        }
     }
 
     public function test_partner_context_requires_active_server_side_membership(): void
