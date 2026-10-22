@@ -33,6 +33,13 @@ final readonly class LoginResult
         ]));
     }
 
+    public static function throttled(): self
+    {
+        return new self(null, null, ValidationResult::invalid([
+            'credentials' => ['Bạn đã thử đăng nhập quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.'],
+        ]));
+    }
+
     public function succeeded(): bool
     {
         return $this->user !== null;

@@ -15,10 +15,12 @@ use App\Modules\Identity\Http\LoginController;
 use App\Modules\Identity\Http\LogoutController;
 use App\Modules\Identity\Http\RegisterController;
 use App\Modules\Identity\Infrastructure\IdentitySession;
+use App\Modules\Identity\Infrastructure\LoginThrottle;
 use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
 use App\Modules\Identity\Infrastructure\UserRepository;
 use App\Shared\Http\FlashBag;
 use App\Shared\Http\ViewRenderer;
+use App\Shared\Clock\ClockInterface;
 use App\Shared\Security\TokenGenerator;
 use PDO;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
@@ -61,7 +63,12 @@ final class AuthControllerTest extends TestCase
             $config,
         );
         $this->login = new LoginController(
-            new LoginService($users, $memberships, $this->identitySession),
+            new LoginService(
+                $users,
+                $memberships,
+                $this->identitySession,
+                new LoginThrottle($container->get(ClockInterface::class)),
+            ),
             $this->identitySession,
             $this->session,
             $views,

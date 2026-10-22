@@ -22,6 +22,7 @@ use App\Modules\Identity\Http\LoginController;
 use App\Modules\Identity\Http\LogoutController;
 use App\Modules\Identity\Http\RegisterController;
 use App\Modules\Identity\Infrastructure\IdentitySession;
+use App\Modules\Identity\Infrastructure\LoginThrottle;
 use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
 use App\Modules\Identity\Infrastructure\UserRepository;
 use App\Shared\Clock\ClockInterface;
@@ -131,6 +132,12 @@ final class App
             ),
         );
         $container->singleton(
+            LoginThrottle::class,
+            static fn (Container $container): LoginThrottle => new LoginThrottle(
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
             RegisterCustomerService::class,
             static fn (Container $container): RegisterCustomerService => new RegisterCustomerService(
                 $container->get(UserRepository::class),
@@ -143,6 +150,7 @@ final class App
                 $container->get(UserRepository::class),
                 $container->get(PartnerMembershipRepository::class),
                 $container->get(IdentitySession::class),
+                $container->get(LoginThrottle::class),
             ),
         );
         $container->singleton(

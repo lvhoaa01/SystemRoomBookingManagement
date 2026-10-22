@@ -6,6 +6,7 @@ namespace App\Modules\Identity\Application;
 
 use App\Modules\Identity\Domain\UserAccount;
 use App\Modules\Identity\Infrastructure\IdentitySession;
+use App\Modules\Identity\Infrastructure\LoginThrottle;
 use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
 use App\Modules\Identity\Infrastructure\UserRepository;
 
@@ -17,25 +18,32 @@ final readonly class LoginService
         private UserRepository $users,
         private PartnerMembershipRepository $memberships,
         private IdentitySession $identitySession,
+        private LoginThrottle $throttle,
     ) {
     }
 
-    public function login(string $identifier, string $password): LoginResult
+    public function login(string $identifier, string $password, string $clientIp = '0.0.0.0'): LoginResult
     {
         $identifier = strtolower(trim($identifier));
+        if ($this->throttle->isBlocked($identifier, $clientIp)) {
+            return LoginResult::throttled();
+        }
         if ($identifier === '' || strlen($identifier) > 190 || $password === '' || strlen($password) > 72) {
             password_verify($password, self::DUMMY_PASSWORD_HASH);
+            $this->throttle->recordFailure($identifier, $clientIp);
             return LoginResult::failed();
         }
 
         $account = $this->users->findByEmailOrCode($identifier);
         if ($account === null) {
             password_verify($password, self::DUMMY_PASSWORD_HASH);
+            $this->throttle->recordFailure($identifier, $clientIp);
             return LoginResult::failed();
         }
 
         $passwordMatches = $account->verifyPassword($password);
         if (!$passwordMatches || !$account->isActive()) {
+            $this->throttle->recordFailure($identifier, $clientIp);
             return LoginResult::failed();
         }
 
@@ -44,6 +52,7 @@ final readonly class LoginService
             : null;
         $user = $account->toCurrentUser();
         $this->identitySession->signIn($user, $organization);
+        $this->throttle->clear($identifier, $clientIp);
 
         return LoginResult::success($user, $organization);
     }

@@ -37,7 +37,7 @@ final readonly class LoginController
     public function store(Request $request): Response
     {
         $identifier = $this->input($request, 'identifier');
-        $result = $this->login->login($identifier, $this->input($request, 'password'));
+        $result = $this->login->login($identifier, $this->input($request, 'password'), $request->clientIp);
         if (!$result->succeeded()) {
             return $this->form($result->validation->errors(), $identifier, [], 422);
         }

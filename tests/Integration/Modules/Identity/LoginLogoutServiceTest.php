@@ -10,8 +10,10 @@ use App\Modules\Identity\Application\LoginService;
 use App\Modules\Identity\Application\LogoutService;
 use App\Modules\Identity\Domain\UserAccount;
 use App\Modules\Identity\Infrastructure\IdentitySession;
+use App\Modules\Identity\Infrastructure\LoginThrottle;
 use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
 use App\Modules\Identity\Infrastructure\UserRepository;
+use App\Shared\Clock\ClockInterface;
 use PDO;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -39,6 +41,7 @@ final class LoginLogoutServiceTest extends TestCase
             new UserRepository($this->pdo),
             new PartnerMembershipRepository($this->pdo),
             $this->identitySession,
+            new LoginThrottle($container->get(ClockInterface::class)),
         );
     }
 
