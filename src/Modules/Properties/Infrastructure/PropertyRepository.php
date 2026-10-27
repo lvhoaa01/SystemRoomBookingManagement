@@ -187,7 +187,7 @@ final readonly class PropertyRepository
             ...$data,
         ]);
 
-        return $statement->rowCount() === 1;
+        return $statement->rowCount() <= 1 && $this->findForOrganization($propertyId, $organizationId) !== null;
     }
 
     public function transition(
