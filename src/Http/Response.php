@@ -39,6 +39,15 @@ final readonly class Response
         return new self('', $status, ['Location' => $location]);
     }
 
+    /** @param array<string, string> $headers */
+    public static function binary(string $body, string $contentType, int $status = 200, array $headers = []): self
+    {
+        if (preg_match('#^[a-z0-9.+-]+/[a-z0-9.+-]+$#i', $contentType) !== 1) {
+            throw new \InvalidArgumentException('MIME type phản hồi không hợp lệ.');
+        }
+        return new self($body, $status, ['Content-Type' => $contentType, ...$headers]);
+    }
+
     public function withHeader(string $name, string $value): self
     {
         return new self($this->body, $this->status, [...$this->headers, $name => $value]);

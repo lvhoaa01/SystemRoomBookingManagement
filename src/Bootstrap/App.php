@@ -25,6 +25,23 @@ use App\Modules\Identity\Infrastructure\IdentitySession;
 use App\Modules\Identity\Infrastructure\LoginThrottle;
 use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
 use App\Modules\Identity\Infrastructure\UserRepository;
+use App\Modules\Properties\Application\CreatePropertyService;
+use App\Modules\Properties\Application\ManageRoomTypeService;
+use App\Modules\Properties\Application\PropertyImageStorage;
+use App\Modules\Properties\Application\ReviewPropertyService;
+use App\Modules\Properties\Application\SubmitPropertyForReviewService;
+use App\Modules\Properties\Application\UpdateFacilitiesService;
+use App\Modules\Properties\Application\UpdatePropertyService;
+use App\Modules\Properties\Domain\PropertyReadinessChecker;
+use App\Modules\Properties\Http\AdminPropertyController;
+use App\Modules\Properties\Http\PartnerPropertyController;
+use App\Modules\Properties\Http\PropertyImageController;
+use App\Modules\Properties\Infrastructure\FacilityRepository;
+use App\Modules\Properties\Infrastructure\PropertyReadinessRepository;
+use App\Modules\Properties\Infrastructure\PropertyRepository;
+use App\Modules\Properties\Infrastructure\RoomTypeRepository;
+use App\Shared\Audit\AuditTrail;
+use App\Shared\Audit\DatabaseAuditTrail;
 use App\Shared\Clock\ClockInterface;
 use App\Shared\Clock\SystemClock;
 use App\Shared\Database\Connection;
@@ -205,6 +222,130 @@ final class App
             static fn (Container $container): PartnerContextMiddleware => new PartnerContextMiddleware(
                 $container->get(IdentitySession::class),
             ),
+        );
+
+        $container->singleton(
+            AuditTrail::class,
+            static fn (Container $container): AuditTrail => new DatabaseAuditTrail($container->get(PDO::class)),
+        );
+        $container->singleton(
+            PropertyRepository::class,
+            static fn (Container $container): PropertyRepository => new PropertyRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            RoomTypeRepository::class,
+            static fn (Container $container): RoomTypeRepository => new RoomTypeRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            FacilityRepository::class,
+            static fn (Container $container): FacilityRepository => new FacilityRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            PropertyReadinessRepository::class,
+            static fn (Container $container): PropertyReadinessRepository => new PropertyReadinessRepository(
+                $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            PropertyReadinessChecker::class,
+            static fn (Container $_): PropertyReadinessChecker => new PropertyReadinessChecker(),
+        );
+        $container->singleton(
+            PropertyImageStorage::class,
+            static fn (Container $container): PropertyImageStorage => new PropertyImageStorage(
+                $projectRoot . '/storage/uploads/properties',
+                $container->get(TokenGenerator::class),
+            ),
+        );
+        $container->singleton(
+            CreatePropertyService::class,
+            static fn (Container $container): CreatePropertyService => new CreatePropertyService(
+                $container->get(PropertyRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+                $container->get(TokenGenerator::class),
+            ),
+        );
+        $container->singleton(
+            UpdatePropertyService::class,
+            static fn (Container $container): UpdatePropertyService => new UpdatePropertyService(
+                $container->get(PropertyRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            SubmitPropertyForReviewService::class,
+            static fn (Container $container): SubmitPropertyForReviewService => new SubmitPropertyForReviewService(
+                $container->get(PropertyRepository::class),
+                $container->get(PropertyReadinessRepository::class),
+                $container->get(PropertyReadinessChecker::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            ReviewPropertyService::class,
+            static fn (Container $container): ReviewPropertyService => new ReviewPropertyService(
+                $container->get(PropertyRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            ManageRoomTypeService::class,
+            static fn (Container $container): ManageRoomTypeService => new ManageRoomTypeService(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomTypeRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            UpdateFacilitiesService::class,
+            static fn (Container $container): UpdateFacilitiesService => new UpdateFacilitiesService(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomTypeRepository::class),
+                $container->get(FacilityRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            PartnerPropertyController::class,
+            static fn (Container $container): PartnerPropertyController => new PartnerPropertyController(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomTypeRepository::class),
+                $container->get(FacilityRepository::class),
+                $container->get(CreatePropertyService::class),
+                $container->get(UpdatePropertyService::class),
+                $container->get(SubmitPropertyForReviewService::class),
+                $container->get(ManageRoomTypeService::class),
+                $container->get(UpdateFacilitiesService::class),
+                $container->get(PropertyImageStorage::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
+        );
+        $container->singleton(
+            AdminPropertyController::class,
+            static fn (Container $container): AdminPropertyController => new AdminPropertyController(
+                $container->get(PropertyRepository::class),
+                $container->get(PropertyReadinessRepository::class),
+                $container->get(ReviewPropertyService::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
+        );
+        $container->instance(
+            PropertyImageController::class,
+            new PropertyImageController($projectRoot . '/storage/uploads/properties'),
         );
 
         // Đăng ký router
