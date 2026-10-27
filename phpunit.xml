@@ -20,7 +20,7 @@
         <env name="APP_URL" value="http://localhost" force="true"/>
         <env name="APP_TIMEZONE" value="Asia/Ho_Chi_Minh" force="true"/>
         <env name="DB_HOST" value="127.0.0.1" force="true"/>
-        <env name="DB_PORT" value="3306" force="true"/>
+        <env name="DB_PORT" value="3307" force="true"/>
         <env name="DB_DATABASE" value="hotel_booking" force="true"/>
         <env name="DB_USERNAME" value="root" force="true"/>
         <env name="DB_PASSWORD" value="" force="true"/>
