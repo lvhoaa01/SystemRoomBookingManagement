@@ -93,6 +93,13 @@ return static function (Router $router, Container $container): void {
     $router->post('/partner/properties/{propertyId}/update', $partner->update(...), $partnerWrite, 'partner.properties.update');
     $router->post('/partner/properties/{propertyId}/submit', $partner->submit(...), $partnerWrite, 'partner.properties.submit');
     $router->post('/partner/properties/{propertyId}/rooms', $partner->createRoom(...), $partnerWrite, 'partner.rooms.store');
+    $router->post('/partner/rooms/{roomTypeId}/update', $partner->updateRoom(...), $partnerWrite, 'partner.rooms.update');
+    $router->post(
+        '/partner/rooms/{roomTypeId}/facilities',
+        $partner->updateRoomFacilities(...),
+        $partnerWrite,
+        'partner.rooms.facilities',
+    );
     $router->post(
         '/partner/properties/{propertyId}/facilities',
         $partner->updatePropertyFacilities(...),

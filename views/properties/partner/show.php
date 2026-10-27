@@ -17,7 +17,32 @@ $selectedFacilityIds = array_map(static fn (array $facility): int => (int) $faci
     <div class="dashboard-main">
         <section class="panel"><div class="panel__heading"><h2>Loại phòng</h2><p>Phòng hoạt động cần có cấu hình giường và ảnh hợp lệ.</p></div>
             <?php if ($rooms === []): ?><p class="muted">Chưa có loại phòng.</p><?php endif; ?>
-            <div class="room-list"><?php foreach ($rooms as $room): ?><article><div><strong><?= $e($room['name']) ?></strong><span><?= $e($room['code']) ?> · <?= (int) $room['maxGuests'] ?> khách · <?= $e($room['status']) ?></span></div><span><?= $e($room['areaM2'] ?? '—') ?> m²</span></article><?php endforeach; ?></div>
+            <div class="room-list"><?php foreach ($rooms as $room): ?>
+                <?php $selectedRoomFacilityIds = array_map(
+                    static fn (array $facility): int => (int) $facility['id'],
+                    $roomFacilities[(int) $room['id']] ?? [],
+                ); ?>
+                <details class="room-editor">
+                    <summary><span><strong><?= $e($room['name']) ?></strong><small><?= $e($room['code']) ?> · <?= (int) $room['maxGuests'] ?> khách · <?= $e($room['status']) ?></small></span><span><?= $e($room['areaM2'] ?? '—') ?> m²</span></summary>
+                    <form class="form-stack" method="post" action="<?= $e($baseUrl) ?>/partner/rooms/<?= (int) $room['id'] ?>/update">
+                        <input type="hidden" name="_token" value="<?= $e($csrfToken) ?>">
+                        <div class="field-grid"><label class="field"><span>Mã phòng</span><input name="code" value="<?= $e($room['code']) ?>" required></label><label class="field"><span>Tên phòng</span><input name="name" value="<?= $e($room['name']) ?>" required></label></div>
+                        <label class="field"><span>Mô tả</span><textarea name="description" rows="3"><?= $e($room['description']) ?></textarea></label>
+                        <div class="field-grid field-grid--three"><label class="field"><span>Tổng khách</span><input type="number" min="1" name="maxGuests" value="<?= (int) $room['maxGuests'] ?>"></label><label class="field"><span>Người lớn</span><input type="number" min="1" name="maxAdults" value="<?= (int) $room['maxAdults'] ?>"></label><label class="field"><span>Trẻ em</span><input type="number" min="0" name="maxChildren" value="<?= (int) $room['maxChildren'] ?>"></label></div>
+                        <label class="field"><span>Cấu hình giường JSON</span><textarea name="bedsJson" rows="2"><?= $e($room['bedsJson']) ?></textarea></label>
+                        <label class="field"><span>Ảnh phòng JSON</span><textarea name="imagesJson" rows="2"><?= $e($room['imagesJson']) ?></textarea></label>
+                        <div class="field-grid"><label class="field"><span>Diện tích m²</span><input type="number" min="1" step="0.01" name="areaM2" value="<?= $e($room['areaM2']) ?>"></label><label class="field"><span>Trạng thái</span><select name="status"><option <?= $room['status'] === 'ACTIVE' ? 'selected' : '' ?>>ACTIVE</option><option <?= $room['status'] === 'INACTIVE' ? 'selected' : '' ?>>INACTIVE</option></select></label></div>
+                        <label class="check-line"><input type="checkbox" name="smokingAllowed" value="1" <?= (int) $room['smokingAllowed'] === 1 ? 'checked' : '' ?>> Cho phép hút thuốc</label>
+                        <button class="button button--secondary">Lưu loại phòng</button>
+                    </form>
+                    <form class="room-facilities" method="post" action="<?= $e($baseUrl) ?>/partner/rooms/<?= (int) $room['id'] ?>/facilities">
+                        <input type="hidden" name="_token" value="<?= $e($csrfToken) ?>">
+                        <strong>Tiện nghi trong phòng</strong>
+                        <div class="facility-list"><?php foreach ($roomFacilityCatalog as $facility): ?><label><input type="checkbox" name="facilityIds[]" value="<?= (int) $facility['id'] ?>" <?= in_array((int) $facility['id'], $selectedRoomFacilityIds, true) ? 'checked' : '' ?>> <?= $e($facility['name']) ?></label><?php endforeach; ?></div>
+                        <button class="button button--secondary">Lưu tiện nghi phòng</button>
+                    </form>
+                </details>
+            <?php endforeach; ?></div>
         </section>
         <section class="panel"><div class="panel__heading"><h2>Thêm loại phòng</h2></div>
             <form class="form-stack" method="post" action="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>/rooms">

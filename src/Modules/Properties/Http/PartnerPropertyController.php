@@ -86,10 +86,19 @@ final readonly class PartnerPropertyController
     {
         [$user, $organization] = $this->identity();
         $property = $this->ownedProperty($request, $organization);
+        $rooms = $this->rooms->listForProperty((int) $property['id'], $organization->id);
+        $roomFacilities = [];
+        foreach ($rooms as $room) {
+            $roomFacilities[(int) $room['id']] = $this->facilities->listForRoomType(
+                (int) $room['id'],
+                $organization->id,
+            );
+        }
         return $this->view('properties/partner/show', [
             'title' => (string) $property['name'],
             'property' => $property,
-            'rooms' => $this->rooms->listForProperty((int) $property['id'], $organization->id),
+            'rooms' => $rooms,
+            'roomFacilities' => $roomFacilities,
             'propertyFacilities' => $this->facilities->listForProperty((int) $property['id'], $organization->id),
             'propertyFacilityCatalog' => $this->facilities->listActiveCatalog(FacilityRepository::SCOPE_PROPERTY),
             'roomFacilityCatalog' => $this->facilities->listActiveCatalog(FacilityRepository::SCOPE_ROOM),
@@ -161,6 +170,25 @@ final readonly class PartnerPropertyController
         return Response::redirect($this->url('/partner/properties/' . $propertyId), 303);
     }
 
+    public function updateRoom(Request $request): Response
+    {
+        [$user, $organization] = $this->identity();
+        $roomTypeId = $this->routeId($request, 'roomTypeId');
+        $room = $this->rooms->findForOrganization($roomTypeId, $organization->id);
+        if ($room === null) {
+            throw new NotFoundHttpException();
+        }
+        try {
+            $this->manageRooms->update(
+                $roomTypeId, $organization, $user->id, $request->body, $request->requestId, $request->clientIp,
+            );
+            $this->flash->add('success', 'Đã cập nhật loại phòng.');
+        } catch (InvalidArgumentException|DomainException $exception) {
+            $this->flash->add('info', $exception->getMessage());
+        }
+        return Response::redirect($this->url('/partner/properties/' . (int) $room['propertyId']), 303);
+    }
+
     public function updatePropertyFacilities(Request $request): Response
     {
         [$user, $organization] = $this->identity();
@@ -184,6 +212,35 @@ final readonly class PartnerPropertyController
             $this->flash->add('info', $exception->getMessage());
         }
         return Response::redirect($this->url('/partner/properties/' . $propertyId), 303);
+    }
+
+    public function updateRoomFacilities(Request $request): Response
+    {
+        [$user, $organization] = $this->identity();
+        $roomTypeId = $this->routeId($request, 'roomTypeId');
+        $room = $this->rooms->findForOrganization($roomTypeId, $organization->id);
+        if ($room === null) {
+            throw new NotFoundHttpException();
+        }
+        $ids = $request->body['facilityIds'] ?? [];
+        if (!is_array($ids)) {
+            throw new ValidationHttpException(['facilityIds' => ['Danh sách tiện nghi không hợp lệ.']]);
+        }
+        $facilities = [];
+        foreach ($ids as $id) {
+            if (filter_var($id, FILTER_VALIDATE_INT) !== false) {
+                $facilities[] = ['id' => (int) $id, 'quantity' => null, 'note' => null];
+            }
+        }
+        try {
+            $this->updateFacilities->updateRoomType(
+                $roomTypeId, $organization, $user->id, $facilities, $request->requestId, $request->clientIp,
+            );
+            $this->flash->add('success', 'Đã cập nhật tiện nghi loại phòng.');
+        } catch (InvalidArgumentException|DomainException $exception) {
+            $this->flash->add('info', $exception->getMessage());
+        }
+        return Response::redirect($this->url('/partner/properties/' . (int) $room['propertyId']), 303);
     }
 
     public function uploadImage(Request $request): Response
