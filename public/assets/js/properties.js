@@ -74,7 +74,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (images.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'image-gallery__empty';
-            empty.innerHTML = '<span>▧</span><strong>Chưa có ảnh nào</strong><small>Thêm ảnh thật của chỗ nghỉ để hoàn thiện hồ sơ.</small>';
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            icon.classList.add('app-icon');
+            const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+            use.setAttribute('href', '#icon-image');
+            icon.append(use);
+            const title = document.createElement('strong');
+            title.textContent = 'Chưa có ảnh nào';
+            const help = document.createElement('small');
+            help.textContent = 'Thêm ảnh thật của chỗ nghỉ để hoàn thiện hồ sơ.';
+            empty.append(icon, title, help);
             gallery.append(empty);
             return;
         }
