@@ -29,7 +29,9 @@ final readonly class ImageCollection implements JsonSerializable
         $paths = [];
 
         foreach ($images as $image) {
-            if (array_keys($image) !== ['path', 'alt', 'sort', 'cover']) {
+            if (!is_array($image) || !self::hasExactKeys($image, ['path', 'alt', 'sort', 'cover'])
+                || !is_string($image['path']) || !is_string($image['alt'])
+                || !is_int($image['sort']) || !is_bool($image['cover'])) {
                 throw new InvalidArgumentException('Mỗi ảnh phải có đúng path, alt, sort và cover.');
             }
 
@@ -121,5 +123,14 @@ final readonly class ImageCollection implements JsonSerializable
         if (!$isRelativeWebPath || !in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
             throw new InvalidArgumentException('Đường dẫn ảnh phải là đường dẫn web tương đối đến tệp ảnh được hỗ trợ.');
         }
+    }
+
+    /** @param array<mixed> $item @param list<string> $expected */
+    private static function hasExactKeys(array $item, array $expected): bool
+    {
+        $keys = array_keys($item);
+        sort($keys);
+        sort($expected);
+        return $keys === $expected;
     }
 }

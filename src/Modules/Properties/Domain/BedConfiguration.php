@@ -25,7 +25,8 @@ final readonly class BedConfiguration implements JsonSerializable
 
         $seenTypes = [];
         foreach ($items as $item) {
-            if (array_keys($item) !== ['type', 'quantity']) {
+            if (!is_array($item) || !self::hasExactKeys($item, ['type', 'quantity'])
+                || !is_string($item['type']) || !is_int($item['quantity'])) {
                 throw new InvalidArgumentException('Mỗi loại giường phải có đúng type và quantity.');
             }
 
@@ -83,5 +84,14 @@ final readonly class BedConfiguration implements JsonSerializable
     public function jsonSerialize(): array
     {
         return $this->items;
+    }
+
+    /** @param array<mixed> $item @param list<string> $expected */
+    private static function hasExactKeys(array $item, array $expected): bool
+    {
+        $keys = array_keys($item);
+        sort($keys);
+        sort($expected);
+        return $keys === $expected;
     }
 }

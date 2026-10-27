@@ -49,6 +49,13 @@ final class PropertyDomainTest extends TestCase
         self::assertSame('/assets/images/accommodation/shared/cover.png', $images->cover()['path']);
         self::assertSame(1, $images->images()[0]['sort']);
         self::assertFalse($images->isEmpty());
+        self::assertEquals($images, ImageCollection::fromJson($images->toJson()));
+    }
+
+    public function test_bed_configuration_accepts_canonical_key_order_on_round_trip(): void
+    {
+        $beds = BedConfiguration::fromJson('[{"type":"DOUBLE","quantity":2}]');
+        self::assertEquals($beds, BedConfiguration::fromJson($beds->toJson()));
     }
 
     #[DataProvider('invalidValueProvider')]
