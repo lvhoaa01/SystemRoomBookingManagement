@@ -12,6 +12,13 @@ declare(strict_types=1);
 $currentUserRole = $currentUserRole ?? null;
 $authenticated = $currentUserName !== null && $currentUserRole !== null;
 $workspaceUrl = $currentUserRole === 'ADMIN' ? $baseUrl . '/admin/properties/review' : $baseUrl . '/partner/properties';
+$publicPath = dirname(__DIR__, 2) . '/public';
+$assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
+    $normalizedPath = '/' . ltrim($path, '/');
+    $modifiedAt = filemtime($publicPath . $normalizedPath);
+
+    return $baseUrl . $normalizedPath . ($modifiedAt === false ? '' : '?v=' . $modifiedAt);
+};
 ?>
 <!doctype html>
 <html lang="vi">
@@ -20,11 +27,16 @@ $workspaceUrl = $currentUserRole === 'ADMIN' ? $baseUrl . '/admin/properties/rev
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $title ?></title>
     <meta name="color-scheme" content="light">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/assets/css/app.css">
-    <script src="<?= $baseUrl ?>/assets/js/properties.js" defer></script>
+    <style>
+        /* Giữ SVG an toàn nếu stylesheet ngoài chưa tải xong hoặc bị cache sai phiên bản. */
+        .svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+        .app-icon { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+    <link rel="stylesheet" href="<?= $assetUrl('/assets/css/app.css') ?>">
+    <script src="<?= $assetUrl('/assets/js/properties.js') ?>" defer></script>
 </head>
 <body class="<?= $authenticated ? 'has-app-shell' : 'has-public-shell' ?>">
-    <svg class="svg-sprite" aria-hidden="true">
+    <svg class="svg-sprite" width="0" height="0" aria-hidden="true" focusable="false">
         <symbol id="icon-building" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16M8 7h2M13 7h1M8 11h2M13 11h1M8 15h2M13 15h1M2 21h20M17 9h2a1 1 0 0 1 1 1v11"/></symbol>
         <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
         <symbol id="icon-bed" viewBox="0 0 24 24"><path d="M3 20v-8M21 20v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2h18M7 12V8a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></symbol>
