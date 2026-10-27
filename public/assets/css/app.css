@@ -1083,7 +1083,8 @@ a:focus-visible {
 .edit-section .field > span i { color: #c9372c; font-style: normal; }
 .edit-fees { margin-top: 18px; }
 .edit-fees > div { display: grid; gap: 10px; }
-.edit-actions { position: sticky; z-index: 10; bottom: 12px; display: flex; justify-content: flex-end; gap: 9px; padding: 12px 14px; border: 1px solid #dce2e8; border-radius: 8px; background: rgba(255,255,255,.96); box-shadow: 0 -5px 18px rgba(20,50,75,.08); backdrop-filter: blur(8px); }
+.edit-actions { display: flex; justify-content: flex-end; gap: 9px; padding: 12px 14px; border: 1px solid #dce2e8; border-radius: 8px; background: #fff; }
+.edit-section .field small [data-character-count] { display: inline; margin: 0; }
 .image-gallery--clean { grid-template-columns: repeat(4,minmax(0,1fr)); }
 .image-gallery--clean .image-gallery__empty { min-height: 130px; border-radius: 6px; background: #f8fafc; }
 .image-gallery__empty > .app-icon { width: 28px; height: 28px; color: #718295; }
