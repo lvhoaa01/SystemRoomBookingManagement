@@ -92,4 +92,35 @@ final class PropertyRepositoryTest extends TestCase
             null,
         );
     }
+
+    public function test_partner_update_cannot_mutate_property_from_another_organization(): void
+    {
+        $property = $this->repository->findById(1);
+        self::assertNotNull($property);
+        $otherOrganizationId = (int) $this->pdo->query(
+            'SELECT ToChucDoiTacID FROM ToChucDoiTac WHERE ToChucDoiTacID <> '
+            . (int) $property['organizationId'] . ' ORDER BY ToChucDoiTacID LIMIT 1'
+        )->fetchColumn();
+
+        $updated = $this->repository->updateForOrganization(1, $otherOrganizationId, [
+            'type' => $property['type'], 'name' => 'Tên không được phép',
+            'sourceName' => $property['sourceName'], 'nameSource' => $property['nameSource'],
+            'sourceRecordCode' => $property['sourceRecordCode'], 'slug' => $property['slug'],
+            'address' => $property['address'], 'addressSource' => $property['addressSource'],
+            'addressVerifiedAt' => $property['addressVerifiedAt'], 'description' => $property['description'],
+            'imagesJson' => $property['imagesJson'], 'latitude' => $property['latitude'],
+            'longitude' => $property['longitude'], 'coordinatesSource' => $property['coordinatesSource'],
+            'coordinatesVerifiedAt' => $property['coordinatesVerifiedAt'],
+            'reconciliationStatus' => $property['reconciliationStatus'], 'mapUrl' => $property['mapUrl'],
+            'starRating' => $property['starRating'], 'taxRate' => $property['taxRate'],
+            'taxIncluded' => $property['taxIncluded'], 'serviceFeeRate' => $property['serviceFeeRate'],
+            'serviceFeeIncluded' => $property['serviceFeeIncluded'], 'checkInTime' => $property['checkInTime'],
+            'checkOutTime' => $property['checkOutTime'], 'timezone' => $property['timezone'],
+            'status' => $property['status'], 'reviewerId' => $property['reviewerId'],
+            'reviewedAt' => $property['reviewedAt'], 'reviewNote' => $property['reviewNote'],
+        ]);
+
+        self::assertFalse($updated);
+        self::assertSame($property['name'], $this->repository->findById(1)['name']);
+    }
 }
