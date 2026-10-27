@@ -36,11 +36,26 @@ final class PropertyReadinessCheckerTest extends TestCase
         self::assertStringContainsString('tham chiếu chéo', $report->missing[8]);
     }
 
+    public function test_majestic_assets_only_make_cs016_ready(): void
+    {
+        $property = $this->property();
+        $property['imagesJson'] = '[{"path":"/assets/images/accommodation/majestic/front.webp","alt":"Mặt tiền","sort":1,"cover":true}]';
+
+        $wrongProperty = (new PropertyReadinessChecker())->check(true, $property, $this->rooms(), $this->commercial());
+        self::assertFalse($wrongProperty->isReady());
+        self::assertStringContainsString('ít nhất một ảnh', $wrongProperty->missing[0]);
+
+        $property['code'] = 'CS016';
+        self::assertTrue((new PropertyReadinessChecker())->check(
+            true, $property, $this->rooms(), $this->commercial(),
+        )->isReady());
+    }
+
     /** @return array<string, mixed> */
     private function property(): array
     {
         return [
-            'type' => 'HOTEL', 'name' => 'Khách sạn', 'sourceName' => 'Khách sạn nguồn',
+            'code' => 'CS001', 'type' => 'HOTEL', 'name' => 'Khách sạn', 'sourceName' => 'Khách sạn nguồn',
             'nameSource' => 'PARTNER_PORTAL', 'sourceRecordCode' => 'ROW-1',
             'address' => 'Quận 1, TP.HCM', 'addressSource' => 'PARTNER_PORTAL',
             'addressVerifiedAt' => '2026-10-27 00:00:00', 'description' => 'Mô tả',

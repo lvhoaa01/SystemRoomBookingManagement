@@ -43,7 +43,7 @@ final class PropertyDomainTest extends TestCase
     {
         $images = new ImageCollection([
             ['path' => '/uploads/properties/CS001/room.webp', 'alt' => 'Phòng', 'sort' => 2, 'cover' => false],
-            ['path' => '/assets/images/accommodation/shared/cover.png', 'alt' => 'Mặt tiền', 'sort' => 1, 'cover' => true],
+            ['path' => '/assets/images/accommodation/shared/cover.png', 'alt' => 'Ảnh minh họa mặt tiền', 'sort' => 1, 'cover' => true],
         ]);
 
         self::assertSame('/assets/images/accommodation/shared/cover.png', $images->cover()['path']);
@@ -81,6 +81,14 @@ final class PropertyDomainTest extends TestCase
         ])];
         yield 'missing cover' => [static fn (): ImageCollection => new ImageCollection([
             ['path' => '/uploads/properties/CS001/a.webp', 'alt' => 'Ảnh', 'sort' => 1, 'cover' => false],
+        ])];
+        yield 'shared image without illustrative label' => [static fn (): ImageCollection => new ImageCollection([
+            [
+                'path' => '/assets/images/accommodation/shared/cover.png',
+                'alt' => 'Mặt tiền thật',
+                'sort' => 1,
+                'cover' => true,
+            ],
         ])];
     }
 }

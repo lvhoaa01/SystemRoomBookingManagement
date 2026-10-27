@@ -40,6 +40,10 @@ final readonly class ImageCollection implements JsonSerializable
             if (trim($image['alt']) === '' || mb_strlen($image['alt']) > 255) {
                 throw new InvalidArgumentException('Mô tả ảnh phải có từ 1 đến 255 ký tự.');
             }
+            if (str_starts_with($image['path'], '/assets/images/accommodation/shared/')
+                && !str_starts_with($image['alt'], 'Ảnh minh họa')) {
+                throw new InvalidArgumentException('Ảnh dùng chung phải được ghi rõ là ảnh minh họa.');
+            }
 
             if ($image['sort'] < 1 || isset($sortOrders[$image['sort']])) {
                 throw new InvalidArgumentException('Thứ tự ảnh phải là số dương và không trùng nhau.');

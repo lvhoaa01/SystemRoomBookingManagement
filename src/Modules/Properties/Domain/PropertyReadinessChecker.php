@@ -28,7 +28,10 @@ final class PropertyReadinessChecker
         if (!$this->hasRequiredProfile($property)) {
             $missing[] = 'Hồ sơ, nguồn dữ liệu, thuế phí và thời gian nhận/trả phòng chưa đầy đủ hoặc không hợp lệ.';
         }
-        if (!$this->hasValidImages((string) ($property['imagesJson'] ?? '[]'))) {
+        if (!$this->hasValidImages(
+            (string) ($property['imagesJson'] ?? '[]'),
+            (string) ($property['code'] ?? ''),
+        )) {
             $missing[] = 'Cơ sở lưu trú phải có ít nhất một ảnh hợp lệ và đúng một ảnh bìa.';
         }
         if (!$this->hasReadyRoom($activeRooms)) {
@@ -114,10 +117,16 @@ final class PropertyReadinessChecker
         return false;
     }
 
-    private function hasValidImages(string $json): bool
+    private function hasValidImages(string $json, string $propertyCode): bool
     {
         try {
-            return !ImageCollection::fromJson($json)->isEmpty();
+            $images = ImageCollection::fromJson($json);
+            foreach ($images->images() as $image) {
+                if (str_contains($image['path'], '/accommodation/majestic/') && $propertyCode !== 'CS016') {
+                    return false;
+                }
+            }
+            return !$images->isEmpty();
         } catch (InvalidArgumentException) {
             return false;
         }
