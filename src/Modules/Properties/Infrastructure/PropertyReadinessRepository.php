@@ -26,11 +26,14 @@ final readonly class PropertyReadinessRepository
     }
 
     /** @return list<array{bedsJson: string, imagesJson: string}> */
+    /** @return list<array{id: int, code: string, name: string, maxGuests: int, areaM2: string|null, bedsJson: string, imagesJson: string}> */
     public function activeRooms(int $propertyId): array
     {
         $this->assertPropertyId($propertyId);
         $statement = $this->pdo->prepare(
-            "SELECT CauHinhGiuongJSON AS bedsJson, AnhJSON AS imagesJson
+            "SELECT LoaiPhongID AS id, MaLoaiPhong AS code, TenLoaiPhong AS name,
+                    SoKhachToiDa AS maxGuests, DienTichM2 AS areaM2,
+                    CauHinhGiuongJSON AS bedsJson, AnhJSON AS imagesJson
              FROM LoaiPhong WHERE CoSoLuuTruID = :propertyId AND TrangThai = 'ACTIVE'"
         );
         $statement->execute(['propertyId' => $propertyId]);
