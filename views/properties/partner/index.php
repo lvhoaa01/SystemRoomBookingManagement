@@ -3,105 +3,47 @@
 declare(strict_types=1);
 
 $e = static fn (mixed $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-$statusLabels = [
-    'DRAFT' => 'Bản nháp',
-    'PENDING_REVIEW' => 'Đang chờ duyệt',
-    'CHANGES_REQUESTED' => 'Cần chỉnh sửa',
-    'ACTIVE' => 'Đang hoạt động',
-    'REJECTED' => 'Bị từ chối',
-    'SUSPENDED' => 'Tạm ngưng',
-];
-$statusCounts = array_count_values(array_column($properties, 'status'));
-$attentionCount = ($statusCounts['CHANGES_REQUESTED'] ?? 0) + ($statusCounts['REJECTED'] ?? 0);
+$statusLabels = ['DRAFT' => 'Bản nháp', 'PENDING_REVIEW' => 'Chờ duyệt', 'CHANGES_REQUESTED' => 'Cần chỉnh sửa', 'ACTIVE' => 'Đang hoạt động', 'REJECTED' => 'Bị từ chối', 'SUSPENDED' => 'Tạm ngưng'];
+$typeLabels = ['HOTEL' => 'Khách sạn', 'RESORT' => 'Khu nghỉ dưỡng', 'APARTMENT' => 'Căn hộ', 'VILLA' => 'Biệt thự', 'HOSTEL' => 'Hostel', 'GUEST_HOUSE' => 'Nhà khách'];
 $cover = static function (array $property): ?array {
     $images = json_decode((string) ($property['imagesJson'] ?? '[]'), true);
-    if (!is_array($images)) {
-        return null;
-    }
-    foreach ($images as $image) {
-        if (is_array($image) && ($image['cover'] ?? false) === true && isset($image['path'])) {
-            return $image;
-        }
-    }
+    if (!is_array($images)) return null;
+    foreach ($images as $image) if (is_array($image) && ($image['cover'] ?? false) === true && isset($image['path'])) return $image;
     return null;
 };
 ?>
-<section class="workspace-hero">
-    <div class="workspace-hero__content">
-        <span class="eyebrow">Không gian đối tác</span>
-        <h1>Xin chào, <?= $e($organization->name) ?></h1>
-        <p>Quản lý hồ sơ, phòng và trạng thái xét duyệt của mọi chỗ nghỉ trong một màn hình.</p>
-        <a class="button button--light" href="<?= $e($baseUrl) ?>/partner/properties/create">
-            <span aria-hidden="true">＋</span> Thêm cơ sở lưu trú
-        </a>
-    </div>
-    <div class="workspace-hero__art" aria-hidden="true">
-        <svg viewBox="0 0 320 190">
-            <path d="M18 166h286"/><path d="M46 165V62h98v103M144 89h95v76M74 88h18M108 88h18M74 116h18M108 116h18M74 143h18M108 143h18M169 112h18M205 112h18M169 140h18M205 140h18"/>
-            <path d="M34 62h122L128 35H62zM224 89l-32-28-32 28M258 165v-35m-16 0h31M269 130l-11-31-11 31"/>
-        </svg>
-    </div>
-</section>
+<header class="resource-header">
+    <div><h1>Cơ sở lưu trú</h1><p>Quản lý thông tin, phòng và trạng thái kiểm duyệt của các chỗ nghỉ.</p></div>
+    <a class="button button--primary" href="<?= $e($baseUrl) ?>/partner/properties/create"><svg class="app-icon"><use href="#icon-plus"/></svg>Thêm cơ sở</a>
+</header>
 
-<section class="metric-grid" aria-label="Tổng quan cơ sở lưu trú">
-    <article class="metric-card metric-card--primary"><span class="metric-card__icon">⌂</span><div><strong><?= count($properties) ?></strong><span>Tổng cơ sở</span></div></article>
-    <article class="metric-card"><span class="metric-card__icon metric-card__icon--success">✓</span><div><strong><?= (int) ($statusCounts['ACTIVE'] ?? 0) ?></strong><span>Đang hoạt động</span></div></article>
-    <article class="metric-card"><span class="metric-card__icon metric-card__icon--warning">◷</span><div><strong><?= (int) ($statusCounts['PENDING_REVIEW'] ?? 0) ?></strong><span>Chờ kiểm duyệt</span></div></article>
-    <article class="metric-card"><span class="metric-card__icon metric-card__icon--danger">!</span><div><strong><?= $attentionCount ?></strong><span>Cần bạn xử lý</span></div></article>
-</section>
-
-<section class="content-section" data-property-browser>
-    <div class="section-heading">
-        <div><span class="eyebrow eyebrow--blue">Danh mục</span><h2>Cơ sở lưu trú của bạn</h2><p>Chọn một cơ sở để tiếp tục hoàn thiện hoặc theo dõi vận hành.</p></div>
-        <?php if ($properties !== []): ?>
-            <label class="search-box">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
-                <span class="visually-hidden">Tìm cơ sở</span>
-                <input type="search" placeholder="Tìm theo tên hoặc địa chỉ" data-property-search>
-            </label>
-        <?php endif; ?>
+<section class="resource-surface" data-property-browser>
+    <div class="resource-toolbar">
+        <label class="toolbar-search"><svg class="app-icon"><use href="#icon-search"/></svg><span class="visually-hidden">Tìm cơ sở</span><input type="search" placeholder="Tìm theo tên, mã hoặc địa chỉ" data-property-search></label>
+        <label class="toolbar-select"><span class="visually-hidden">Lọc trạng thái</span><select data-property-status-select><option value="ALL">Tất cả trạng thái</option><?php foreach ($statusLabels as $code => $label): ?><option value="<?= $e($code) ?>"><?= $e($label) ?></option><?php endforeach; ?></select></label>
     </div>
 
     <?php if ($properties === []): ?>
-        <div class="empty-state empty-state--illustrated">
-            <span class="empty-state__icon" aria-hidden="true">⌂</span>
-            <h2>Bắt đầu với cơ sở đầu tiên</h2>
-            <p>Tạo hồ sơ chỗ nghỉ, bổ sung phòng và tiện nghi rồi gửi cho đội ngũ StayBooking kiểm duyệt.</p>
-            <a class="button button--primary" href="<?= $e($baseUrl) ?>/partner/properties/create">Tạo cơ sở lưu trú</a>
-        </div>
+        <div class="resource-empty"><svg class="app-icon"><use href="#icon-building"/></svg><h2>Chưa có cơ sở lưu trú</h2><p>Tạo cơ sở đầu tiên để bắt đầu cấu hình phòng và tiện nghi.</p><a class="button button--primary" href="<?= $e($baseUrl) ?>/partner/properties/create">Thêm cơ sở</a></div>
     <?php else: ?>
-        <div class="filter-tabs" role="group" aria-label="Lọc theo trạng thái">
-            <button class="filter-tab is-active" type="button" data-property-filter="ALL">Tất cả <span><?= count($properties) ?></span></button>
-            <button class="filter-tab" type="button" data-property-filter="ACTIVE">Hoạt động <span><?= (int) ($statusCounts['ACTIVE'] ?? 0) ?></span></button>
-            <button class="filter-tab" type="button" data-property-filter="PENDING_REVIEW">Chờ duyệt <span><?= (int) ($statusCounts['PENDING_REVIEW'] ?? 0) ?></span></button>
-            <button class="filter-tab" type="button" data-property-filter="DRAFT">Bản nháp <span><?= (int) ($statusCounts['DRAFT'] ?? 0) ?></span></button>
+        <div class="resource-table-wrap">
+            <table class="resource-table">
+                <thead><tr><th>Cơ sở lưu trú</th><th>Loại hình</th><th>Trạng thái</th><th>Cập nhật gần nhất</th><th><span class="visually-hidden">Thao tác</span></th></tr></thead>
+                <tbody>
+                <?php foreach ($properties as $property): ?>
+                    <?php $image = $cover($property); $status = (string) $property['status']; ?>
+                    <tr data-property-card data-status="<?= $e($status) ?>" data-search="<?= $e(mb_strtolower($property['name'] . ' ' . $property['code'] . ' ' . $property['address'])) ?>">
+                        <td><div class="resource-name"><span class="resource-thumbnail"><?php if ($image !== null): ?><img src="<?= $e($baseUrl . $image['path']) ?>" alt=""><?php else: ?><svg class="app-icon"><use href="#icon-building"/></svg><?php endif; ?></span><span><a href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>"><?= $e($property['name']) ?></a><small><?= $e($property['code']) ?> · <?= $e($property['address']) ?></small></span></div></td>
+                        <td><?= $e($typeLabels[$property['type']] ?? $property['type']) ?></td>
+                        <td><span class="status-label status-label--<?= strtolower($e($status)) ?>"><i></i><?= $e($statusLabels[$status] ?? $status) ?></span></td>
+                        <td><time><?= $e($property['updatedAt']) ?></time></td>
+                        <td class="resource-actions"><a class="icon-button" href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>" aria-label="Quản lý <?= $e($property['name']) ?>"><svg class="app-icon"><use href="#icon-chevron"/></svg></a></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
-        <div class="property-grid property-grid--modern">
-            <?php foreach ($properties as $property): ?>
-                <?php $image = $cover($property); $status = (string) $property['status']; ?>
-                <article class="property-card property-card--modern" data-property-card data-status="<?= $e($status) ?>" data-search="<?= $e(mb_strtolower($property['name'] . ' ' . $property['address'])) ?>">
-                    <div class="property-card__media">
-                        <?php if ($image !== null): ?>
-                            <img src="<?= $e($baseUrl . $image['path']) ?>" alt="<?= $e($image['alt'] ?? $property['name']) ?>">
-                        <?php else: ?>
-                            <div class="property-card__placeholder" aria-label="Chưa có ảnh bìa"><span>SB</span><small>Thêm ảnh bìa</small></div>
-                        <?php endif; ?>
-                        <span class="status-badge status-badge--<?= strtolower($e($status)) ?>"><?= $e($statusLabels[$status] ?? $status) ?></span>
-                    </div>
-                    <div class="property-card__body">
-                        <div class="property-card__title-row">
-                            <div><span class="property-type"><?= $e(str_replace('_', ' ', $property['type'])) ?></span><h3><?= $e($property['name']) ?></h3></div>
-                            <?php if ((float) ($property['starRating'] ?? 0) > 0): ?><span class="rating-pill"><?= $e($property['starRating']) ?> ★</span><?php endif; ?>
-                        </div>
-                        <p class="property-address"><span aria-hidden="true">⌖</span><?= $e($property['address']) ?></p>
-                        <div class="property-card__footer">
-                            <span class="property-code">Mã: <?= $e($property['code']) ?></span>
-                            <a href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>">Quản lý <span aria-hidden="true">→</span></a>
-                        </div>
-                    </div>
-                </article>
-            <?php endforeach; ?>
-        </div>
-        <div class="empty-state empty-state--compact" data-property-no-results hidden><h3>Không tìm thấy cơ sở phù hợp</h3><p>Hãy thử từ khóa hoặc bộ lọc khác.</p></div>
+        <div class="resource-empty resource-empty--search" data-property-no-results hidden><svg class="app-icon"><use href="#icon-search"/></svg><h2>Không tìm thấy cơ sở</h2><p>Hãy thử từ khóa hoặc trạng thái khác.</p></div>
+        <footer class="resource-footer">Hiển thị <strong data-visible-count><?= count($properties) ?></strong> trong tổng số <?= count($properties) ?> cơ sở</footer>
     <?php endif; ?>
 </section>

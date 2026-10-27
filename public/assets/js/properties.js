@@ -18,7 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const cards = [...browser.querySelectorAll('[data-property-card]')];
         const search = browser.querySelector('[data-property-search]');
         const filters = [...browser.querySelectorAll('[data-property-filter]')];
+        const statusSelect = browser.querySelector('[data-property-status-select]');
         const noResults = browser.querySelector('[data-property-no-results]');
+        const visibleCount = browser.querySelector('[data-visible-count]');
         let activeStatus = 'ALL';
 
         const refresh = () => {
@@ -31,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!card.hidden) visible += 1;
             });
             if (noResults) noResults.hidden = visible !== 0;
+            if (visibleCount) visibleCount.textContent = visible;
         };
 
         filters.forEach((filter) => filter.addEventListener('click', () => {
@@ -38,6 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
             filters.forEach((item) => item.classList.toggle('is-active', item === filter));
             refresh();
         }));
+        statusSelect?.addEventListener('change', () => {
+            activeStatus = statusSelect.value;
+            refresh();
+        });
         search?.addEventListener('input', refresh);
     }
 
