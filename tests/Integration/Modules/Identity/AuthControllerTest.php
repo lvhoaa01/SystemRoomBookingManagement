@@ -96,6 +96,7 @@ final class AuthControllerTest extends TestCase
         self::assertSame(200, $response->status());
         self::assertMatchesRegularExpression('~/assets/css/app\.css\?v=\d+~', $response->body());
         self::assertMatchesRegularExpression('~/assets/js/properties\.js\?v=\d+~', $response->body());
+        self::assertMatchesRegularExpression('~/assets/images/accommodation/shared/logoNew\.png\?v=\d+~', $response->body());
         self::assertStringContainsString('.app-icon { width: 20px; height: 20px;', $response->body());
         self::assertStringContainsString('name="_token"', $response->body());
         self::assertStringContainsString('Tạo tài khoản', $response->body());

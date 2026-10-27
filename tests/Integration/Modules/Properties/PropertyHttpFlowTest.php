@@ -58,6 +58,7 @@ final class PropertyHttpFlowTest extends TestCase
         self::assertStringContainsString('Cơ sở lưu trú của bạn', $index->body());
         self::assertStringContainsString('Cơ sở lưu trú', $index->body());
         self::assertStringContainsString('resource-table', $index->body());
+        self::assertStringContainsString('/assets/images/accommodation/shared/logoNew.png?v=', $index->body());
 
         $ownedPropertyId = (int) $this->pdo->query(
             'SELECT CoSoLuuTruID FROM CoSoLuuTru WHERE ToChucDoiTacID = ' . $organization->id . ' LIMIT 1'

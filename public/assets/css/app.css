@@ -474,21 +474,15 @@ textarea {
 .brand {
     display: inline-flex;
     align-items: center;
-    gap: 9px;
     color: var(--surface);
-    font-size: 1.45rem;
-    font-weight: 800;
-    letter-spacing: -0.035em;
 }
+
+.brand__logo { display: block; width: 186px; max-width: 100%; height: auto; }
 
 .brand-group { display: flex; align-items: center; gap: 14px; }
 .brand__mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; background: var(--blue-700); }
 .brand__mark svg, .site-nav svg { width: 19px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .workspace-label { padding-left: 14px; border-left: 1px solid rgba(255,255,255,.28); color: #c9e3ff; font-size: .78rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
-
-.brand span {
-    color: #79b8ff;
-}
 
 .brand:hover {
     text-decoration: none;
@@ -927,11 +921,9 @@ a:focus-visible {
 .has-app-shell { background: #f5f7fa; color: #172b3a; }
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 240px minmax(0,1fr); }
 .app-sidebar { position: sticky; z-index: 40; top: 0; height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #dde3ea; background: #fff; }
-.app-brand { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid #eef1f4; color: #14324b; font-size: 1.1rem; font-weight: 700; letter-spacing: -.025em; }
+.app-brand { height: 64px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid #eef1f4; color: #14324b; }
 .app-brand:hover { text-decoration: none; }
-.app-brand strong { color: #0b5ed7; }
-.app-brand__mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 7px; background: #0b5ed7; color: #fff; }
-.app-brand__mark .app-icon { width: 19px; height: 19px; }
+.app-brand__logo { display: block; width: 174px; max-width: 100%; height: auto; }
 .app-navigation { flex: 1; display: flex; flex-direction: column; gap: 3px; padding: 20px 12px; }
 .app-navigation__section { padding: 0 10px 9px; color: #7b8794; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .app-navigation a, .app-navigation .is-disabled, .app-sidebar__footer .is-disabled { min-height: 42px; display: flex; align-items: center; gap: 12px; padding: 9px 11px; border-radius: 7px; color: #425466; font-size: .88rem; font-weight: 600; }
