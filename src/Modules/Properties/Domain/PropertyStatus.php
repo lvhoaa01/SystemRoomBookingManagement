@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 namespace App\Modules\Properties\Domain;
-
+// Trạng thái
 enum PropertyStatus: string
 {
     case DRAFT = 'DRAFT';

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 namespace App\Modules\Properties\Domain;
-
+// Hành động của Admin
 enum PropertyReviewAction: string
 {
     case APPROVE = 'APPROVE';
