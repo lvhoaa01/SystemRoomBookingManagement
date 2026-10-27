@@ -1,4 +1,32 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const browser = document.querySelector('[data-property-browser]');
+    if (browser) {
+        const cards = [...browser.querySelectorAll('[data-property-card]')];
+        const search = browser.querySelector('[data-property-search]');
+        const filters = [...browser.querySelectorAll('[data-property-filter]')];
+        const noResults = browser.querySelector('[data-property-no-results]');
+        let activeStatus = 'ALL';
+
+        const refresh = () => {
+            const term = (search?.value || '').trim().toLocaleLowerCase('vi');
+            let visible = 0;
+            cards.forEach((card) => {
+                const statusMatches = activeStatus === 'ALL' || card.dataset.status === activeStatus;
+                const searchMatches = !term || card.dataset.search.includes(term);
+                card.hidden = !(statusMatches && searchMatches);
+                if (!card.hidden) visible += 1;
+            });
+            if (noResults) noResults.hidden = visible !== 0;
+        };
+
+        filters.forEach((filter) => filter.addEventListener('click', () => {
+            activeStatus = filter.dataset.propertyFilter;
+            filters.forEach((item) => item.classList.toggle('is-active', item === filter));
+            refresh();
+        }));
+        search?.addEventListener('input', refresh);
+    }
+
     const uploader = document.querySelector('[data-image-uploader]');
     const jsonField = document.querySelector('#images-json');
     if (!uploader || !jsonField) return;
