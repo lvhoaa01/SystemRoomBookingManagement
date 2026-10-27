@@ -38,6 +38,76 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const uploader = document.querySelector('[data-image-uploader]');
     const jsonField = document.querySelector('#images-json');
+    const gallery = document.querySelector('[data-image-gallery]');
+
+    const readImages = () => {
+        try {
+            const images = JSON.parse(jsonField?.value || '[]');
+            return Array.isArray(images) ? images : [];
+        } catch {
+            return [];
+        }
+    };
+
+    const writeImages = (images) => {
+        images.forEach((image, index) => { image.sort = index + 1; });
+        if (jsonField) jsonField.value = JSON.stringify(images);
+        renderGallery();
+    };
+
+    const renderGallery = () => {
+        if (!gallery) return;
+        const images = readImages();
+        gallery.replaceChildren();
+        if (images.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'image-gallery__empty';
+            empty.innerHTML = '<span>▧</span><strong>Chưa có ảnh nào</strong><small>Thêm ảnh thật của chỗ nghỉ để hoàn thiện hồ sơ.</small>';
+            gallery.append(empty);
+            return;
+        }
+        images.forEach((image, index) => {
+            const item = document.createElement('article');
+            item.className = 'image-tile';
+            const img = document.createElement('img');
+            img.src = `${gallery.dataset.baseUrl}${image.path}`;
+            img.alt = image.alt;
+            const meta = document.createElement('div');
+            meta.className = 'image-tile__meta';
+            const label = document.createElement('span');
+            label.textContent = image.cover ? 'Ảnh bìa' : `Ảnh ${index + 1}`;
+            const actions = document.createElement('span');
+            if (!image.cover) {
+                const coverButton = document.createElement('button');
+                coverButton.type = 'button';
+                coverButton.textContent = 'Đặt làm bìa';
+                coverButton.addEventListener('click', () => writeImages(images.map((entry, entryIndex) => ({ ...entry, cover: entryIndex === index }))));
+                actions.append(coverButton);
+            }
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.textContent = 'Xóa';
+            removeButton.addEventListener('click', () => {
+                const remaining = images.filter((_, entryIndex) => entryIndex !== index);
+                if (remaining.length > 0 && !remaining.some((entry) => entry.cover)) remaining[0].cover = true;
+                writeImages(remaining);
+            });
+            actions.append(removeButton);
+            meta.append(label, actions);
+            item.append(img, meta);
+            gallery.append(item);
+        });
+    };
+
+    renderGallery();
+
+    document.querySelectorAll('[data-character-field]').forEach((field) => {
+        const counter = field.parentElement.querySelector('[data-character-count]');
+        const update = () => { if (counter) counter.textContent = field.value.length; };
+        field.addEventListener('input', update);
+        update();
+    });
+
     if (!uploader || !jsonField) return;
 
     const button = uploader.querySelector('[data-image-submit]');
@@ -59,9 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(uploader.dataset.url, { method: 'POST', body, headers: { Accept: 'application/json' } });
             const payload = await response.json();
             if (!response.ok) throw new Error(payload.error?.message || 'Không thể tải ảnh.');
-            const images = JSON.parse(jsonField.value || '[]');
+            const images = readImages();
             images.push({ path: payload.data.path, alt: alt.value.trim() || 'Ảnh cơ sở lưu trú', sort: images.length + 1, cover: images.length === 0 });
-            jsonField.value = JSON.stringify(images);
+            writeImages(images);
             file.value = '';
             status.textContent = 'Đã tải ảnh và thêm vào danh sách. Hãy bấm Lưu thay đổi.';
         } catch (error) {
