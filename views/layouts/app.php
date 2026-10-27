@@ -17,6 +17,7 @@ declare(strict_types=1);
     <title><?= $title ?></title>
     <meta name="color-scheme" content="light">
     <link rel="stylesheet" href="<?= $baseUrl ?>/assets/css/app.css">
+    <script src="<?= $baseUrl ?>/assets/js/properties.js" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Bỏ qua đến nội dung chính</a>
