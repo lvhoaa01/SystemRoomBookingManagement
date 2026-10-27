@@ -143,10 +143,6 @@ final readonly class PropertyData
             'address' => $this->address,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
-            'taxRate' => $this->taxRate,
-            'taxIncluded' => $this->taxIncluded ? 1 : 0,
-            'serviceFeeRate' => $this->serviceFeeRate,
-            'serviceFeeIncluded' => $this->serviceFeeIncluded ? 1 : 0,
             'checkInTime' => $this->checkInTime,
             'checkOutTime' => $this->checkOutTime,
         ];
@@ -155,7 +151,10 @@ final readonly class PropertyData
                 return true;
             }
         }
-        return false;
+        return abs((float) ($existing['taxRate'] ?? -1) - (float) $this->taxRate) > 0.00001
+            || abs((float) ($existing['serviceFeeRate'] ?? -1) - (float) $this->serviceFeeRate) > 0.00001
+            || (bool) ($existing['taxIncluded'] ?? false) !== $this->taxIncluded
+            || (bool) ($existing['serviceFeeIncluded'] ?? false) !== $this->serviceFeeIncluded;
     }
 
     private static function assertLength(string $value, int $min, int $max, string $label): void

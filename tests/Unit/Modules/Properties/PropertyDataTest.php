@@ -15,8 +15,8 @@ final class PropertyDataTest extends TestCase
         $data = PropertyData::fromArray($this->input());
         $existing = [
             'type' => 'HOTEL', 'name' => 'Khách sạn kiểm thử', 'address' => '1 Nguyễn Huệ, Quận 1',
-            'latitude' => null, 'longitude' => null, 'taxRate' => '8', 'taxIncluded' => 1,
-            'serviceFeeRate' => '5', 'serviceFeeIncluded' => 0,
+            'latitude' => null, 'longitude' => null, 'taxRate' => '8.00', 'taxIncluded' => 1,
+            'serviceFeeRate' => '5.000', 'serviceFeeIncluded' => 0,
             'checkInTime' => '14:00:00', 'checkOutTime' => '12:00:00',
         ];
         self::assertFalse($data->changesCriticalFields($existing));
