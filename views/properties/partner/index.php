@@ -5,6 +5,7 @@ declare(strict_types=1);
 $e = static fn (mixed $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $statusLabels = ['DRAFT' => 'Bản nháp', 'PENDING_REVIEW' => 'Chờ duyệt', 'CHANGES_REQUESTED' => 'Cần chỉnh sửa', 'ACTIVE' => 'Đang hoạt động', 'REJECTED' => 'Bị từ chối', 'SUSPENDED' => 'Tạm ngưng'];
 $typeLabels = ['HOTEL' => 'Khách sạn', 'RESORT' => 'Khu nghỉ dưỡng', 'APARTMENT' => 'Căn hộ', 'VILLA' => 'Biệt thự', 'HOSTEL' => 'Hostel', 'GUEST_HOUSE' => 'Nhà khách'];
+$formatDate = static fn (mixed $value): string => date('d/m/Y H:i', strtotime((string) $value));
 $cover = static function (array $property): ?array {
     $images = json_decode((string) ($property['imagesJson'] ?? '[]'), true);
     if (!is_array($images)) return null;
@@ -36,7 +37,7 @@ $cover = static function (array $property): ?array {
                         <td><div class="resource-name"><span class="resource-thumbnail"><?php if ($image !== null): ?><img src="<?= $e($baseUrl . $image['path']) ?>" alt=""><?php else: ?><svg class="app-icon"><use href="#icon-building"/></svg><?php endif; ?></span><span><a href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>"><?= $e($property['name']) ?></a><small><?= $e($property['code']) ?> · <?= $e($property['address']) ?></small></span></div></td>
                         <td><?= $e($typeLabels[$property['type']] ?? $property['type']) ?></td>
                         <td><span class="status-label status-label--<?= strtolower($e($status)) ?>"><i></i><?= $e($statusLabels[$status] ?? $status) ?></span></td>
-                        <td><time><?= $e($property['updatedAt']) ?></time></td>
+                        <td><time><?= $e($formatDate($property['updatedAt'])) ?></time></td>
                         <td class="resource-actions"><a class="icon-button" href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>" aria-label="Quản lý <?= $e($property['name']) ?>"><svg class="app-icon"><use href="#icon-chevron"/></svg></a></td>
                     </tr>
                 <?php endforeach; ?>

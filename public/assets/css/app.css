@@ -997,6 +997,7 @@ a:focus-visible {
 .resource-empty h2 { margin: 0 0 6px; font-size: 1.05rem; }
 .resource-empty p { max-width: 390px; margin: 0 0 18px; color: #7b8794; font-size: .84rem; }
 .resource-empty--search { min-height: 240px; }
+.resource-empty[hidden] { display: none; }
 
 .resource-breadcrumb { min-height: 24px; display: flex; align-items: center; gap: 6px; margin-bottom: 16px; color: #7b8794; font-size: .75rem; }
 .resource-breadcrumb .app-icon { width: 14px; height: 14px; }
