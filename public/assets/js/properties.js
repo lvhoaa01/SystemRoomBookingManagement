@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-toggle-target]').forEach((trigger) => {
+        trigger.addEventListener('click', () => {
+            const target = document.getElementById(trigger.dataset.toggleTarget);
+            if (!target) return;
+            target.hidden = !target.hidden;
+            if (!target.hidden) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
     const browser = document.querySelector('[data-property-browser]');
     if (browser) {
         const cards = [...browser.querySelectorAll('[data-property-card]')];
