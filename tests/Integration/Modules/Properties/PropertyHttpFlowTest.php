@@ -56,8 +56,8 @@ final class PropertyHttpFlowTest extends TestCase
         $index = $this->app->handle(new Request('GET', '/partner/properties', requestId: 'property-http-index'));
         self::assertSame(200, $index->status());
         self::assertStringContainsString('Cơ sở lưu trú của bạn', $index->body());
-        self::assertStringContainsString('Không gian đối tác', $index->body());
-        self::assertStringContainsString('property-card--modern', $index->body());
+        self::assertStringContainsString('Cơ sở lưu trú', $index->body());
+        self::assertStringContainsString('resource-table', $index->body());
 
         $ownedPropertyId = (int) $this->pdo->query(
             'SELECT CoSoLuuTruID FROM CoSoLuuTru WHERE ToChucDoiTacID = ' . $organization->id . ' LIMIT 1'
@@ -66,8 +66,8 @@ final class PropertyHttpFlowTest extends TestCase
             'GET', '/partner/properties/' . $ownedPropertyId, requestId: 'property-http-detail',
         ));
         self::assertSame(200, $detail->status());
-        self::assertStringContainsString('Hoàn thiện hồ sơ của bạn', $detail->body());
-        self::assertStringContainsString('Kho phòng', $detail->body());
+        self::assertStringContainsString('Hoàn thiện thông tin', $detail->body());
+        self::assertStringContainsString('Danh sách phòng', $detail->body());
 
         $foreignPropertyId = (int) $this->pdo->query(
             'SELECT CoSoLuuTruID FROM CoSoLuuTru WHERE ToChucDoiTacID <> ' . $organization->id . ' LIMIT 1'
@@ -100,8 +100,8 @@ final class PropertyHttpFlowTest extends TestCase
         ));
         self::assertSame(200, $queue->status());
         self::assertStringContainsString('Hàng đợi duyệt', $queue->body());
-        self::assertStringContainsString('Trung tâm kiểm duyệt', $queue->body());
-        self::assertStringContainsString('review-queue', $queue->body());
+        self::assertStringContainsString('Kiểm duyệt cơ sở', $queue->body());
+        self::assertStringContainsString('review-table', $queue->body());
 
         $pendingPropertyId = (int) $this->pdo->query(
             "SELECT CoSoLuuTruID FROM CoSoLuuTru WHERE TrangThai = 'PENDING_REVIEW' LIMIT 1"
@@ -111,7 +111,7 @@ final class PropertyHttpFlowTest extends TestCase
             'GET', '/admin/properties/' . $pendingPropertyId, requestId: 'property-http-admin-detail',
         ));
         self::assertSame(200, $detail->status());
-        self::assertStringContainsString('Mức sẵn sàng', $detail->body());
-        self::assertStringContainsString('Hoàn tất kiểm duyệt', $detail->body());
+        self::assertStringContainsString('Khả năng bán trong 30 ngày', $detail->body());
+        self::assertStringContainsString('Quyết định kiểm duyệt', $detail->body());
     }
 }
