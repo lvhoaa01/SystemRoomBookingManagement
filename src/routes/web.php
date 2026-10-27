@@ -42,6 +42,7 @@ return static function (Router $router, Container $container): void {
             'csrfToken' => $container->get(SessionBootstrap::class)->csrfToken(),
             'flashes' => $container->get(FlashBag::class)->consumeAll(),
             'currentUserName' => $user?->fullName,
+            'currentUserRole' => $user?->role,
         ], 'layouts/app'));
     }, [$requestId], 'home');
 

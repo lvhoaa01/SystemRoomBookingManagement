@@ -298,6 +298,7 @@ final readonly class PartnerPropertyController
             'csrfToken' => $this->session->csrfToken(),
             'flashes' => $this->flash->consumeAll(),
             'currentUserName' => $user->fullName,
+            'currentUserRole' => $user->role,
         ], 'layouts/app'), $status);
     }
 
