@@ -15,6 +15,17 @@ use App\Http\Middleware\AuthMiddleware;
 use App\Http\Middleware\CsrfMiddleware;
 use App\Http\Middleware\PartnerContextMiddleware;
 use App\Http\Middleware\RequestIdMiddleware;
+use App\Modules\Commercial\Application\ManageCancellationPolicyService;
+use App\Modules\Commercial\Application\ManageDailyRateService;
+use App\Modules\Commercial\Application\ManagePromotionService;
+use App\Modules\Commercial\Application\ManageRoomProductService;
+use App\Modules\Commercial\Application\PriceCalculator;
+use App\Modules\Commercial\Application\StandardPriceCalculator;
+use App\Modules\Commercial\Http\PartnerCommercialController;
+use App\Modules\Commercial\Infrastructure\CancellationPolicyRepository;
+use App\Modules\Commercial\Infrastructure\DailyRateRepository;
+use App\Modules\Commercial\Infrastructure\PromotionRepository;
+use App\Modules\Commercial\Infrastructure\RoomProductRepository;
 use App\Modules\Identity\Application\LoginService;
 use App\Modules\Identity\Application\LogoutService;
 use App\Modules\Identity\Application\RegisterCustomerService;
@@ -233,6 +244,28 @@ final class App
             static fn (Container $container): PropertyRepository => new PropertyRepository($container->get(PDO::class)),
         );
         $container->singleton(
+            CancellationPolicyRepository::class,
+            static fn (Container $container): CancellationPolicyRepository => new CancellationPolicyRepository(
+                $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            RoomProductRepository::class,
+            static fn (Container $container): RoomProductRepository => new RoomProductRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            DailyRateRepository::class,
+            static fn (Container $container): DailyRateRepository => new DailyRateRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            PromotionRepository::class,
+            static fn (Container $container): PromotionRepository => new PromotionRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            PriceCalculator::class,
+            static fn (Container $_): PriceCalculator => new StandardPriceCalculator(),
+        );
+        $container->singleton(
             RoomTypeRepository::class,
             static fn (Container $container): RoomTypeRepository => new RoomTypeRepository($container->get(PDO::class)),
         );
@@ -309,6 +342,63 @@ final class App
                 $container->get(FacilityRepository::class),
                 $container->get(TransactionManager::class),
                 $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            ManageCancellationPolicyService::class,
+            static fn (Container $container): ManageCancellationPolicyService => new ManageCancellationPolicyService(
+                $container->get(PropertyRepository::class),
+                $container->get(CancellationPolicyRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            ManageRoomProductService::class,
+            static fn (Container $container): ManageRoomProductService => new ManageRoomProductService(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomProductRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            ManageDailyRateService::class,
+            static fn (Container $container): ManageDailyRateService => new ManageDailyRateService(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomProductRepository::class),
+                $container->get(DailyRateRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            ManagePromotionService::class,
+            static fn (Container $container): ManagePromotionService => new ManagePromotionService(
+                $container->get(PropertyRepository::class),
+                $container->get(PromotionRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            PartnerCommercialController::class,
+            static fn (Container $container): PartnerCommercialController => new PartnerCommercialController(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomTypeRepository::class),
+                $container->get(CancellationPolicyRepository::class),
+                $container->get(RoomProductRepository::class),
+                $container->get(DailyRateRepository::class),
+                $container->get(PromotionRepository::class),
+                $container->get(ManageCancellationPolicyService::class),
+                $container->get(ManageRoomProductService::class),
+                $container->get(ManageDailyRateService::class),
+                $container->get(ManagePromotionService::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
             ),
         );
         $container->singleton(

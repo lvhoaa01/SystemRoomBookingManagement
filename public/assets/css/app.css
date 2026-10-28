@@ -1138,6 +1138,76 @@ a:focus-visible {
 .review-actions small { margin-top: 3px; color: #7b8794; font-size: .68rem; }
 .decision-audit { margin: 16px 0 0; padding-top: 13px; border-top: 1px solid #e5e9ee; color: #8995a1; font-size: .67rem; }
 
+.commercial-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 4px 0 22px; }
+.commercial-kicker { color: #0b5ed7; font-size: .7rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.commercial-header h1 { margin: 7px 0 5px; color: #172b3a; font-size: clamp(1.75rem,3vw,2.2rem); line-height: 1.12; letter-spacing: -.04em; }
+.commercial-header p { margin: 0; color: #667585; font-size: .84rem; }
+.commercial-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); overflow: hidden; margin-bottom: 18px; border: 1px solid #dce3ea; border-radius: 10px; background: #fff; box-shadow: 0 8px 24px rgba(20,50,75,.04); }
+.commercial-stats > div { min-width: 0; padding: 17px 19px; border-right: 1px solid #e5e9ee; }
+.commercial-stats > div:last-child { border-right: 0; }
+.commercial-stats span, .commercial-stats small { display: block; overflow: hidden; color: #7b8794; font-size: .69rem; text-overflow: ellipsis; white-space: nowrap; }
+.commercial-stats strong { display: block; margin: 5px 0 3px; color: #14324b; font-size: 1.45rem; line-height: 1; }
+.commercial-nav { position: sticky; z-index: 12; top: 64px; display: flex; gap: 4px; margin-bottom: 18px; padding: 6px; border: 1px solid #dce3ea; border-radius: 9px; background: rgba(255,255,255,.96); box-shadow: 0 5px 18px rgba(20,50,75,.05); backdrop-filter: blur(8px); }
+.commercial-nav a { padding: 8px 13px; border-radius: 6px; color: #526273; font-size: .76rem; font-weight: 700; }
+.commercial-nav a:hover { background: #edf5ff; color: #0b5ed7; text-decoration: none; }
+.commercial-section { scroll-margin-top: 126px; overflow: hidden; margin-bottom: 18px; border: 1px solid #dce3ea; border-radius: 10px; background: #fff; }
+.commercial-section__heading { min-height: 86px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 20px; border-bottom: 1px solid #e5e9ee; background: linear-gradient(90deg,#f8fbff 0,#fff 45%); }
+.commercial-section__heading > div { position: relative; padding-left: 43px; }
+.section-index { position: absolute; top: 0; left: 0; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: #e7f1ff; color: #0b5ed7; font-size: .7rem; font-weight: 800; }
+.commercial-section__heading h2 { margin: 0 0 4px; color: #253b4c; font-size: 1rem; }
+.commercial-section__heading p { margin: 0; color: #7b8794; font-size: .74rem; }
+.commercial-create { padding: 20px; border-bottom: 1px solid #dce3ea; background: #f7faff; }
+.commercial-create[hidden] { display: none; }
+.commercial-form { display: grid; gap: 14px; }
+.commercial-records { display: grid; }
+.commercial-record { border-bottom: 1px solid #e8ecf0; }
+.commercial-record:last-child { border-bottom: 0; }
+.commercial-record summary { min-height: 66px; display: grid; grid-template-columns: 100px minmax(210px,1.6fr) minmax(125px,.7fr) 96px 18px; align-items: center; gap: 14px; padding: 10px 18px; color: #526273; cursor: pointer; list-style: none; }
+.commercial-record summary::-webkit-details-marker, .rate-product summary::-webkit-details-marker { display: none; }
+.commercial-record summary:hover, .rate-product summary:hover { background: #f8fbff; }
+.commercial-record summary > .app-icon, .rate-product summary > .app-icon { width: 15px; height: 15px; transition: transform .15s; }
+.commercial-record[open] summary > .app-icon, .rate-product[open] summary > .app-icon { transform: rotate(90deg); }
+.record-code { width: max-content; max-width: 100%; overflow: hidden; padding: 4px 7px; border-radius: 5px; background: #eef3f7; color: #526273; font-family: ui-monospace,SFMono-Regular,Consolas,monospace; font-size: .68rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.record-name strong, .record-name small, .record-metric small { display: block; }
+.record-name strong { color: #2b4050; font-size: .82rem; }
+.record-name small, .record-metric small { margin-top: 3px; color: #8995a1; font-size: .67rem; }
+.record-metric { color: #425466; font-size: .74rem; font-weight: 700; }
+.record-discount { color: #0b5ed7; font-size: .96rem; font-weight: 800; }
+.commercial-record__body { padding: 20px; border-top: 1px solid #e5e9ee; background: #f8fafc; }
+.commercial-empty { min-height: 116px; display: grid; place-content: center; justify-items: center; padding: 24px; color: #7b8794; text-align: center; }
+.commercial-empty strong { color: #425466; font-size: .82rem; }
+.commercial-empty span { margin-top: 4px; font-size: .72rem; }
+.rate-range { display: flex; align-items: flex-end; gap: 8px; }
+.rate-range label { display: grid; gap: 4px; color: #7b8794; font-size: .65rem; font-weight: 700; }
+.rate-range input { height: 34px; padding: 0 8px; border: 1px solid #cbd3dc; border-radius: 5px; color: #34495a; font-size: .72rem; }
+.rate-products { display: grid; }
+.rate-product { border-bottom: 1px solid #e8ecf0; }
+.rate-product:last-child { border-bottom: 0; }
+.rate-product summary { min-height: 64px; display: grid; grid-template-columns: 1fr auto 18px; align-items: center; gap: 14px; padding: 10px 18px; cursor: pointer; list-style: none; }
+.rate-product summary strong, .rate-product summary small { display: block; }
+.rate-product summary strong { color: #2b4050; font-size: .82rem; }
+.rate-product summary small { margin-top: 3px; color: #8995a1; font-size: .68rem; }
+.rate-product__body { border-top: 1px solid #e5e9ee; background: #f8fafc; }
+.rate-entry { display: grid; grid-template-columns: 1.05fr 1.15fr .75fr .75fr .85fr auto auto; align-items: end; gap: 9px; padding: 16px; border-bottom: 1px solid #dfe5eb; }
+.rate-entry .field { gap: 4px; }
+.rate-entry .field > span { font-size: .65rem; }
+.rate-entry input { min-height: 34px; padding: 6px 8px; font-size: .72rem; }
+.rate-closed { min-height: 34px; display: flex; align-items: center; gap: 6px; color: #526273; font-size: .7rem; white-space: nowrap; }
+.rate-closed input { accent-color: #0b5ed7; }
+.rate-table-wrap { overflow-x: auto; }
+.rate-table { width: 100%; border-collapse: collapse; }
+.rate-table th { padding: 9px 14px; background: #f4f7fa; color: #718091; font-size: .65rem; text-align: left; white-space: nowrap; }
+.rate-table td { padding: 10px 14px; border-top: 1px solid #e8ecf0; color: #526273; font-size: .72rem; white-space: nowrap; }
+.rate-table td:nth-child(2) { color: #253b4c; font-weight: 700; }
+.rate-empty { padding: 24px; color: #8995a1; font-size: .72rem; text-align: center; }
+
+@media (max-width: 1000px) {
+    .commercial-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .commercial-stats > div:nth-child(2) { border-right: 0; }
+    .commercial-stats > div:nth-child(-n+2) { border-bottom: 1px solid #e5e9ee; }
+    .rate-entry { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+
 @media (max-width: 900px) {
     .app-shell { grid-template-columns: 1fr; }
     .app-sidebar { position: fixed; left: 0; transform: translateX(-100%); width: 240px; box-shadow: 16px 0 40px rgba(20,50,75,.14); transition: transform .2s ease; }
@@ -1150,6 +1220,8 @@ a:focus-visible {
     .detail-aside { position: static; grid-template-columns: 1fr 1fr; }
     .review-detail-layout { grid-template-columns: 1fr; }
     .review-decision-panel { position: static; }
+    .commercial-record summary { grid-template-columns: 88px minmax(190px,1fr) 110px 18px; }
+    .commercial-record summary > .status-label { display: none; }
 }
 
 @media (max-width: 560px) {
@@ -1183,6 +1255,14 @@ a:focus-visible {
     .review-room-table__head { display: none; }
     .review-room-table > div:not(.review-room-table__head) { grid-template-columns: 1fr auto; }
     .review-room-table > div > span:nth-child(2), .review-room-table > div > span:nth-child(3) { display: none; }
+    .commercial-header, .commercial-section__heading { align-items: stretch; flex-direction: column; }
+    .commercial-stats { grid-template-columns: 1fr 1fr; }
+    .commercial-nav { top: 64px; overflow-x: auto; }
+    .commercial-nav a { flex: 0 0 auto; }
+    .commercial-record summary { grid-template-columns: 78px minmax(0,1fr) 16px; }
+    .commercial-record summary > .record-metric, .commercial-record summary > .record-discount { display: none; }
+    .rate-range { align-items: stretch; flex-direction: column; width: 100%; }
+    .rate-entry { grid-template-columns: 1fr 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

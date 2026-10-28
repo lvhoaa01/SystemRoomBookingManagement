@@ -26,7 +26,7 @@ $statusLabels = ['DRAFT' => 'Bản nháp', 'PENDING_REVIEW' => 'Chờ duyệt', 
     <div class="detail-header__actions"><a class="button button--secondary" href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>/edit"><svg class="app-icon"><use href="#icon-edit"/></svg>Chỉnh sửa</a><?php if (in_array($status, ['DRAFT', 'CHANGES_REQUESTED'], true)): ?><form method="post" action="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>/submit"><input type="hidden" name="_token" value="<?= $e($csrfToken) ?>"><button class="button button--primary"><svg class="app-icon"><use href="#icon-send"/></svg>Gửi duyệt</button></form><?php endif; ?></div>
 </header>
 
-<nav class="detail-tabs" aria-label="Các phần của cơ sở"><a class="is-active" href="#overview">Tổng quan</a><a href="#rooms">Phòng</a><a href="#facilities">Tiện nghi</a><a href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>/edit#property-media">Hình ảnh</a></nav>
+<nav class="detail-tabs" aria-label="Các phần của cơ sở"><a class="is-active" href="#overview">Tổng quan</a><a href="#rooms">Phòng</a><a href="#facilities">Tiện nghi</a><a href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>/commercial">Giá &amp; chính sách</a><a href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>/edit#property-media">Hình ảnh</a></nav>
 
 <div class="detail-layout">
     <main class="detail-main">

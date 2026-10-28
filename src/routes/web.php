@@ -18,6 +18,7 @@ use App\Modules\Identity\Http\LogoutController;
 use App\Modules\Identity\Http\RegisterController;
 use App\Modules\Identity\Infrastructure\IdentitySession;
 use App\Modules\Identity\Domain\UserAccount;
+use App\Modules\Commercial\Http\PartnerCommercialController;
 use App\Modules\Properties\Http\AdminPropertyController;
 use App\Modules\Properties\Http\PartnerPropertyController;
 use App\Modules\Properties\Http\PropertyImageController;
@@ -108,6 +109,56 @@ return static function (Router $router, Container $container): void {
         'partner.properties.facilities',
     );
     $router->post('/partner/properties/{propertyId}/images', $partner->uploadImage(...), $partnerWrite, 'partner.properties.images');
+
+    $commercial = $container->get(PartnerCommercialController::class);
+    $router->get(
+        '/partner/properties/{propertyId}/commercial',
+        $commercial->index(...),
+        $partnerRead,
+        'partner.commercial.index',
+    );
+    $router->post(
+        '/partner/properties/{propertyId}/cancellation-policies',
+        $commercial->createPolicy(...),
+        $partnerWrite,
+        'partner.commercial.policies.store',
+    );
+    $router->post(
+        '/partner/cancellation-policies/{policyId}/update',
+        $commercial->updatePolicy(...),
+        $partnerWrite,
+        'partner.commercial.policies.update',
+    );
+    $router->post(
+        '/partner/properties/{propertyId}/room-products',
+        $commercial->createProduct(...),
+        $partnerWrite,
+        'partner.commercial.products.store',
+    );
+    $router->post(
+        '/partner/room-products/{productId}/update',
+        $commercial->updateProduct(...),
+        $partnerWrite,
+        'partner.commercial.products.update',
+    );
+    $router->post(
+        '/partner/room-products/{productId}/rates',
+        $commercial->updateRate(...),
+        $partnerWrite,
+        'partner.commercial.rates.update',
+    );
+    $router->post(
+        '/partner/properties/{propertyId}/promotions',
+        $commercial->createPromotion(...),
+        $partnerWrite,
+        'partner.commercial.promotions.store',
+    );
+    $router->post(
+        '/partner/promotions/{promotionId}/update',
+        $commercial->updatePromotion(...),
+        $partnerWrite,
+        'partner.commercial.promotions.update',
+    );
 
     $admin = $container->get(AdminPropertyController::class);
     $adminRead = [$requestId, $auth, $adminRole];
