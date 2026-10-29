@@ -12,23 +12,23 @@ final readonly class PropertyData
 {
     private const TYPES = ['HOTEL', 'RESORT', 'APARTMENT', 'VILLA', 'HOSTEL', 'GUEST_HOUSE'];
 
-    public function __construct(
+    public function __construct(// 19
         public string $type,
         public string $name,
         public string $address,
         public string $description,
         public ImageCollection $images,
-        public ?string $latitude,
-        public ?string $longitude,
-        public ?string $coordinatesSource,
-        public ?string $coordinatesVerifiedAt,
+        public ?string $latitude, // Vĩ độ
+        public ?string $longitude, // Kinh độ
+        public ?string $coordinatesSource, // Nguồn
+        public ?string $coordinatesVerifiedAt, // Thời điểm xác minh
         public string $reconciliationStatus,
         public ?string $mapUrl,
-        public ?string $starRating,
-        public string $taxRate,
-        public bool $taxIncluded,
-        public string $serviceFeeRate,
-        public bool $serviceFeeIncluded,
+        public ?string $starRating,// Số sao đánh giá (maybe gg map btw)
+        public string $taxRate,// Tỷ lệ thuế
+        public bool $taxIncluded, // Thuế đã bao gồm trong giá chưa
+        public string $serviceFeeRate,// Tỷ lệ phí dịch vụ
+        public bool $serviceFeeIncluded,// Tỷ lệ phí dịch vụ đã bao gồm trong giá chưa
         public string $checkInTime,
         public string $checkOutTime,
         public string $timezone,
