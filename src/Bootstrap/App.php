@@ -43,6 +43,7 @@ use App\Modules\Inventory\Application\InventoryReconciliationService;
 use App\Modules\Inventory\Application\TransactionalInventoryReservationService;
 use App\Modules\Inventory\Infrastructure\DatabaseAvailabilityReader;
 use App\Modules\Inventory\Infrastructure\InventoryRepository;
+use App\Modules\Inventory\Http\PartnerInventoryController;
 use App\Modules\Properties\Application\CreatePropertyService;
 use App\Modules\Properties\Application\ManageRoomTypeService;
 use App\Modules\Properties\Application\PropertyImageStorage;
@@ -306,6 +307,20 @@ final class App
             InventoryReconciliationService::class,
             static fn (Container $container): InventoryReconciliationService => new InventoryReconciliationService(
                 $container->get(InventoryRepository::class),
+            ),
+        );
+        $container->singleton(
+            PartnerInventoryController::class,
+            static fn (Container $container): PartnerInventoryController => new PartnerInventoryController(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomTypeRepository::class),
+                $container->get(InventoryRepository::class),
+                $container->get(InventoryCalendarService::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
             ),
         );
         $container->singleton(

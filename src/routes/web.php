@@ -19,6 +19,7 @@ use App\Modules\Identity\Http\RegisterController;
 use App\Modules\Identity\Infrastructure\IdentitySession;
 use App\Modules\Identity\Domain\UserAccount;
 use App\Modules\Commercial\Http\PartnerCommercialController;
+use App\Modules\Inventory\Http\PartnerInventoryController;
 use App\Modules\Properties\Http\AdminPropertyController;
 use App\Modules\Properties\Http\PartnerPropertyController;
 use App\Modules\Properties\Http\PropertyImageController;
@@ -158,6 +159,20 @@ return static function (Router $router, Container $container): void {
         $commercial->updatePromotion(...),
         $partnerWrite,
         'partner.commercial.promotions.update',
+    );
+
+    $inventory = $container->get(PartnerInventoryController::class);
+    $router->get(
+        '/partner/properties/{propertyId}/inventory',
+        $inventory->index(...),
+        $partnerRead,
+        'partner.inventory.index',
+    );
+    $router->post(
+        '/partner/room-types/{roomTypeId}/inventory',
+        $inventory->update(...),
+        $partnerWrite,
+        'partner.inventory.update',
     );
 
     $admin = $container->get(AdminPropertyController::class);
