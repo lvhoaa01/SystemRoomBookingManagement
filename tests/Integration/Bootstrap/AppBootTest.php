@@ -10,6 +10,7 @@ use App\Modules\Identity\Application\LoginService;
 use App\Modules\Identity\Infrastructure\IdentitySession;
 use App\Modules\Identity\Infrastructure\UserRepository;
 use App\Modules\Inventory\Application\AvailabilityReader;
+use App\Modules\Inventory\Application\InventoryReservationService;
 use App\Shared\Clock\ClockInterface;
 use App\Shared\Security\Hasher;
 use App\Shared\Security\TokenGenerator;
@@ -87,5 +88,9 @@ final class AppBootTest extends TestCase
         $container = App::boot(dirname(__DIR__, 3))->container();
 
         self::assertSame($container->get(AvailabilityReader::class), $container->get(AvailabilityReader::class));
+        self::assertSame(
+            $container->get(InventoryReservationService::class),
+            $container->get(InventoryReservationService::class),
+        );
     }
 }

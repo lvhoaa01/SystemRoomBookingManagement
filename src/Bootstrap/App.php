@@ -38,6 +38,8 @@ use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
 use App\Modules\Identity\Infrastructure\UserRepository;
 use App\Modules\Inventory\Application\AvailabilityReader;
 use App\Modules\Inventory\Application\InventoryCalendarService;
+use App\Modules\Inventory\Application\InventoryReservationService;
+use App\Modules\Inventory\Application\TransactionalInventoryReservationService;
 use App\Modules\Inventory\Infrastructure\DatabaseAvailabilityReader;
 use App\Modules\Inventory\Infrastructure\InventoryRepository;
 use App\Modules\Properties\Application\CreatePropertyService;
@@ -289,6 +291,14 @@ final class App
                 $container->get(InventoryRepository::class),
                 $container->get(TransactionManager::class),
                 $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            InventoryReservationService::class,
+            static fn (Container $container): InventoryReservationService => new TransactionalInventoryReservationService(
+                $container->get(PDO::class),
+                $container->get(InventoryRepository::class),
+                $container->get(ClockInterface::class),
             ),
         );
         $container->singleton(

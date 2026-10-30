@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Inventory\Infrastructure;
 
+use App\Modules\Inventory\Application\BookingInventoryItem;
+use App\Shared\Contract\InventoryDemand;
 use DateTimeImmutable;
+use DateTimeZone;
+use DomainException;
 use InvalidArgumentException;
 use PDO;
 
@@ -101,6 +105,186 @@ final readonly class InventoryRepository
             return null;
         }
         return $this->findForOrganization($roomTypeId, $stayDate, $organizationId);
+    }
+
+    /**
+     * Khóa theo đúng thứ tự room type tăng dần, sau đó ngày tăng dần.
+     *
+     * @param list<InventoryDemand> $demands đã được aggregate và sort
+     * @return array<string, array<string, mixed>>
+     */
+    public function lockRows(array $demands): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT LoaiPhongID AS roomTypeId, NgayLuuTru AS stayDate,
+                    TongSoLuong AS totalQuantity, SoLuongDaGiu AS heldQuantity,
+                    TongSoLuong - SoLuongDaGiu AS availableQuantity, PhienBan AS version
+             FROM TonPhongNgay
+             WHERE LoaiPhongID = :roomTypeId AND NgayLuuTru = :stayDate
+             FOR UPDATE'
+        );
+        $rows = [];
+        foreach ($demands as $demand) {
+            if (!$demand instanceof InventoryDemand) {
+                throw new InvalidArgumentException('Nhu cầu khóa tồn sai kiểu dữ liệu.');
+            }
+            $statement->execute(['roomTypeId' => $demand->roomTypeId, 'stayDate' => $demand->date]);
+            $row = $statement->fetch(PDO::FETCH_ASSOC);
+            if (is_array($row)) {
+                $rows[$demand->roomTypeId . ':' . $demand->date] = $row;
+            }
+        }
+        return $rows;
+    }
+
+    /** @param list<InventoryDemand> $demands */
+    public function incrementHeld(array $demands): void
+    {
+        $statement = $this->pdo->prepare(
+            'UPDATE TonPhongNgay
+             SET SoLuongDaGiu = SoLuongDaGiu + :quantityAdd,
+                 PhienBan = PhienBan + 1, CapNhatLuc = CURRENT_TIMESTAMP(6)
+             WHERE LoaiPhongID = :roomTypeId AND NgayLuuTru = :stayDate
+                 AND SoLuongDaGiu + :quantityCheck <= TongSoLuong'
+        );
+        foreach ($demands as $demand) {
+            $statement->execute([
+                'quantityAdd' => $demand->quantity,
+                'quantityCheck' => $demand->quantity,
+                'roomTypeId' => $demand->roomTypeId,
+                'stayDate' => $demand->date,
+            ]);
+            if ($statement->rowCount() !== 1) {
+                throw new DomainException('Counter tồn không thể tăng an toàn.');
+            }
+        }
+    }
+
+    /** @param list<InventoryDemand> $demands */
+    public function decrementHeld(array $demands): void
+    {
+        $statement = $this->pdo->prepare(
+            'UPDATE TonPhongNgay
+             SET SoLuongDaGiu = SoLuongDaGiu - :quantitySubtract,
+                 PhienBan = PhienBan + 1, CapNhatLuc = CURRENT_TIMESTAMP(6)
+             WHERE LoaiPhongID = :roomTypeId AND NgayLuuTru = :stayDate
+                 AND SoLuongDaGiu >= :quantityCheck'
+        );
+        foreach ($demands as $demand) {
+            $statement->execute([
+                'quantitySubtract' => $demand->quantity,
+                'quantityCheck' => $demand->quantity,
+                'roomTypeId' => $demand->roomTypeId,
+                'stayDate' => $demand->date,
+            ]);
+            if ($statement->rowCount() !== 1) {
+                throw new DomainException('Counter tồn không thể giảm an toàn.');
+            }
+        }
+    }
+
+    /** @param list<BookingInventoryItem> $items */
+    public function assertBookingItemsEligible(int $bookingId, array $items): void
+    {
+        $ids = array_map(static fn (BookingInventoryItem $item): int => $item->bookingItemId, $items);
+        if (count(array_unique($ids)) !== count($ids)) {
+            throw new InvalidArgumentException('Danh sách giữ tồn có hạng mục trùng lặp.');
+        }
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $statement = $this->pdo->prepare(
+            'SELECT hm.HangMucDatChoID AS bookingItemId, hm.LoaiPhongID AS roomTypeId,
+                    dc.TrangThai AS bookingStatus
+             FROM HangMucDatCho hm
+             INNER JOIN DatCho dc ON dc.DatChoID = hm.DatChoID
+             WHERE hm.DatChoID = ? AND hm.HangMucDatChoID IN (' . $placeholders . ')
+             ORDER BY hm.HangMucDatChoID ASC'
+        );
+        $statement->execute([$bookingId, ...$ids]);
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+        if (count($rows) !== count($items)) {
+            throw new DomainException('Hạng mục giữ tồn không thuộc booking hiện tại.');
+        }
+        $expected = array_column($items, 'roomTypeId', 'bookingItemId');
+        foreach ($rows as $row) {
+            if (!in_array((string) $row['bookingStatus'], ['PENDING_PAYMENT', 'CONFIRMED'], true)) {
+                throw new DomainException('Trạng thái booking không được phép có ledger active.');
+            }
+            if (($expected[(int) $row['bookingItemId']] ?? null) !== (int) $row['roomTypeId']) {
+                throw new DomainException('Loại phòng giữ tồn không khớp hạng mục booking.');
+            }
+        }
+    }
+
+    public function insertActiveHold(
+        int $bookingItemId,
+        int $roomTypeId,
+        string $stayDate,
+        ?DateTimeImmutable $expiresAt,
+        DateTimeImmutable $heldAt,
+    ): void {
+        $statement = $this->pdo->prepare(
+            "INSERT INTO GiuTonPhongDem
+                (HangMucDatChoID, LoaiPhongID, NgayLuuTru, TrangThai, HetHanLuc, GiuLuc)
+             VALUES (:bookingItemId, :roomTypeId, :stayDate, 'ACTIVE', :expiresAt, :heldAt)"
+        );
+        $statement->execute([
+            'bookingItemId' => $bookingItemId,
+            'roomTypeId' => $roomTypeId,
+            'stayDate' => $stayDate,
+            'expiresAt' => self::databaseTime($expiresAt),
+            'heldAt' => self::databaseTime($heldAt),
+        ]);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function lockActiveHoldsForBooking(int $bookingId): array
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT gt.GiuTonPhongDemID AS id, gt.HangMucDatChoID AS bookingItemId,
+                    gt.LoaiPhongID AS roomTypeId, gt.NgayLuuTru AS stayDate
+             FROM GiuTonPhongDem gt
+             INNER JOIN HangMucDatCho hm ON hm.HangMucDatChoID = gt.HangMucDatChoID
+             WHERE hm.DatChoID = :bookingId AND gt.TrangThai = 'ACTIVE'
+             ORDER BY gt.GiuTonPhongDemID ASC
+             FOR UPDATE"
+        );
+        $statement->execute(['bookingId' => $bookingId]);
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** @param list<int> $holdIds */
+    public function releaseHolds(array $holdIds, string $reason, DateTimeImmutable $releasedAt): int
+    {
+        $placeholders = implode(',', array_fill(0, count($holdIds), '?'));
+        $statement = $this->pdo->prepare(
+            "UPDATE GiuTonPhongDem
+             SET TrangThai = 'RELEASED', NhaLuc = ?, LyDoNha = ?
+             WHERE GiuTonPhongDemID IN (" . $placeholders . ") AND TrangThai = 'ACTIVE'"
+        );
+        $statement->execute([self::databaseTime($releasedAt), $reason, ...$holdIds]);
+        return $statement->rowCount();
+    }
+
+    /** @return list<int> */
+    public function findExpiredBookingIds(DateTimeImmutable $at, int $limit): array
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT DISTINCT hm.DatChoID
+             FROM GiuTonPhongDem gt
+             INNER JOIN HangMucDatCho hm ON hm.HangMucDatChoID = gt.HangMucDatChoID
+             INNER JOIN DatCho dc ON dc.DatChoID = hm.DatChoID
+             WHERE gt.TrangThai = 'ACTIVE' AND gt.HetHanLuc IS NOT NULL
+                 AND gt.HetHanLuc <= :expiredAt AND dc.TrangThai = 'PENDING_PAYMENT'
+             ORDER BY hm.DatChoID ASC
+             LIMIT " . $limit
+        );
+        $statement->execute(['expiredAt' => self::databaseTime($at)]);
+        return array_map('intval', $statement->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    private static function databaseTime(?DateTimeImmutable $time): ?string
+    {
+        return $time?->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s.u');
     }
 
     private static function assertIds(int $roomTypeId, int $organizationId): void
