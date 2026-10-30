@@ -9,6 +9,7 @@ use App\Http\Request;
 use App\Modules\Identity\Application\LoginService;
 use App\Modules\Identity\Infrastructure\IdentitySession;
 use App\Modules\Identity\Infrastructure\UserRepository;
+use App\Modules\Inventory\Application\AvailabilityReader;
 use App\Shared\Clock\ClockInterface;
 use App\Shared\Security\Hasher;
 use App\Shared\Security\TokenGenerator;
@@ -79,5 +80,12 @@ final class AppBootTest extends TestCase
         self::assertSame($container->get(UserRepository::class), $container->get(UserRepository::class));
         self::assertSame($container->get(IdentitySession::class), $container->get(IdentitySession::class));
         self::assertSame($container->get(LoginService::class), $container->get(LoginService::class));
+    }
+
+    public function test_registers_inventory_reader_as_singleton(): void
+    {
+        $container = App::boot(dirname(__DIR__, 3))->container();
+
+        self::assertSame($container->get(AvailabilityReader::class), $container->get(AvailabilityReader::class));
     }
 }

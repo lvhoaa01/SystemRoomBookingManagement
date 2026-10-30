@@ -36,6 +36,8 @@ use App\Modules\Identity\Infrastructure\IdentitySession;
 use App\Modules\Identity\Infrastructure\LoginThrottle;
 use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
 use App\Modules\Identity\Infrastructure\UserRepository;
+use App\Modules\Inventory\Application\AvailabilityReader;
+use App\Modules\Inventory\Infrastructure\DatabaseAvailabilityReader;
 use App\Modules\Properties\Application\CreatePropertyService;
 use App\Modules\Properties\Application\ManageRoomTypeService;
 use App\Modules\Properties\Application\PropertyImageStorage;
@@ -264,6 +266,12 @@ final class App
         $container->singleton(
             PriceCalculator::class,
             static fn (Container $_): PriceCalculator => new StandardPriceCalculator(),
+        );
+        $container->singleton(
+            AvailabilityReader::class,
+            static fn (Container $container): AvailabilityReader => new DatabaseAvailabilityReader(
+                $container->get(PDO::class),
+            ),
         );
         $container->singleton(
             RoomTypeRepository::class,
