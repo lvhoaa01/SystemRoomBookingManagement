@@ -36,6 +36,14 @@ use App\Modules\Identity\Infrastructure\IdentitySession;
 use App\Modules\Identity\Infrastructure\LoginThrottle;
 use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
 use App\Modules\Identity\Infrastructure\UserRepository;
+use App\Modules\Inventory\Application\AvailabilityReader;
+use App\Modules\Inventory\Application\InventoryCalendarService;
+use App\Modules\Inventory\Application\InventoryReservationService;
+use App\Modules\Inventory\Application\InventoryReconciliationService;
+use App\Modules\Inventory\Application\TransactionalInventoryReservationService;
+use App\Modules\Inventory\Infrastructure\DatabaseAvailabilityReader;
+use App\Modules\Inventory\Infrastructure\InventoryRepository;
+use App\Modules\Inventory\Http\PartnerInventoryController;
 use App\Modules\Properties\Application\CreatePropertyService;
 use App\Modules\Properties\Application\ManageRoomTypeService;
 use App\Modules\Properties\Application\PropertyImageStorage;
@@ -264,6 +272,56 @@ final class App
         $container->singleton(
             PriceCalculator::class,
             static fn (Container $_): PriceCalculator => new StandardPriceCalculator(),
+        );
+        $container->singleton(
+            AvailabilityReader::class,
+            static fn (Container $container): AvailabilityReader => new DatabaseAvailabilityReader(
+                $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            InventoryRepository::class,
+            static fn (Container $container): InventoryRepository => new InventoryRepository(
+                $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            InventoryCalendarService::class,
+            static fn (Container $container): InventoryCalendarService => new InventoryCalendarService(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomTypeRepository::class),
+                $container->get(InventoryRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            InventoryReservationService::class,
+            static fn (Container $container): InventoryReservationService => new TransactionalInventoryReservationService(
+                $container->get(PDO::class),
+                $container->get(InventoryRepository::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            InventoryReconciliationService::class,
+            static fn (Container $container): InventoryReconciliationService => new InventoryReconciliationService(
+                $container->get(InventoryRepository::class),
+            ),
+        );
+        $container->singleton(
+            PartnerInventoryController::class,
+            static fn (Container $container): PartnerInventoryController => new PartnerInventoryController(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomTypeRepository::class),
+                $container->get(InventoryRepository::class),
+                $container->get(InventoryCalendarService::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
         );
         $container->singleton(
             RoomTypeRepository::class,

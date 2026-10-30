@@ -18,7 +18,7 @@ $penaltyLabels = ['NONE' => 'Không phạt', 'PERCENT' => 'Theo phần trăm', '
 
 <header class="commercial-header">
     <div><span class="commercial-kicker">Thiết lập thương mại</span><h1><?= $e($property['name']) ?></h1><p>Quản lý chính sách hủy, sản phẩm bán, lịch giá và ưu đãi tại một nơi.</p></div>
-    <a class="button button--secondary" href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>"><svg class="app-icon"><use href="#icon-building"/></svg>Về hồ sơ cơ sở</a>
+    <div class="inline-actions"><a class="button button--secondary" href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>/inventory">Tồn phòng</a><a class="button button--secondary" href="<?= $e($baseUrl) ?>/partner/properties/<?= (int) $property['id'] ?>"><svg class="app-icon"><use href="#icon-building"/></svg>Về hồ sơ cơ sở</a></div>
 </header>
 
 <div class="commercial-stats" aria-label="Tổng quan cấu hình">
