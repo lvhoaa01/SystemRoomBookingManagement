@@ -282,6 +282,51 @@ final readonly class InventoryRepository
         return array_map('intval', $statement->fetchAll(PDO::FETCH_COLUMN));
     }
 
+    /** @return list<array<string, mixed>> */
+    public function findReconciliationIssues(
+        string $fromDate,
+        string $toDate,
+        ?int $roomTypeId = null,
+    ): array {
+        self::assertDateRange($fromDate, $toDate);
+        $roomFilter = $roomTypeId === null ? '' : ' AND tp.LoaiPhongID = :roomTypeId';
+        $missingCounterFilter = $roomTypeId === null ? '' : ' AND gt.LoaiPhongID = :missingRoomTypeId';
+        $statement = $this->pdo->prepare(
+            "SELECT tp.LoaiPhongID AS roomTypeId, tp.NgayLuuTru AS stayDate,
+                    tp.TongSoLuong AS totalQuantity, tp.SoLuongDaGiu AS counterHeldQuantity,
+                    COUNT(gt.GiuTonPhongDemID) AS ledgerHeldQuantity
+             FROM TonPhongNgay tp
+             LEFT JOIN GiuTonPhongDem gt ON gt.LoaiPhongID = tp.LoaiPhongID
+                 AND gt.NgayLuuTru = tp.NgayLuuTru AND gt.TrangThai = 'ACTIVE'
+             WHERE tp.NgayLuuTru BETWEEN :fromDate AND :toDate" . $roomFilter . "
+             GROUP BY tp.LoaiPhongID, tp.NgayLuuTru, tp.TongSoLuong, tp.SoLuongDaGiu
+             HAVING tp.SoLuongDaGiu <> COUNT(gt.GiuTonPhongDemID)
+             UNION ALL
+             SELECT gt.LoaiPhongID AS roomTypeId, gt.NgayLuuTru AS stayDate,
+                    NULL AS totalQuantity, NULL AS counterHeldQuantity,
+                    COUNT(gt.GiuTonPhongDemID) AS ledgerHeldQuantity
+             FROM GiuTonPhongDem gt
+             LEFT JOIN TonPhongNgay tp ON tp.LoaiPhongID = gt.LoaiPhongID
+                 AND tp.NgayLuuTru = gt.NgayLuuTru
+             WHERE gt.TrangThai = 'ACTIVE' AND tp.LoaiPhongID IS NULL
+                 AND gt.NgayLuuTru BETWEEN :missingFromDate AND :missingToDate" . $missingCounterFilter . "
+             GROUP BY gt.LoaiPhongID, gt.NgayLuuTru
+             ORDER BY roomTypeId ASC, stayDate ASC"
+        );
+        $parameters = [
+            'fromDate' => $fromDate,
+            'toDate' => $toDate,
+            'missingFromDate' => $fromDate,
+            'missingToDate' => $toDate,
+        ];
+        if ($roomTypeId !== null) {
+            $parameters['roomTypeId'] = $roomTypeId;
+            $parameters['missingRoomTypeId'] = $roomTypeId;
+        }
+        $statement->execute($parameters);
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     private static function databaseTime(?DateTimeImmutable $time): ?string
     {
         return $time?->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s.u');

@@ -39,6 +39,7 @@ use App\Modules\Identity\Infrastructure\UserRepository;
 use App\Modules\Inventory\Application\AvailabilityReader;
 use App\Modules\Inventory\Application\InventoryCalendarService;
 use App\Modules\Inventory\Application\InventoryReservationService;
+use App\Modules\Inventory\Application\InventoryReconciliationService;
 use App\Modules\Inventory\Application\TransactionalInventoryReservationService;
 use App\Modules\Inventory\Infrastructure\DatabaseAvailabilityReader;
 use App\Modules\Inventory\Infrastructure\InventoryRepository;
@@ -299,6 +300,12 @@ final class App
                 $container->get(PDO::class),
                 $container->get(InventoryRepository::class),
                 $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            InventoryReconciliationService::class,
+            static fn (Container $container): InventoryReconciliationService => new InventoryReconciliationService(
+                $container->get(InventoryRepository::class),
             ),
         );
         $container->singleton(
