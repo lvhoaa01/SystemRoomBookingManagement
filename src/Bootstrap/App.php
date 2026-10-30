@@ -37,7 +37,9 @@ use App\Modules\Identity\Infrastructure\LoginThrottle;
 use App\Modules\Identity\Infrastructure\PartnerMembershipRepository;
 use App\Modules\Identity\Infrastructure\UserRepository;
 use App\Modules\Inventory\Application\AvailabilityReader;
+use App\Modules\Inventory\Application\InventoryCalendarService;
 use App\Modules\Inventory\Infrastructure\DatabaseAvailabilityReader;
+use App\Modules\Inventory\Infrastructure\InventoryRepository;
 use App\Modules\Properties\Application\CreatePropertyService;
 use App\Modules\Properties\Application\ManageRoomTypeService;
 use App\Modules\Properties\Application\PropertyImageStorage;
@@ -271,6 +273,22 @@ final class App
             AvailabilityReader::class,
             static fn (Container $container): AvailabilityReader => new DatabaseAvailabilityReader(
                 $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            InventoryRepository::class,
+            static fn (Container $container): InventoryRepository => new InventoryRepository(
+                $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            InventoryCalendarService::class,
+            static fn (Container $container): InventoryCalendarService => new InventoryCalendarService(
+                $container->get(PropertyRepository::class),
+                $container->get(RoomTypeRepository::class),
+                $container->get(InventoryRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
             ),
         );
         $container->singleton(
