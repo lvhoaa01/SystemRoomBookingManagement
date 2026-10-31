@@ -59,6 +59,14 @@ use App\Modules\Properties\Infrastructure\FacilityRepository;
 use App\Modules\Properties\Infrastructure\PropertyReadinessRepository;
 use App\Modules\Properties\Infrastructure\PropertyRepository;
 use App\Modules\Properties\Infrastructure\RoomTypeRepository;
+use App\Modules\Search\Application\DeterministicRoomAllocator;
+use App\Modules\Search\Application\PropertyAllocationService;
+use App\Modules\Search\Application\PropertyAvailabilityService;
+use App\Modules\Search\Application\RoomAllocator;
+use App\Modules\Search\Application\SearchCriteriaFactory;
+use App\Modules\Search\Application\SearchService;
+use App\Modules\Search\Http\PublicSearchController;
+use App\Modules\Search\Infrastructure\SearchCatalogRepository;
 use App\Shared\Audit\AuditTrail;
 use App\Shared\Audit\DatabaseAuditTrail;
 use App\Shared\Clock\ClockInterface;
@@ -277,6 +285,59 @@ final class App
             AvailabilityReader::class,
             static fn (Container $container): AvailabilityReader => new DatabaseAvailabilityReader(
                 $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            SearchCriteriaFactory::class,
+            static fn (Container $container): SearchCriteriaFactory => new SearchCriteriaFactory(
+                $container->get(ClockInterface::class),
+                $container->get(AppConfig::class)->businessTimezone,
+            ),
+        );
+        $container->singleton(
+            SearchCatalogRepository::class,
+            static fn (Container $container): SearchCatalogRepository => new SearchCatalogRepository(
+                $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            RoomAllocator::class,
+            static fn (Container $_): RoomAllocator => new DeterministicRoomAllocator(),
+        );
+        $container->singleton(
+            PropertyAllocationService::class,
+            static fn (Container $container): PropertyAllocationService => new PropertyAllocationService(
+                $container->get(PriceCalculator::class),
+                $container->get(RoomAllocator::class),
+            ),
+        );
+        $container->singleton(
+            SearchService::class,
+            static fn (Container $container): SearchService => new SearchService(
+                $container->get(SearchCatalogRepository::class),
+                $container->get(PropertyAllocationService::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            PropertyAvailabilityService::class,
+            static fn (Container $container): PropertyAvailabilityService => new PropertyAvailabilityService(
+                $container->get(SearchCatalogRepository::class),
+                $container->get(PropertyAllocationService::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            PublicSearchController::class,
+            static fn (Container $container): PublicSearchController => new PublicSearchController(
+                $container->get(SearchCriteriaFactory::class),
+                $container->get(SearchService::class),
+                $container->get(PropertyAvailabilityService::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
             ),
         );
         $container->singleton(

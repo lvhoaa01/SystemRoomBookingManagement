@@ -23,6 +23,7 @@ use App\Modules\Inventory\Http\PartnerInventoryController;
 use App\Modules\Properties\Http\AdminPropertyController;
 use App\Modules\Properties\Http\PartnerPropertyController;
 use App\Modules\Properties\Http\PropertyImageController;
+use App\Modules\Search\Http\PublicSearchController;
 use App\Shared\Http\FlashBag;
 use App\Shared\Http\ViewRenderer;
 
@@ -83,6 +84,16 @@ return static function (Router $router, Container $container): void {
         ($container->get(HealthController::class))($request),
         [$requestId],
         'health',
+    );
+
+    $publicSearch = $container->get(PublicSearchController::class);
+    $router->get('/search', $publicSearch->search(...), [$requestId], 'search.index');
+    $router->get('/properties/{slug}', $publicSearch->property(...), [$requestId], 'properties.public.show');
+    $router->get(
+        '/properties/{slug}/availability',
+        $publicSearch->availability(...),
+        [$requestId],
+        'properties.public.availability',
     );
 
     $partner = $container->get(PartnerPropertyController::class);

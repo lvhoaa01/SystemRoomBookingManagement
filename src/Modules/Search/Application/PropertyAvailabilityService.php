@@ -52,6 +52,17 @@ final readonly class PropertyAvailabilityService
         }
         $current = $this->allocationService->allocate($property, $criteria, $now, $timing)[0] ?? null;
 
+        // Trên detail, paymentTiming vừa mô tả nhánh đang xem vừa có thể là filter gốc từ search.
+        // Thử biến thể còn lại để giữ continuity nếu fingerprint của card chứng minh đó là tiêu chí gốc.
+        if ($previousFingerprint !== null
+            && ($current === null || $current->selectionFingerprint !== $previousFingerprint)) {
+            $alternateCriteria = $this->togglePaymentTimingFilter($criteria, $timing);
+            $alternate = $this->allocationService->allocate($property, $alternateCriteria, $now, $timing)[0] ?? null;
+            if ($alternate !== null && $alternate->selectionFingerprint === $previousFingerprint) {
+                $current = $alternate;
+            }
+        }
+
         $fingerprintChanged = $previousFingerprint !== null
             && ($current === null || $current->selectionFingerprint !== $previousFingerprint);
         $mappingChanged = $selected !== []
@@ -80,6 +91,24 @@ final readonly class PropertyAvailabilityService
     {
         $filters = $criteria->filters;
         unset($filters['paymentTiming']);
+        return new SearchCriteria(
+            $criteria->destination,
+            $criteria->stayPeriod,
+            $criteria->parties,
+            $filters,
+            $criteria->sort,
+            $criteria->page,
+        );
+    }
+
+    private function togglePaymentTimingFilter(SearchCriteria $criteria, string $timing): SearchCriteria
+    {
+        $filters = $criteria->filters;
+        if (isset($filters['paymentTiming'])) {
+            unset($filters['paymentTiming']);
+        } else {
+            $filters['paymentTiming'] = $timing;
+        }
         return new SearchCriteria(
             $criteria->destination,
             $criteria->stayPeriod,
