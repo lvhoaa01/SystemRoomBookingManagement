@@ -33,6 +33,8 @@ final readonly class SearchCriteria implements JsonSerializable
             throw new InvalidArgumentException('Tìm kiếm phải có từ 1 đến 5 nhóm phòng.');
         }
         $orders = [];
+        $adultCount = 0;
+        $childCount = 0;
         foreach ($this->parties as $party) {
             if (!$party instanceof RoomParty) {
                 throw new InvalidArgumentException('Mỗi nhóm khách phải là RoomParty.');
@@ -41,6 +43,11 @@ final readonly class SearchCriteria implements JsonSerializable
                 throw new InvalidArgumentException('Thứ tự nhóm phòng không được trùng.');
             }
             $orders[$party->roomOrder] = true;
+            $adultCount += $party->adults;
+            $childCount += $party->children();
+        }
+        if ($adultCount > 10 || $childCount > 10) {
+            throw new InvalidArgumentException('Một lượt tìm kiếm hỗ trợ tối đa 10 người lớn và 10 trẻ em.');
         }
         if ($this->sort === '') {
             throw new InvalidArgumentException('Tiêu chí sắp xếp không được để trống.');
