@@ -39,6 +39,10 @@ return static function (Router $router, Container $container): void {
         $config = $container->get(AppConfig::class);
         $identity = $container->get(IdentitySession::class);
         $user = $identity->currentUser();
+        $today = $container->get(\App\Shared\Clock\ClockInterface::class)
+            ->now()
+            ->setTimezone($config->businessTimezone)
+            ->setTime(0, 0);
         return Response::html($container->get(ViewRenderer::class)->render('home', [
             'title' => 'StayBooking - Tìm chỗ nghỉ tại TP.HCM',
             'baseUrl' => rtrim($config->url, '/'),
@@ -46,6 +50,12 @@ return static function (Router $router, Container $container): void {
             'flashes' => $container->get(FlashBag::class)->consumeAll(),
             'currentUserName' => $user?->fullName,
             'currentUserRole' => $user?->role,
+            'searchForm' => [
+                'destination' => 'Thành phố Hồ Chí Minh',
+                'checkIn' => $today->modify('+1 day')->format('Y-m-d'),
+                'checkOut' => $today->modify('+3 days')->format('Y-m-d'),
+                'parties' => [['adults' => 2, 'childAges' => []]],
+            ],
         ], 'layouts/app'));
     }, [$requestId], 'home');
 

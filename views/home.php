@@ -4,30 +4,37 @@ declare(strict_types=1);
 
 /** @var string|null $currentUserName */
 /** @var string $baseUrl */
+/** @var array<string, mixed> $searchForm */
 ?>
-<section class="hero">
+<section class="hero home-hero">
     <div class="hero__content">
-        <span class="eyebrow">Lưu trú tại Thành phố Hồ Chí Minh</span>
-        <h1>Tìm chỗ nghỉ phù hợp cho hành trình của bạn</h1>
-        <p>So sánh lựa chọn rõ ràng, xem tổng giá minh bạch và quản lý chuyến đi tại một nơi.</p>
+        <span class="eyebrow">StayBooking · Thành phố Hồ Chí Minh</span>
+        <h1>Một thành phố.<br>Hàng trăm trải nghiệm.</h1>
+        <p>Tìm phòng còn bán theo đúng ngày và nhóm khách, so sánh tổng giá minh bạch trước khi lựa chọn.</p>
     </div>
+    <div class="home-hero__visual" aria-hidden="true"><span>HCM</span><small>VIETNAM</small></div>
+</section>
+
+<section id="search" class="home-search-shell" aria-label="Tìm chỗ nghỉ">
+    <?php require __DIR__ . '/search/_form.php'; ?>
+    <p class="search-trust"><span>✓</span> Không cần đăng nhập để tìm kiếm &nbsp;·&nbsp; Giá gồm thuế/phí &nbsp;·&nbsp; Kiểm tra tồn theo từng đêm</p>
 </section>
 
 <section class="home-grid" aria-label="Thông tin nền tảng">
     <article class="feature-card">
         <span class="feature-card__number">01</span>
-        <h2>Tìm kiếm minh bạch</h2>
-        <p>Thông tin phòng, chính sách và tổng giá sẽ được trình bày theo cùng một cấu trúc.</p>
+        <h2>Đúng nhu cầu thật</h2>
+        <p>Mỗi nhóm khách được giữ nguyên; hệ thống không tự bỏ trẻ em hay đổi cách phân phòng.</p>
     </article>
     <article class="feature-card">
         <span class="feature-card__number">02</span>
-        <h2>Đặt phòng an toàn</h2>
-        <p>Mọi thao tác quan trọng được xác thực tại máy chủ và bảo vệ bằng phiên đăng nhập.</p>
+        <h2>Giá nhất quán</h2>
+        <p>Search và trang chi tiết dùng chung một bộ tính giá, chính sách và cách làm tròn.</p>
     </article>
     <article class="feature-card">
         <span class="feature-card__number">03</span>
-        <h2>Quản lý thuận tiện</h2>
-        <p>Theo dõi đặt phòng, thay đổi hợp lệ và lịch sử chuyến đi trong tài khoản của bạn.</p>
+        <h2>Tồn phòng hiện hành</h2>
+        <p>Mỗi lần đổi ngày hoặc cách thanh toán đều gọi lại dữ liệu hiện tại từ máy chủ.</p>
     </article>
 </section>
 

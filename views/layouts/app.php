@@ -34,6 +34,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
     </style>
     <link rel="stylesheet" href="<?= $assetUrl('/assets/css/app.css') ?>">
     <script src="<?= $assetUrl('/assets/js/properties.js') ?>" defer></script>
+    <script src="<?= $assetUrl('/assets/js/search.js') ?>" defer></script>
 </head>
 <body class="<?= $authenticated ? 'has-app-shell' : 'has-public-shell' ?>">
     <svg class="svg-sprite" width="0" height="0" aria-hidden="true" focusable="false">
@@ -115,7 +116,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
             </div>
         </div>
     <?php else: ?>
-        <header class="site-header"><div class="container site-header__inner"><a class="brand" href="<?= $baseUrl ?>/" aria-label="StayBooking"><img class="brand__logo" src="<?= $assetUrl('/assets/images/accommodation/shared/logoNew.png') ?>" width="186" height="62" alt=""></a><nav class="site-nav" aria-label="Tài khoản"><a class="nav-link" href="<?= $baseUrl ?>/auth/login">Đăng nhập</a><a class="button button--header" href="<?= $baseUrl ?>/auth/register">Đăng ký</a></nav></div></header>
+        <header class="site-header"><div class="container site-header__inner"><a class="brand" href="<?= $baseUrl ?>/" aria-label="StayBooking"><img class="brand__logo" src="<?= $assetUrl('/assets/images/accommodation/shared/logoNew.png') ?>" width="186" height="62" alt=""></a><nav class="site-nav" aria-label="Điều hướng công khai"><a class="nav-link" href="<?= $baseUrl ?>/#search">Tìm chỗ nghỉ</a><a class="nav-link" href="<?= $baseUrl ?>/auth/login">Đăng nhập</a><a class="button button--header" href="<?= $baseUrl ?>/auth/register">Đăng ký</a></nav></div></header>
         <?php if ($flashes !== []): ?><div class="container flash-region" aria-live="polite"><?php foreach ($flashes as $type => $messages): ?><?php foreach ($messages as $message): ?><div class="alert alert--<?= $type === 'success' ? 'success' : 'info' ?>"><?= $message ?></div><?php endforeach; ?><?php endforeach; ?></div><?php endif; ?>
         <main id="main-content" class="container page-content"><?= $content ?></main>
         <footer class="site-footer"><div class="container">StayBooking · Nền tảng đặt phòng tại TP.HCM</div></footer>
