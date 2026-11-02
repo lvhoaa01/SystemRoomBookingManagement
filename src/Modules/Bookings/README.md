@@ -92,6 +92,8 @@ booking, hủy/refund/waiver, đổi ngày lưu trú, no-show và completion.
 
 ## Ranh giới hiện tại
 
-Module chưa xử lý dashboard báo cáo và hàng lỗi payment/refund dành cho admin;
-đó là giai đoạn sau. Verified review thuộc module Reviews. Mọi use case mới vẫn
-phải giữ snapshot lịch sử, tenant scope, idempotency và lock order đã thiết lập.
+Dashboard báo cáo và hàng lỗi payment/refund dành cho admin là read model thuộc
+module Admin; Bookings chỉ cung cấp dữ liệu nguồn và tiếp tục sở hữu mọi chuyển
+trạng thái booking/payment. Verified review thuộc module Reviews. Mọi use case
+mới vẫn phải giữ snapshot lịch sử, tenant scope, idempotency và lock order đã
+thiết lập.
