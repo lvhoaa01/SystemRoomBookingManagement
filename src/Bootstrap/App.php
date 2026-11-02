@@ -31,6 +31,9 @@ use App\Modules\Bookings\Application\PaymentGateway;
 use App\Modules\Bookings\Application\PreviewService;
 use App\Modules\Bookings\Application\PreviewSnapshotFactory;
 use App\Modules\Bookings\Application\WaiverService;
+use App\Modules\Bookings\Application\NoShowService;
+use App\Modules\Bookings\Application\NoShowRefundService;
+use App\Modules\Bookings\Application\CompletionService;
 use App\Modules\Bookings\Http\BookingController;
 use App\Modules\Bookings\Http\BookingPortalController;
 use App\Modules\Bookings\Http\BookingViewPresenter;
@@ -44,6 +47,7 @@ use App\Modules\Bookings\Infrastructure\PaymentRepository;
 use App\Modules\Bookings\Infrastructure\PreviewRepository;
 use App\Modules\Bookings\Infrastructure\PreviewTokenSession;
 use App\Modules\Bookings\Infrastructure\WaiverRepository;
+use App\Modules\Bookings\Infrastructure\BookingLifecycleRepository;
 use App\Modules\Commercial\Application\ManageCancellationPolicyService;
 use App\Modules\Commercial\Application\CancellationCalculator;
 use App\Modules\Commercial\Application\ManageDailyRateService;
@@ -51,6 +55,7 @@ use App\Modules\Commercial\Application\ManagePromotionService;
 use App\Modules\Commercial\Application\ManageRoomProductService;
 use App\Modules\Commercial\Application\PriceCalculator;
 use App\Modules\Commercial\Application\StandardPriceCalculator;
+use App\Modules\Commercial\Application\NoShowFeeCalculator;
 use App\Modules\Commercial\Http\PartnerCommercialController;
 use App\Modules\Commercial\Infrastructure\CancellationPolicyRepository;
 use App\Modules\Commercial\Infrastructure\DailyRateRepository;
@@ -98,6 +103,9 @@ use App\Modules\Search\Application\SearchCriteriaFactory;
 use App\Modules\Search\Application\SearchService;
 use App\Modules\Search\Http\PublicSearchController;
 use App\Modules\Search\Infrastructure\SearchCatalogRepository;
+use App\Modules\Reviews\Application\ReviewService;
+use App\Modules\Reviews\Http\ReviewController;
+use App\Modules\Reviews\Infrastructure\ReviewRepository;
 use App\Shared\Audit\AuditTrail;
 use App\Shared\Audit\DatabaseAuditTrail;
 use App\Shared\Clock\ClockInterface;
@@ -422,6 +430,10 @@ final class App
             static fn (Container $container): WaiverRepository => new WaiverRepository($container->get(PDO::class)),
         );
         $container->singleton(
+            BookingLifecycleRepository::class,
+            static fn (Container $container): BookingLifecycleRepository => new BookingLifecycleRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
             CancellationCalculator::class,
             static fn (Container $_): CancellationCalculator => new CancellationCalculator(),
         );
@@ -482,6 +494,33 @@ final class App
                 $container->get(CancellationRefundService::class),
                 $container->get(TransactionManager::class),
                 $container->get(AuditTrail::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(NoShowFeeCalculator::class, static fn (Container $_): NoShowFeeCalculator => new NoShowFeeCalculator());
+        $container->singleton(
+            NoShowRefundService::class,
+            static fn (Container $container): NoShowRefundService => new NoShowRefundService(
+                $container->get(PDO::class), $container->get(BookingLifecycleRepository::class),
+                $container->get(PaymentRepository::class), $container->get(PaymentGateway::class),
+                $container->get(TransactionManager::class), $container->get(AuditTrail::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            NoShowService::class,
+            static fn (Container $container): NoShowService => new NoShowService(
+                $container->get(BookingLifecycleRepository::class), $container->get(PaymentRepository::class),
+                $container->get(NoShowFeeCalculator::class), $container->get(InventoryReservationService::class),
+                $container->get(NoShowRefundService::class), $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class), $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            CompletionService::class,
+            static fn (Container $container): CompletionService => new CompletionService(
+                $container->get(BookingLifecycleRepository::class), $container->get(InventoryReservationService::class),
+                $container->get(TransactionManager::class), $container->get(AuditTrail::class),
                 $container->get(ClockInterface::class),
             ),
         );
@@ -613,12 +652,32 @@ final class App
                 $container->get(CancellationQuoteService::class),
                 $container->get(CancellationService::class),
                 $container->get(WaiverService::class),
+                $container->get(NoShowService::class),
                 $container->get(BookingViewPresenter::class),
                 $container->get(IdentitySession::class),
                 $container->get(SessionBootstrap::class),
                 $container->get(ViewRenderer::class),
                 $container->get(FlashBag::class),
                 $container->get(AppConfig::class),
+            ),
+        );
+        $container->singleton(
+            ReviewRepository::class,
+            static fn (Container $container): ReviewRepository => new ReviewRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            ReviewService::class,
+            static fn (Container $container): ReviewService => new ReviewService(
+                $container->get(ReviewRepository::class), $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class), $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            ReviewController::class,
+            static fn (Container $container): ReviewController => new ReviewController(
+                $container->get(ReviewService::class), $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class), $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class), $container->get(AppConfig::class),
             ),
         );
         $container->singleton(

@@ -23,6 +23,7 @@ use App\Modules\Bookings\Application\DateChangeQuoteService;
 use App\Modules\Bookings\Application\DateChangeService;
 use App\Modules\Bookings\Application\WaiverDecision;
 use App\Modules\Bookings\Application\WaiverService;
+use App\Modules\Bookings\Application\NoShowService;
 use App\Modules\Bookings\Domain\Booking;
 use App\Modules\Identity\Domain\CurrentUser;
 use App\Modules\Identity\Domain\OrganizationContext;
@@ -45,6 +46,7 @@ final readonly class BookingPortalController
         private CancellationQuoteService $cancellationQuotes,
         private CancellationService $cancellations,
         private WaiverService $waivers,
+        private NoShowService $noShows,
         private BookingViewPresenter $presenter,
         private IdentitySession $identity,
         private SessionBootstrap $session,
@@ -252,6 +254,23 @@ final readonly class BookingPortalController
             $this->organization()->id,
         ));
         return $this->detailView($booking, '/partner/bookings', false);
+    }
+
+    public function partnerNoShow(Request $request): Response
+    {
+        $code = $this->code($request);
+        try {
+            $result = $this->noShows->mark($code, $this->organization()->id, $this->user()->id,
+                $request->requestId, $request->clientIp);
+            $this->flash->add('success', 'Đã đánh dấu no-show. Phí: ' . $result['fee']->decimal()
+                . ' ₫; hoàn dự kiến: ' . $result['expectedRefund']->decimal() . ' ₫.');
+        } catch (BookingException $exception) {
+            if ($exception->errorCode === 'BOOKING_NOT_FOUND') {
+                throw new NotFoundHttpException();
+            }
+            $this->flash->add('info', $exception->getMessage());
+        }
+        return Response::redirect($this->url('/partner/bookings/' . rawurlencode($code)), 303);
     }
 
     public function partnerWaivers(Request $request): Response

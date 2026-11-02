@@ -93,6 +93,20 @@ foreach ($waivers as $waiver) {
         <?php endif; ?>
 
         <?php if ($listPath === '/account/bookings'): ?>
+        <?php if ($booking['status'] === 'COMPLETED'): ?>
+        <section class="booking-card">
+            <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-star"/></svg></span><div><h2>Đánh giá kỳ lưu trú</h2><p>Chỉ một đánh giá trong vòng 90 ngày từ ngày trả phòng.</p></div></div>
+            <form class="booking-edit-form" method="post" action="<?= $baseUrl ?>/account/bookings/<?= rawurlencode((string) $booking['code']) ?>/review">
+                <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                <div class="field-grid"><label class="field"><span>Điểm tổng (1–10)</span><input type="number" name="overall" min="1" max="10" required></label><label class="field"><span>Sạch sẽ</span><input type="number" name="cleanliness" min="1" max="10"></label></div>
+                <div class="field-grid"><label class="field"><span>Vị trí</span><input type="number" name="location" min="1" max="10"></label><label class="field"><span>Nhân viên</span><input type="number" name="staff" min="1" max="10"></label></div>
+                <div class="field-grid"><label class="field"><span>Thoải mái</span><input type="number" name="comfort" min="1" max="10"></label><label class="field"><span>Tiện nghi</span><input type="number" name="facilities" min="1" max="10"></label></div>
+                <label class="field"><span>Đáng tiền</span><input type="number" name="value" min="1" max="10"></label>
+                <label class="field"><span>Bình luận</span><textarea name="comment" rows="4" maxlength="3000"></textarea></label>
+                <button class="button button--primary" type="submit">Đăng đánh giá</button>
+            </form>
+        </section>
+        <?php endif; ?>
         <section class="booking-card booking-cancellation-card">
             <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-review"/></svg></span><div><h2>Hủy đặt chỗ</h2><p>Phí được tính từ chính sách snapshot tại thời điểm đặt và được kiểm tra lại khi bạn xác nhận.</p></div></div>
             <?php if ($cancellationQuote !== null): ?>
@@ -141,6 +155,13 @@ foreach ($waivers as $waiver) {
             <?php if ($waivers !== []): ?>
                 <div class="waiver-history"><h3>Lịch sử yêu cầu</h3><?php foreach ($waivers as $waiver): ?><article><span class="booking-status booking-status--<?= strtolower((string) $waiver['status']) ?>"><i></i><?= $escape($waiver['status']) ?></span><p><?= $escape($waiver['reason']) ?></p><?php if ($waiver['response'] !== null): ?><small>Phản hồi: <?= $escape($waiver['response']) ?></small><?php endif; ?></article><?php endforeach; ?></div>
             <?php endif; ?>
+        </section>
+        <?php endif; ?>
+
+        <?php if ($listPath === '/partner/bookings' && $booking['status'] === 'CONFIRMED'): ?>
+        <section class="booking-card">
+            <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-clock"/></svg></span><div><h2>Khách không đến</h2><p>Chỉ dùng từ giờ nhận phòng đến hết ngày kế tiếp. Toàn bộ tồn sẽ được trả.</p></div></div>
+            <form method="post" action="<?= $baseUrl ?>/partner/bookings/<?= rawurlencode((string) $booking['code']) ?>/no-show"><input type="hidden" name="_token" value="<?= $csrfToken ?>"><button class="button button--danger" type="submit">Xác nhận no-show</button></form>
         </section>
         <?php endif; ?>
     </main>

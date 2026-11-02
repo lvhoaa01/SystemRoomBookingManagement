@@ -1,7 +1,7 @@
 # Bookings
 
 Module Bookings sở hữu preview, booking, snapshot lịch sử, payment, quản lý
-booking, hủy/refund/waiver và đổi ngày lưu trú.
+booking, hủy/refund/waiver, đổi ngày lưu trú, no-show và completion.
 
 ## Luồng preview
 
@@ -71,8 +71,27 @@ booking, hủy/refund/waiver và đổi ngày lưu trú.
   counter và audit thay đổi trong cùng transaction. Retry cùng `RequestID` và
   payload chỉ trả kết quả cũ.
 
+## No-show
+
+- Partner chỉ thao tác booking thuộc tổ chức trong session, từ giờ nhận phòng
+  đến hết ngày kế tiếp theo múi giờ cơ sở.
+- Phí được tính từ `SnapshotHuyJSON` của từng item; không đọc chính sách hiện
+  tại để sửa lịch sử.
+- Booking, toàn bộ ledger active, counter tồn, snapshot no-show và audit thay
+  đổi trong cùng transaction theo lock order booking → payment → ledger → tồn.
+- Online chỉ khởi tạo refund trong transaction. Gateway được gọi sau commit với
+  idempotency key ổn định; retry refund lỗi không release hoặc tính phí lần hai.
+- `DatCho.SoTienHoan` luôn bằng 0 cho no-show; số hoàn nằm ở `ThanhToan.DaHoan`.
+
+## Completion
+
+- `php bin/console.php booking:complete [limit]` quét batch booking confirmed đã
+  qua giờ trả phòng địa phương.
+- Mỗi booking được khóa và xử lý bằng transaction riêng: trả hold còn lại,
+  chuyển `COMPLETED` và ghi audit. Booking đã thành terminal không được chọn lại.
+
 ## Ranh giới hiện tại
 
-Module chưa xử lý no-show, completion, verified review và báo cáo quản trị; đó
-là các giai đoạn sau. Mọi use case mới vẫn phải giữ snapshot lịch sử, tenant
-scope, idempotency và lock order đã thiết lập.
+Module chưa xử lý dashboard báo cáo và hàng lỗi payment/refund dành cho admin;
+đó là giai đoạn sau. Verified review thuộc module Reviews. Mọi use case mới vẫn
+phải giữ snapshot lịch sử, tenant scope, idempotency và lock order đã thiết lập.
