@@ -15,6 +15,14 @@ use App\Http\Middleware\AuthMiddleware;
 use App\Http\Middleware\CsrfMiddleware;
 use App\Http\Middleware\PartnerContextMiddleware;
 use App\Http\Middleware\RequestIdMiddleware;
+use App\Modules\Admin\Application\AdminCatalogService;
+use App\Modules\Admin\Application\AuditLogService;
+use App\Modules\Admin\Application\ReportService;
+use App\Modules\Admin\Http\AdminCatalogController;
+use App\Modules\Admin\Http\AdminOperationsController;
+use App\Modules\Admin\Infrastructure\AdminCatalogRepository;
+use App\Modules\Admin\Infrastructure\AuditLogRepository;
+use App\Modules\Admin\Infrastructure\ReportRepository;
 use App\Modules\Bookings\Application\BookingAccessService;
 use App\Modules\Bookings\Application\BookingModificationService;
 use App\Modules\Bookings\Application\BookingService;
@@ -678,6 +686,50 @@ final class App
                 $container->get(ReviewService::class), $container->get(IdentitySession::class),
                 $container->get(SessionBootstrap::class), $container->get(ViewRenderer::class),
                 $container->get(FlashBag::class), $container->get(AppConfig::class),
+            ),
+        );
+        $container->singleton(
+            AdminCatalogRepository::class,
+            static fn (Container $container): AdminCatalogRepository => new AdminCatalogRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            AdminCatalogService::class,
+            static fn (Container $container): AdminCatalogService => new AdminCatalogService(
+                $container->get(AdminCatalogRepository::class), $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+            ),
+        );
+        $container->singleton(
+            AuditLogRepository::class,
+            static fn (Container $container): AuditLogRepository => new AuditLogRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            AuditLogService::class,
+            static fn (Container $container): AuditLogService => new AuditLogService($container->get(AuditLogRepository::class)),
+        );
+        $container->singleton(
+            ReportRepository::class,
+            static fn (Container $container): ReportRepository => new ReportRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            ReportService::class,
+            static fn (Container $container): ReportService => new ReportService($container->get(ReportRepository::class)),
+        );
+        $container->singleton(
+            AdminCatalogController::class,
+            static fn (Container $container): AdminCatalogController => new AdminCatalogController(
+                $container->get(AdminCatalogService::class), $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class), $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class), $container->get(AppConfig::class),
+            ),
+        );
+        $container->singleton(
+            AdminOperationsController::class,
+            static fn (Container $container): AdminOperationsController => new AdminOperationsController(
+                $container->get(AuditLogService::class), $container->get(ReportService::class),
+                $container->get(IdentitySession::class), $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class), $container->get(FlashBag::class),
+                $container->get(AppConfig::class), $container->get(ClockInterface::class),
             ),
         );
         $container->singleton(

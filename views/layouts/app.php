@@ -89,8 +89,11 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
                         <a<?= $activeNavigation === 'properties' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/properties/review"><svg class="app-icon"><use href="#icon-review"/></svg><span>Kiểm duyệt cơ sở</span></a>
                         <a<?= $activeNavigation === 'bookings' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/bookings"><svg class="app-icon"><use href="#icon-bed"/></svg><span>Hỗ trợ booking</span></a>
                         <a<?= $activeNavigation === 'reviews' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/reviews"><svg class="app-icon"><use href="#icon-star"/></svg><span>Đánh giá</span></a>
-                        <span class="is-disabled"><svg class="app-icon"><use href="#icon-users"/></svg><span>Tài khoản</span></span>
-                        <span class="is-disabled"><svg class="app-icon"><use href="#icon-file"/></svg><span>Nhật ký hệ thống</span></span>
+                        <a<?= $activeNavigation === 'accounts' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/accounts"><svg class="app-icon"><use href="#icon-users"/></svg><span>Tài khoản</span></a>
+                        <a<?= $activeNavigation === 'facilities' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/facilities"><svg class="app-icon"><use href="#icon-settings"/></svg><span>Tiện nghi</span></a>
+                        <a<?= $activeNavigation === 'audits' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/audits"><svg class="app-icon"><use href="#icon-file"/></svg><span>Nhật ký hệ thống</span></a>
+                        <a<?= $activeNavigation === 'payment-issues' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/payment-issues"><svg class="app-icon"><use href="#icon-clock"/></svg><span>Lỗi thanh toán</span></a>
+                        <a<?= $activeNavigation === 'reports' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/reports"><svg class="app-icon"><use href="#icon-chart"/></svg><span>Báo cáo</span></a>
                     <?php else: ?>
                         <span class="app-navigation__section">Không gian đối tác</span>
                         <span class="is-disabled"><svg class="app-icon"><use href="#icon-grid"/></svg><span>Tổng quan</span></span>
@@ -99,7 +102,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
                         <a<?= $activeNavigation === 'waivers' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/partner/waivers"><svg class="app-icon"><use href="#icon-review"/></svg><span>Miễn phí hủy</span></a>
                         <span class="is-disabled"><svg class="app-icon"><use href="#icon-users"/></svg><span>Khách hàng</span></span>
                         <span class="is-disabled"><svg class="app-icon"><use href="#icon-chart"/></svg><span>Doanh thu</span></span>
-                        <span class="is-disabled"><svg class="app-icon"><use href="#icon-file"/></svg><span>Báo cáo</span></span>
+                        <a<?= $activeNavigation === 'reports' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/partner/reports"><svg class="app-icon"><use href="#icon-file"/></svg><span>Báo cáo</span></a>
                     <?php endif; ?>
                 </nav>
                 <div class="app-sidebar__footer"><span class="is-disabled"><svg class="app-icon"><use href="#icon-settings"/></svg><span>Cài đặt</span></span></div>

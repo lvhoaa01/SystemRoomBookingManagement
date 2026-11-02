@@ -28,6 +28,8 @@ use App\Modules\Properties\Http\PartnerPropertyController;
 use App\Modules\Properties\Http\PropertyImageController;
 use App\Modules\Search\Http\PublicSearchController;
 use App\Modules\Reviews\Http\ReviewController;
+use App\Modules\Admin\Http\AdminCatalogController;
+use App\Modules\Admin\Http\AdminOperationsController;
 use App\Shared\Http\FlashBag;
 use App\Shared\Http\ViewRenderer;
 
@@ -150,6 +152,8 @@ return static function (Router $router, Container $container): void {
     $router->get('/partner/bookings', $bookingPortal->partnerIndex(...), $partnerBookingRead, 'partner.bookings.index');
     $router->get('/partner/bookings/{code}', $bookingPortal->partnerShow(...), $partnerBookingRead, 'partner.bookings.show');
     $router->post('/partner/bookings/{code}/no-show', $bookingPortal->partnerNoShow(...), $partnerBookingWrite, 'partner.bookings.no-show');
+    $adminOperations = $container->get(AdminOperationsController::class);
+    $router->get('/partner/reports', $adminOperations->partnerReports(...), $partnerBookingRead, 'partner.reports.index');
     $router->get('/partner/waivers', $bookingPortal->partnerWaivers(...), $partnerBookingRead, 'partner.waivers.index');
     $router->post('/partner/waivers/{waiverId}/decision', $bookingPortal->partnerWaiverDecision(...), $partnerBookingWrite, 'partner.waivers.decision');
     $router->get('/partner/properties', $partner->index(...), $partnerRead, 'partner.properties.index');
@@ -242,6 +246,15 @@ return static function (Router $router, Container $container): void {
     $admin = $container->get(AdminPropertyController::class);
     $adminRead = [$requestId, $auth, $adminRole];
     $adminWrite = [$requestId, $csrf, $auth, $adminRole];
+    $adminCatalog = $container->get(AdminCatalogController::class);
+    $router->get('/admin/accounts', $adminCatalog->accounts(...), $adminRead, 'admin.accounts.index');
+    $router->post('/admin/accounts/{userId}/status', $adminCatalog->accountStatus(...), $adminWrite, 'admin.accounts.status');
+    $router->get('/admin/facilities', $adminCatalog->facilities(...), $adminRead, 'admin.facilities.index');
+    $router->post('/admin/facilities', $adminCatalog->createFacility(...), $adminWrite, 'admin.facilities.create');
+    $router->post('/admin/facilities/{facilityId}/update', $adminCatalog->updateFacility(...), $adminWrite, 'admin.facilities.update');
+    $router->get('/admin/audits', $adminOperations->audits(...), $adminRead, 'admin.audits.index');
+    $router->get('/admin/reports', $adminOperations->adminReports(...), $adminRead, 'admin.reports.index');
+    $router->get('/admin/payment-issues', $adminOperations->paymentIssues(...), $adminRead, 'admin.payment-issues.index');
     $router->get('/admin/reviews', $reviewController->adminIndex(...), $adminRead, 'admin.reviews.index');
     $router->post('/admin/reviews/{reviewId}/moderate', $reviewController->adminModerate(...), $adminWrite, 'admin.reviews.moderate');
     $router->get('/admin/bookings', $bookingPortal->adminIndex(...), $adminRead, 'admin.bookings.index');
