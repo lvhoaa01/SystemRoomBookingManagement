@@ -21,6 +21,12 @@ final readonly class MockPaymentGateway implements PaymentGateway
 
     public function refund(PaymentGatewayRequest $request): PaymentGatewayResult
     {
+        if ($this->outcome === PaymentGatewayResult::FAILED) {
+            return new PaymentGatewayResult(PaymentGatewayResult::FAILED, null, 'MOCK_REFUND_DECLINED');
+        }
+        if ($this->outcome === PaymentGatewayResult::TIMEOUT) {
+            return new PaymentGatewayResult(PaymentGatewayResult::TIMEOUT, null, 'MOCK_REFUND_TIMEOUT');
+        }
         return new PaymentGatewayResult(
             PaymentGatewayResult::SUCCESS,
             'MOCK-REFUND-' . strtoupper(substr(hash('sha256', $request->idempotencyKey), 0, 20)),
