@@ -1,13 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-auto-submit]').forEach((field) => {
-        field.addEventListener('change', () => field.form?.requestSubmit());
-    });
-
-    const appShell = document.querySelector('[data-app-shell]');
-    document.querySelectorAll('[data-sidebar-toggle]').forEach((button) => {
-        button.addEventListener('click', () => appShell?.classList.toggle('is-sidebar-open'));
-    });
-
     document.querySelectorAll('[data-toggle-target]').forEach((trigger) => {
         trigger.addEventListener('click', () => {
             const target = document.getElementById(trigger.dataset.toggleTarget);

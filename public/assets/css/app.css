@@ -545,7 +545,11 @@ textarea {
 
 .button:focus-visible,
 input:focus-visible,
-a:focus-visible {
+a:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
     outline: 3px solid var(--yellow-500);
     outline-offset: 2px;
 }
@@ -811,6 +815,8 @@ a:focus-visible {
     color: #dcecff;
     font-size: 0.9rem;
 }
+.site-footer .container { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.site-footer a { color: #fff; font-weight: 750; }
 
 .site-footer__inner { display: flex; justify-content: space-between; gap: 20px; }
 
@@ -1342,6 +1348,7 @@ a:focus-visible {
 .stay-card__media img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .25s; }
 .stay-card:hover .stay-card__media img { transform: scale(1.03); }
 .stay-card__media > span { position: absolute; left: 12px; top: 12px; padding: 5px 9px; border-radius: 999px; background: rgba(0,34,79,.86); color: #fff; font-size: .67rem; letter-spacing: .05em; text-transform: uppercase; }
+.illustration-badge { position: absolute; right: 10px; bottom: 10px; z-index: 2; padding: 5px 8px; border-radius: 999px; background: rgba(255,255,255,.92); color: var(--blue-950); font-size: .62rem; font-weight: 800; box-shadow: 0 2px 8px rgba(0,34,79,.16); }
 .stay-card__body { min-width: 0; display: grid; padding: 18px; }
 .stay-card__heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .stay-card__heading h2 { margin: 3px 0 4px; font-size: 1.3rem; letter-spacing: -.02em; }
@@ -1380,7 +1387,7 @@ a:focus-visible {
 .stay-detail-score { display: flex; align-items: center; gap: 8px; }
 .stay-detail-score > strong { padding: 11px; border-radius: 10px 10px 10px 0; background: var(--blue-950); color: #fff; font-size: 1.3rem; }
 .stay-detail-score span, .stay-detail-score small { display: block; color: var(--ink-500); font-size: .72rem; }
-.stay-gallery { overflow: hidden; height: 430px; display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 4px; margin-bottom: 26px; border-radius: 15px; background: #dce8f5; }
+.stay-gallery { position: relative; overflow: hidden; height: 430px; display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 4px; margin-bottom: 26px; border-radius: 15px; background: #dce8f5; }
 .stay-gallery img { width: 100%; height: 100%; object-fit: cover; }
 .stay-gallery__cover { grid-row: 1 / -1; }
 .stay-detail-layout { display: grid; grid-template-columns: minmax(0,1fr) 285px; gap: 24px; align-items: start; }
@@ -1402,7 +1409,7 @@ a:focus-visible {
 .allocation-list { display: grid; }
 .allocation-card { display: grid; grid-template-columns: 145px minmax(160px,1.25fr) minmax(150px,1fr) 130px; gap: 16px; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); }
 .allocation-card--compact { grid-template-columns: minmax(160px,1.25fr) minmax(150px,1fr) 130px; }
-.allocation-card__media { overflow: hidden; height: 105px; border-radius: 9px; background: var(--blue-100); }
+.allocation-card__media { position: relative; overflow: hidden; height: 105px; border-radius: 9px; background: var(--blue-100); }
 .allocation-card__media img { width: 100%; height: 100%; object-fit: cover; }
 .allocation-card__info > span { color: var(--blue-700); font-size: .65rem; font-weight: 800; text-transform: uppercase; }
 .allocation-card__info h3 { margin: 3px 0; font-size: 1rem; }
@@ -1454,6 +1461,40 @@ a:focus-visible {
     .availability-panel__heading, .stay-detail-header { align-items: stretch; flex-direction: column; }
     .timing-toggle { width: 100%; }
     .timing-toggle button { min-width: 0; flex: 1; }
+}
+
+/* Giai đoạn 16: trạng thái UI, accessibility và provenance */
+form[aria-busy="true"] { cursor: wait; }
+button:disabled, input[type="submit"]:disabled { cursor: not-allowed; opacity: .62; transform: none !important; }
+.payment-timing-badge { display: inline-flex !important; width: fit-content; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: .64rem !important; font-weight: 800; line-height: 1.25; }
+.payment-timing-badge--online { background: #e5f0ff; color: #0758b7 !important; }
+.payment-timing-badge--property { background: #e8f7ef; color: #176b43 !important; }
+.source-page-header { max-width: 760px; margin-bottom: 24px; }
+.source-page-header h1 { margin: 7px 0 9px; color: var(--blue-950); font-size: clamp(2rem,5vw,3.2rem); }
+.source-page-header p, .source-notice p { color: var(--ink-600); line-height: 1.65; }
+.source-notice { margin-bottom: 20px; padding: 20px; border: 1px solid #b8d4f0; border-radius: 12px; background: var(--blue-50); }
+.source-notice h2 { margin: 0 0 7px; color: var(--blue-950); font-size: 1rem; }
+.source-notice p { margin: 0; }
+.source-list { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-soft); }
+.source-entry { display: grid; grid-template-columns: minmax(180px,1fr) 140px auto; align-items: center; gap: 20px; padding: 15px 20px; border-top: 1px solid var(--line); }
+.source-entry strong, .source-entry small { display: block; }
+.source-entry small { margin-top: 4px; color: var(--ink-500); }
+.source-entry > span { color: var(--blue-900); font-size: .72rem; font-weight: 800; }
+.source-entry nav { display: flex; gap: 12px; }
+.source-entry a { color: var(--blue-700); font-size: .72rem; font-weight: 750; }
+.error-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(145deg,#eff6ff,#fff); }
+.error-state { width: min(620px,100%); padding: 40px; border: 1px solid #c9dbed; border-radius: 18px; background: #fff; text-align: center; box-shadow: var(--shadow); }
+.error-state > span { color: var(--blue-700); font-size: 3rem; font-weight: 900; }
+.error-state h1 { margin: 8px 0; color: var(--blue-950); }
+.error-state p { color: var(--ink-600); }
+.error-state div { display: flex; justify-content: center; gap: 10px; margin: 24px 0; }
+.error-state small { color: var(--ink-500); }
+@media (max-width: 720px) {
+    .site-footer .container, .source-entry { align-items: flex-start; grid-template-columns: 1fr; flex-direction: column; }
+    .source-entry { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
 
 /* Giai đoạn 15: admin, audit và báo cáo */

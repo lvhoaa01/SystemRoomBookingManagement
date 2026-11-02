@@ -51,13 +51,18 @@ final readonly class ExceptionHandler
         }
 
         $title = $mapped['status'] >= 500 ? 'Hệ thống tạm thời gặp sự cố' : 'Không thể xử lý yêu cầu';
-        $body = '<!doctype html><html lang="vi"><meta charset="utf-8"><title>'
-            . htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
-            . '</title><h1>' . htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
-            . '</h1><p>' . htmlspecialchars($mapped['message'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
-            . '</p><small>Mã yêu cầu: '
-            . htmlspecialchars($request->requestId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
-            . '</small></html>';
+        $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $baseUrl = rtrim($this->config->url, '/');
+        $retryUrl = $request->method === 'GET' ? $baseUrl . $request->path : $baseUrl . '/';
+        $body = '<!doctype html><html lang="vi"><head><meta charset="utf-8">'
+            . '<meta name="viewport" content="width=device-width, initial-scale=1">'
+            . '<title>' . $escape($title) . '</title><link rel="stylesheet" href="'
+            . $escape($baseUrl . '/assets/css/app.css') . '"></head><body class="error-page">'
+            . '<main class="error-state"><span>' . $mapped['status'] . '</span><h1>' . $escape($title)
+            . '</h1><p>' . $escape($mapped['message']) . '</p><div><a class="button button--primary" href="'
+            . $escape($retryUrl) . '">Thử lại</a><a class="button button--secondary" href="' . $escape($baseUrl . '/')
+            . '">Về trang chủ</a></div><small>Mã yêu cầu: ' . $escape($request->requestId)
+            . ' · ' . $escape($mapped['code']) . '</small></main></body></html>';
 
         return Response::html($body, $mapped['status'], $headers);
     }

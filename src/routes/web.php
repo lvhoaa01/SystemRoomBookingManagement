@@ -25,6 +25,7 @@ use App\Modules\Bookings\Http\BookingPortalController;
 use App\Modules\Commercial\Http\PartnerCommercialController;
 use App\Modules\Inventory\Http\PartnerInventoryController;
 use App\Modules\Properties\Http\AdminPropertyController;
+use App\Modules\Properties\Http\ImageSourceController;
 use App\Modules\Properties\Http\PartnerPropertyController;
 use App\Modules\Properties\Http\PropertyImageController;
 use App\Modules\Search\Http\PublicSearchController;
@@ -109,6 +110,7 @@ return static function (Router $router, Container $container): void {
         [$requestId],
         'health',
     );
+    $router->get('/image-sources', ($container->get(ImageSourceController::class))(...), [$requestId], 'image-sources');
 
     $publicSearch = $container->get(PublicSearchController::class);
     $router->get('/search', $publicSearch->search(...), [$requestId], 'search.index');

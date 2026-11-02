@@ -97,6 +97,7 @@ use App\Modules\Properties\Application\UpdateFacilitiesService;
 use App\Modules\Properties\Application\UpdatePropertyService;
 use App\Modules\Properties\Domain\PropertyReadinessChecker;
 use App\Modules\Properties\Http\AdminPropertyController;
+use App\Modules\Properties\Http\ImageSourceController;
 use App\Modules\Properties\Http\PartnerPropertyController;
 use App\Modules\Properties\Http\PropertyImageController;
 use App\Modules\Properties\Infrastructure\FacilityRepository;
@@ -956,6 +957,15 @@ final class App
         $container->instance(
             PropertyImageController::class,
             new PropertyImageController($projectRoot . '/storage/uploads/properties'),
+        );
+        $container->singleton(
+            ImageSourceController::class,
+            static fn (Container $container): ImageSourceController => new ImageSourceController(
+                $projectRoot . '/public/assets/images/accommodation/majestic/ASSET_LOCK.json',
+                $container->get(IdentitySession::class), $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class), $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
         );
 
         // Đăng ký router

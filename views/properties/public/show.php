@@ -11,7 +11,10 @@ $currentUserRole = $currentUserRole ?? null;
 $property = $availability['property'];
 $allocation = $availability['allocation'];
 $images = $property['images'];
-$coverPath = $images[0]['path'] ?? '/assets/images/accommodation/shared/accommodation-cover.png';
+$cover = $images[0] ?? ['path' => '/assets/images/accommodation/shared/accommodation-cover.png', 'alt' => 'Ảnh minh họa cơ sở lưu trú'];
+foreach ($images as $image) { if (($image['cover'] ?? false) === true) { $cover = $image; break; } }
+$coverPath = $cover['path'];
+$coverIllustrative = str_contains((string)$coverPath, '/shared/') || str_starts_with((string)($cover['alt'] ?? ''), 'Ảnh minh họa');
 $asset = static fn (string $path): string => $baseUrl . '/' . ltrim($path, '/');
 $productMap = [];
 foreach ($property['roomProducts'] as $product) { $productMap[$product['productId']] = $product; }
@@ -33,8 +36,9 @@ $selectedValue = $allocation === null ? '' : implode(',', array_map(
 </header>
 
 <section class="stay-gallery">
-    <img class="stay-gallery__cover" src="<?= $asset((string) $coverPath) ?>" alt="Ảnh bìa <?= $property['name'] ?>">
+    <img class="stay-gallery__cover" src="<?= $asset((string) $coverPath) ?>" alt="<?= $cover['alt'] ?? 'Ảnh bìa ' . $property['name'] ?>">
     <?php foreach (array_slice($images, 1, 4) as $image): ?><img src="<?= $asset((string) $image['path']) ?>" alt="<?= $image['alt'] ?? $property['name'] ?>"><?php endforeach; ?>
+    <?php if($coverIllustrative):?><span class="illustration-badge">Ảnh minh họa</span><?php endif;?>
 </section>
 
 <div class="stay-detail-layout">
@@ -46,7 +50,7 @@ $selectedValue = $allocation === null ? '' : implode(',', array_map(
             <div class="allocation-list" data-allocation-list>
                 <?php if ($allocation === null): ?><div class="search-empty"><h3>Timing này hiện không còn tổ hợp phù hợp</h3><p>Hãy thử nhánh thanh toán còn lại hoặc đổi ngày.</p></div><?php else: ?>
                     <?php foreach ($allocation['rooms'] as $room): ?><?php $product = $productMap[$room['productId']] ?? null; ?>
-                        <article class="allocation-card"><div class="allocation-card__media"><img src="<?= $asset((string) ($product['images'][0]['path'] ?? '/assets/images/accommodation/shared/room-placeholder.png')) ?>" alt="<?= $product['roomTypeName'] ?? 'Phòng lưu trú' ?>"></div><div class="allocation-card__info"><span>Phòng <?= $room['roomOrder'] ?></span><h3><?= $product['roomTypeName'] ?? 'Phòng phù hợp' ?></h3><p><?= $product['maximumAdults'] ?? $room['party']['adults'] ?> người lớn tối đa · <?= $product['areaSquareMeters'] ?? '—' ?> m²</p><div><?php foreach (array_slice($product['facilities'] ?? [], 0, 3) as $facility): ?><small><?= $facility['name'] ?></small><?php endforeach; ?></div></div><div class="allocation-card__product"><strong><?= $product['productName'] ?? 'Lựa chọn phòng' ?></strong><span><?= ($product['mealType'] ?? '') === 'BREAKFAST_INCLUDED' ? 'Có bữa sáng' : 'Phòng không kèm bữa' ?></span><span><?= ($product['cancellationPolicy']['policyType'] ?? '') === 'FLEXIBLE' ? 'Hủy theo chính sách linh hoạt' : 'Không hoàn tiền' ?></span></div><div class="allocation-card__price"><span><?= count($room['priceBreakdown']['nights']) ?> đêm</span><strong><?= number_format((float) $room['priceBreakdown']['grandTotal']['amount'], 0, ',', '.') ?> ₫</strong><small>Đã gồm thuế và phí</small></div></article>
+                        <?php $roomImage=$product['images'][0]??['path'=>'/assets/images/accommodation/shared/room-placeholder.png','alt'=>'Ảnh minh họa phòng lưu trú'];$roomIllustrative=str_contains((string)$roomImage['path'],'/shared/')||str_starts_with((string)($roomImage['alt']??''),'Ảnh minh họa');?><article class="allocation-card"><div class="allocation-card__media"><img src="<?= $asset((string)$roomImage['path']) ?>" alt="<?= $roomImage['alt']??($product['roomTypeName']??'Phòng lưu trú') ?>"><?php if($roomIllustrative):?><small class="illustration-badge">Ảnh minh họa</small><?php endif;?></div><div class="allocation-card__info"><span>Phòng <?= $room['roomOrder'] ?></span><h3><?= $product['roomTypeName'] ?? 'Phòng phù hợp' ?></h3><p><?= $product['maximumAdults'] ?? $room['party']['adults'] ?> người lớn tối đa · <?= $product['areaSquareMeters'] ?? '—' ?> m²</p><div><?php foreach (array_slice($product['facilities'] ?? [], 0, 3) as $facility): ?><small><?= $facility['name'] ?></small><?php endforeach; ?></div></div><div class="allocation-card__product"><strong><?= $product['productName'] ?? 'Lựa chọn phòng' ?></strong><span><?= ($product['mealType'] ?? '') === 'BREAKFAST_INCLUDED' ? 'Có bữa sáng' : 'Phòng không kèm bữa' ?></span><span class="payment-timing-badge payment-timing-badge--<?= $availability['paymentTiming']==='PAY_ONLINE'?'online':'property' ?>"><?= $availability['paymentTiming']==='PAY_ONLINE'?'Trả trực tuyến':'Trả tại cơ sở' ?></span><span><?= ($product['cancellationPolicy']['policyType'] ?? '') === 'FLEXIBLE' ? 'Hủy theo chính sách linh hoạt' : 'Không hoàn tiền' ?></span></div><div class="allocation-card__price"><span><?= count($room['priceBreakdown']['nights']) ?> đêm</span><strong><?= number_format((float) $room['priceBreakdown']['grandTotal']['amount'], 0, ',', '.') ?> ₫</strong><small>Đã gồm thuế và phí</small></div></article>
                     <?php endforeach; ?>
                     <div class="allocation-total"><div><span>Tổng cho <?= count($allocation['rooms']) ?> phòng</span><small>Giá sẽ được kiểm tra lại trước khi xác nhận</small></div><strong><?= number_format((float) $allocation['grandTotal']['amount'], 0, ',', '.') ?> ₫</strong><?php if ($currentUserRole === 'CUSTOMER'): ?><button class="button button--primary" type="submit" form="preview-create-form">Tiếp tục xác nhận</button><?php elseif ($currentUserRole === null): ?><a class="button button--primary" href="<?= $baseUrl ?>/auth/login">Đăng nhập để tiếp tục</a><?php else: ?><button class="button button--primary" type="button" disabled>Chỉ dành cho khách hàng</button><?php endif; ?></div>
                 <?php endif; ?>

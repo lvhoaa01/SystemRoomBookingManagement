@@ -30,6 +30,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
     <title><?= $title ?></title>
     <meta name="color-scheme" content="light">
     <link rel="stylesheet" href="<?= $assetUrl('/assets/css/app.css') ?>">
+    <script src="<?= $assetUrl('/assets/js/app.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/properties.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/search.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/booking.js') ?>" defer></script>
@@ -106,7 +107,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
 
             <div class="app-workspace">
                 <header class="app-topbar">
-                    <button class="icon-button app-topbar__menu" type="button" data-sidebar-toggle aria-label="Mở menu"><svg class="app-icon"><use href="#icon-menu"/></svg></button>
+                        <button class="icon-button app-topbar__menu" type="button" data-sidebar-toggle aria-expanded="false" aria-label="Mở menu"><svg class="app-icon"><use href="#icon-menu"/></svg></button>
                     <div class="app-topbar__context"><?= $currentUserRole === 'ADMIN' ? 'Quản trị hệ thống' : 'Partner Hub' ?></div>
                     <div class="app-topbar__account">
                         <button class="icon-button" type="button" aria-label="Thông báo"><svg class="app-icon"><use href="#icon-bell"/></svg></button>
@@ -124,7 +125,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
         <header class="site-header"><div class="container site-header__inner"><a class="brand" href="<?= $baseUrl ?>/" aria-label="StayBooking"><img class="brand__logo" src="<?= $assetUrl('/assets/images/accommodation/shared/logoNew.png') ?>" width="186" height="62" alt=""></a><nav class="site-nav" aria-label="Điều hướng công khai"><a class="nav-link" href="<?= $baseUrl ?>/#search">Tìm chỗ nghỉ</a><?php if ($authenticated): ?><?php if ($currentUserRole === 'CUSTOMER'): ?><a class="nav-link" href="<?= $baseUrl ?>/account/bookings">Đặt chỗ của tôi</a><?php endif; ?><span class="customer-nav-name"><?= $currentUserName ?></span><form method="post" action="<?= $baseUrl ?>/auth/logout"><input type="hidden" name="_token" value="<?= $csrfToken ?>"><button class="button button--header" type="submit">Đăng xuất</button></form><?php else: ?><a class="nav-link" href="<?= $baseUrl ?>/auth/login">Đăng nhập</a><a class="button button--header" href="<?= $baseUrl ?>/auth/register">Đăng ký</a><?php endif; ?></nav></div></header>
         <?php if ($flashes !== []): ?><div class="container flash-region" aria-live="polite"><?php foreach ($flashes as $type => $messages): ?><?php foreach ($messages as $message): ?><div class="alert alert--<?= $type === 'success' ? 'success' : 'info' ?>"><?= $message ?></div><?php endforeach; ?><?php endforeach; ?></div><?php endif; ?>
         <main id="main-content" class="container page-content"><?= $content ?></main>
-        <footer class="site-footer"><div class="container">StayBooking · Nền tảng đặt phòng tại TP.HCM</div></footer>
+        <footer class="site-footer"><div class="container"><span>StayBooking · Nền tảng đặt phòng tại TP.HCM</span><a href="<?= $baseUrl ?>/image-sources">Nguồn ảnh</a></div></footer>
     <?php endif; ?>
 </body>
 </html>

@@ -71,6 +71,22 @@ final class SecurityContractTest extends TestCase
         self::assertSame('DENY', $response->headers()['X-Frame-Options']);
         self::assertStringNotContainsString('<style', $response->body());
         self::assertDoesNotMatchRegularExpression('/\son[a-z]+\s*=/i', $response->body());
+        self::assertMatchesRegularExpression('~/assets/js/app\.js\?v=\d+~', $response->body());
+        self::assertStringContainsString('/image-sources', $response->body());
+    }
+
+    public function test_image_source_page_exposes_attribution_and_shared_asset_notice(): void
+    {
+        $response = $this->app->handle(new Request(
+            'GET', '/image-sources', requestId: 'security-image-sources',
+        ));
+
+        self::assertSame(200, $response->status());
+        self::assertStringContainsString('Nguồn ảnh', $response->body());
+        self::assertStringContainsString('Wikimedia Commons', $response->body());
+        self::assertStringContainsString('accommodation-cover.png', $response->body());
+        self::assertStringContainsString('creativecommons.org', $response->body());
+        self::assertStringContainsString('noopener noreferrer', $response->body());
     }
 
     public function test_preview_endpoint_returns_429_after_session_ip_limit(): void

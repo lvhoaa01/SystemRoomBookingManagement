@@ -28,7 +28,7 @@ foreach ($waivers as $waiver) {
     <main class="booking-detail-main">
         <section class="booking-card">
             <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-building"/></svg></span><div><h2><?= $booking['property']['name'] ?></h2><p><?= $booking['property']['address'] ?></p></div></div>
-            <div class="booking-stay-grid"><div><span>Nhận phòng</span><strong><?= $date($booking['checkIn']) ?></strong></div><div><span>Trả phòng</span><strong><?= $date($booking['checkOut']) ?></strong></div><div><span>Thanh toán</span><strong><?= $booking['paymentTiming'] === 'PAY_ONLINE' ? 'Trực tuyến' : 'Tại cơ sở' ?></strong></div></div>
+            <div class="booking-stay-grid"><div><span>Nhận phòng</span><strong><?= $date($booking['checkIn']) ?></strong></div><div><span>Trả phòng</span><strong><?= $date($booking['checkOut']) ?></strong></div><div><span>Thanh toán</span><strong class="payment-timing-badge payment-timing-badge--<?= $booking['paymentTiming']==='PAY_ONLINE'?'online':'property' ?>"><?= $booking['paymentTiming'] === 'PAY_ONLINE' ? 'Trực tuyến' : 'Tại cơ sở' ?></strong></div></div>
         </section>
 
         <section class="booking-card">
