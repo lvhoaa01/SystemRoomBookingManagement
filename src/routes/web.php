@@ -27,6 +27,7 @@ use App\Modules\Properties\Http\AdminPropertyController;
 use App\Modules\Properties\Http\PartnerPropertyController;
 use App\Modules\Properties\Http\PropertyImageController;
 use App\Modules\Search\Http\PublicSearchController;
+use App\Modules\Reviews\Http\ReviewController;
 use App\Shared\Http\FlashBag;
 use App\Shared\Http\ViewRenderer;
 
@@ -138,6 +139,8 @@ return static function (Router $router, Container $container): void {
     $router->post('/account/bookings/{code}/cancel', $bookingPortal->customerCancel(...), $customerWrite, 'account.bookings.cancel');
     $router->post('/account/bookings/{code}/waiver', $bookingPortal->customerWaiver(...), $customerWrite, 'account.bookings.waiver');
     $router->post('/account/bookings/{code}/waiver/withdraw', $bookingPortal->customerWithdrawWaiver(...), $customerWrite, 'account.bookings.waiver-withdraw');
+    $reviewController = $container->get(ReviewController::class);
+    $router->post('/account/bookings/{code}/review', $reviewController->create(...), $customerWrite, 'account.bookings.review');
 
     $partner = $container->get(PartnerPropertyController::class);
     $partnerRead = [$requestId, $auth, $partnerRole, $partnerContext];
@@ -146,6 +149,7 @@ return static function (Router $router, Container $container): void {
     $partnerBookingWrite = [$requestId, $csrf, $auth, $partnerRole];
     $router->get('/partner/bookings', $bookingPortal->partnerIndex(...), $partnerBookingRead, 'partner.bookings.index');
     $router->get('/partner/bookings/{code}', $bookingPortal->partnerShow(...), $partnerBookingRead, 'partner.bookings.show');
+    $router->post('/partner/bookings/{code}/no-show', $bookingPortal->partnerNoShow(...), $partnerBookingWrite, 'partner.bookings.no-show');
     $router->get('/partner/waivers', $bookingPortal->partnerWaivers(...), $partnerBookingRead, 'partner.waivers.index');
     $router->post('/partner/waivers/{waiverId}/decision', $bookingPortal->partnerWaiverDecision(...), $partnerBookingWrite, 'partner.waivers.decision');
     $router->get('/partner/properties', $partner->index(...), $partnerRead, 'partner.properties.index');
@@ -238,6 +242,8 @@ return static function (Router $router, Container $container): void {
     $admin = $container->get(AdminPropertyController::class);
     $adminRead = [$requestId, $auth, $adminRole];
     $adminWrite = [$requestId, $csrf, $auth, $adminRole];
+    $router->get('/admin/reviews', $reviewController->adminIndex(...), $adminRead, 'admin.reviews.index');
+    $router->post('/admin/reviews/{reviewId}/moderate', $reviewController->adminModerate(...), $adminWrite, 'admin.reviews.moderate');
     $router->get('/admin/bookings', $bookingPortal->adminIndex(...), $adminRead, 'admin.bookings.index');
     $router->get('/admin/bookings/{code}', $bookingPortal->adminShow(...), $adminRead, 'admin.bookings.show');
     $router->get('/admin/properties/review', $admin->index(...), $adminRead, 'admin.properties.index');

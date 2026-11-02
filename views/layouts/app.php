@@ -88,6 +88,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
                         <span class="app-navigation__section">Quản trị</span>
                         <a<?= $activeNavigation === 'properties' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/properties/review"><svg class="app-icon"><use href="#icon-review"/></svg><span>Kiểm duyệt cơ sở</span></a>
                         <a<?= $activeNavigation === 'bookings' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/bookings"><svg class="app-icon"><use href="#icon-bed"/></svg><span>Hỗ trợ booking</span></a>
+                        <a<?= $activeNavigation === 'reviews' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/admin/reviews"><svg class="app-icon"><use href="#icon-star"/></svg><span>Đánh giá</span></a>
                         <span class="is-disabled"><svg class="app-icon"><use href="#icon-users"/></svg><span>Tài khoản</span></span>
                         <span class="is-disabled"><svg class="app-icon"><use href="#icon-file"/></svg><span>Nhật ký hệ thống</span></span>
                     <?php else: ?>
