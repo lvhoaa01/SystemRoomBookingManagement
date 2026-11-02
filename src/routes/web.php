@@ -9,6 +9,7 @@ use App\Http\HealthController;
 use App\Http\Middleware\AuthMiddleware;
 use App\Http\Middleware\CsrfMiddleware;
 use App\Http\Middleware\RequestIdMiddleware;
+use App\Http\Middleware\RateLimitMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Request;
 use App\Http\Response;
@@ -32,6 +33,7 @@ use App\Modules\Admin\Http\AdminCatalogController;
 use App\Modules\Admin\Http\AdminOperationsController;
 use App\Shared\Http\FlashBag;
 use App\Shared\Http\ViewRenderer;
+use App\Shared\Security\SessionRateLimiter;
 
 return static function (Router $router, Container $container): void {
     $requestId = $container->get(RequestIdMiddleware::class);
@@ -41,6 +43,11 @@ return static function (Router $router, Container $container): void {
     $adminRole = new RoleMiddleware($container->get(IdentitySession::class), [UserAccount::ROLE_ADMIN]);
     $customerRole = new RoleMiddleware($container->get(IdentitySession::class), [UserAccount::ROLE_CUSTOMER]);
     $partnerContext = $container->get(\App\Http\Middleware\PartnerContextMiddleware::class);
+    $limiter = $container->get(SessionRateLimiter::class);
+    $previewRate = new RateLimitMiddleware($limiter, 'preview.create', 20, 60);
+    $bookingRate = new RateLimitMiddleware($limiter, 'booking.create', 10, 60);
+    $quoteRate = new RateLimitMiddleware($limiter, 'booking.quote', 20, 300);
+    $uploadRate = new RateLimitMiddleware($limiter, 'property.upload', 10, 300);
 
     $router->get('/', static function (Request $request) use ($container): Response {
         $config = $container->get(AppConfig::class);
@@ -116,10 +123,10 @@ return static function (Router $router, Container $container): void {
     $preview = $container->get(PreviewController::class);
     $customerRead = [$requestId, $auth, $customerRole];
     $customerWrite = [$requestId, $csrf, $auth, $customerRole];
-    $router->post('/previews', $preview->create(...), $customerWrite, 'previews.create');
+    $router->post('/previews', $preview->create(...), [...$customerWrite, $previewRate], 'previews.create');
     $router->get('/checkout', $preview->checkout(...), $customerRead, 'checkout.show');
     $booking = $container->get(BookingController::class);
-    $router->post('/bookings', $booking->store(...), $customerWrite, 'bookings.store');
+    $router->post('/bookings', $booking->store(...), [...$customerWrite, $bookingRate], 'bookings.store');
     $router->get(
         '/bookings/{code}/confirmation',
         $booking->confirmation(...),
@@ -135,9 +142,9 @@ return static function (Router $router, Container $container): void {
         $customerWrite,
         'account.bookings.update',
     );
-    $router->post('/account/bookings/{code}/date-change-preview', $bookingPortal->customerDateChangePreview(...), $customerWrite, 'account.bookings.date-change-preview');
+    $router->post('/account/bookings/{code}/date-change-preview', $bookingPortal->customerDateChangePreview(...), [...$customerWrite, $quoteRate], 'account.bookings.date-change-preview');
     $router->post('/account/bookings/{code}/date-change', $bookingPortal->customerDateChange(...), $customerWrite, 'account.bookings.date-change');
-    $router->post('/account/bookings/{code}/cancel-preview', $bookingPortal->customerCancelPreview(...), $customerWrite, 'account.bookings.cancel-preview');
+    $router->post('/account/bookings/{code}/cancel-preview', $bookingPortal->customerCancelPreview(...), [...$customerWrite, $quoteRate], 'account.bookings.cancel-preview');
     $router->post('/account/bookings/{code}/cancel', $bookingPortal->customerCancel(...), $customerWrite, 'account.bookings.cancel');
     $router->post('/account/bookings/{code}/waiver', $bookingPortal->customerWaiver(...), $customerWrite, 'account.bookings.waiver');
     $router->post('/account/bookings/{code}/waiver/withdraw', $bookingPortal->customerWithdrawWaiver(...), $customerWrite, 'account.bookings.waiver-withdraw');
@@ -177,7 +184,7 @@ return static function (Router $router, Container $container): void {
         $partnerWrite,
         'partner.properties.facilities',
     );
-    $router->post('/partner/properties/{propertyId}/images', $partner->uploadImage(...), $partnerWrite, 'partner.properties.images');
+    $router->post('/partner/properties/{propertyId}/images', $partner->uploadImage(...), [...$partnerWrite, $uploadRate], 'partner.properties.images');
 
     $commercial = $container->get(PartnerCommercialController::class);
     $router->get(

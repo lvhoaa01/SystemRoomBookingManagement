@@ -122,10 +122,12 @@ use App\Shared\Database\Connection;
 use App\Shared\Database\TransactionManager;
 use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\FlashBag;
+use App\Shared\Http\SecurityHeaders;
 use App\Shared\Http\ViewRenderer;
 use App\Shared\Logging\FileLogger;
 use App\Shared\Logging\Logger;
 use App\Shared\Security\Hasher;
+use App\Shared\Security\SessionRateLimiter;
 use App\Shared\Security\TokenGenerator;
 use PDO;
 use Throwable;
@@ -136,6 +138,7 @@ final class App
         private readonly Router $router,
         private readonly Container $container,
         private readonly ExceptionHandler $exceptionHandler,
+        private readonly SecurityHeaders $securityHeaders,
     ) {
     }
 
@@ -154,6 +157,12 @@ final class App
 
         $container->singleton(ClockInterface::class, static fn (Container $_): ClockInterface => new SystemClock());
         $container->singleton(TokenGenerator::class, static fn (Container $_): TokenGenerator => new TokenGenerator());
+        $container->singleton(
+            SessionRateLimiter::class,
+            static fn (Container $container): SessionRateLimiter => new SessionRateLimiter(
+                $container->get(ClockInterface::class),
+            ),
+        );
         $container->singleton(Hasher::class, 
         static fn (Container $_): Hasher => new Hasher());
 
@@ -959,8 +968,10 @@ final class App
         $container->instance(Router::class, $router);
         $exceptionHandler = new ExceptionHandler($appConfig, $container->get(Logger::class));
         $container->instance(ExceptionHandler::class, $exceptionHandler);
+        $securityHeaders = new SecurityHeaders($appConfig);
+        $container->instance(SecurityHeaders::class, $securityHeaders);
 
-        return new self($router, $container, $exceptionHandler);
+        return new self($router, $container, $exceptionHandler, $securityHeaders);
     }
 
     public function container(): Container
@@ -978,7 +989,7 @@ final class App
             $response = $this->exceptionHandler->handle($exception, $request);
         }
 
-        $response->send();
+        $this->securityHeaders->apply($response)->send();
     }
 
     public function handle(Request $request): Response
@@ -989,6 +1000,8 @@ final class App
             $response = $this->exceptionHandler->handle($exception, $request);
         }
 
-        return $response->withHeader('X-Request-ID', $request->requestId);
+        return $this->securityHeaders->apply(
+            $response->withHeader('X-Request-ID', $request->requestId),
+        );
     }
 }

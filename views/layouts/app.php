@@ -29,11 +29,6 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $title ?></title>
     <meta name="color-scheme" content="light">
-    <style>
-        /* Giữ SVG an toàn nếu stylesheet ngoài chưa tải xong hoặc bị cache sai phiên bản. */
-        .svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
-        .app-icon { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-    </style>
     <link rel="stylesheet" href="<?= $assetUrl('/assets/css/app.css') ?>">
     <script src="<?= $assetUrl('/assets/js/properties.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/search.js') ?>" defer></script>

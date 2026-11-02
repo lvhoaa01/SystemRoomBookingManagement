@@ -39,7 +39,15 @@ final readonly class LoginController
         $identifier = $this->input($request, 'identifier');
         $result = $this->login->login($identifier, $this->input($request, 'password'), $request->clientIp);
         if (!$result->succeeded()) {
-            return $this->form($result->validation->errors(), $identifier, [], 422);
+            $response = $this->form(
+                $result->validation->errors(),
+                $identifier,
+                [],
+                $result->retryAfterSeconds > 0 ? 429 : 422,
+            );
+            return $result->retryAfterSeconds > 0
+                ? $response->withHeader('Retry-After', (string) $result->retryAfterSeconds)
+                : $response;
         }
 
         $this->flash->add('success', 'Đăng nhập thành công.');

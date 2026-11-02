@@ -1016,8 +1016,10 @@ a:focus-visible {
 .surface-heading p { margin: 0; color: #7b8794; font-size: .76rem; }
 .surface-heading > strong { color: #0b5ed7; font-size: .94rem; }
 .surface-heading--bordered { align-items: center; margin: -2px -2px 16px; padding: 2px 2px 16px; border-bottom: 1px solid #e4e8ed; }
-.progress-track { overflow: hidden; height: 6px; margin: 16px 0 10px; border-radius: 999px; background: #e9eef3; }
-.progress-track span { display: block; height: 100%; border-radius: inherit; background: #0b5ed7; }
+.progress-track { display: block; overflow: hidden; width: 100%; height: 6px; margin: 16px 0 10px; border: 0; border-radius: 999px; background: #e9eef3; appearance: none; }
+.progress-track::-webkit-progress-bar { border-radius: inherit; background: #e9eef3; }
+.progress-track::-webkit-progress-value { border-radius: inherit; background: #0b5ed7; }
+.progress-track::-moz-progress-bar { border-radius: inherit; background: #0b5ed7; }
 .completion-list { display: grid; }
 .completion-list > div { min-height: 55px; display: grid; grid-template-columns: 22px 1fr 16px; align-items: center; gap: 10px; border-bottom: 1px solid #edf0f3; }
 .completion-list > div:last-child { border-bottom: 0; }

@@ -171,8 +171,6 @@ final readonly class BookingController
         return [
             'Cache-Control' => 'no-store, private',
             'Referrer-Policy' => 'no-referrer',
-            'X-Content-Type-Options' => 'nosniff',
-            'Content-Security-Policy' => "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'",
         ];
     }
 

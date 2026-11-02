@@ -26,7 +26,7 @@ final readonly class LoginService
     {
         $identifier = strtolower(trim($identifier));
         if ($this->throttle->isBlocked($identifier, $clientIp)) {
-            return LoginResult::throttled();
+            return LoginResult::throttled($this->throttle->retryAfterSeconds($identifier, $clientIp));
         }
         if ($identifier === '' || strlen($identifier) > 190 || $password === '' || strlen($password) > 72) {
             password_verify($password, self::DUMMY_PASSWORD_HASH);
