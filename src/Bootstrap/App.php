@@ -37,6 +37,7 @@ use App\Modules\Bookings\Application\OnlinePaymentService;
 use App\Modules\Bookings\Application\PaymentExpiryService;
 use App\Modules\Bookings\Application\PaymentGateway;
 use App\Modules\Bookings\Application\PreviewService;
+use App\Modules\Bookings\Application\PreviewExpiryService;
 use App\Modules\Bookings\Application\PreviewSnapshotFactory;
 use App\Modules\Bookings\Application\WaiverService;
 use App\Modules\Bookings\Application\NoShowService;
@@ -119,6 +120,7 @@ use App\Shared\Audit\AuditTrail;
 use App\Shared\Audit\DatabaseAuditTrail;
 use App\Shared\Clock\ClockInterface;
 use App\Shared\Clock\SystemClock;
+use App\Shared\Console\ConsoleJobRunner;
 use App\Shared\Database\Connection;
 use App\Shared\Database\TransactionManager;
 use App\Shared\Http\ExceptionHandler;
@@ -180,6 +182,13 @@ final class App
             Logger::class,
             static fn (Container $container): Logger => new FileLogger(
                 $projectRoot . '/storage/logs/app.log',
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            ConsoleJobRunner::class,
+            static fn (Container $container): ConsoleJobRunner => new ConsoleJobRunner(
+                $container->get(Logger::class),
                 $container->get(ClockInterface::class),
             ),
         );
@@ -638,6 +647,15 @@ final class App
                 $container->get(BookingRepository::class),
                 $container->get(PaymentRepository::class),
                 $container->get(InventoryReservationService::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            PreviewExpiryService::class,
+            static fn (Container $container): PreviewExpiryService => new PreviewExpiryService(
+                $container->get(PreviewRepository::class),
                 $container->get(TransactionManager::class),
                 $container->get(AuditTrail::class),
                 $container->get(ClockInterface::class),

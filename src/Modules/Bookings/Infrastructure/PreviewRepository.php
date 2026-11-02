@@ -102,6 +102,64 @@ final readonly class PreviewRepository
         $statement->execute(['previewId' => $previewId]);
     }
 
+    /** @return list<int> */
+    public function expiredValidIds(DateTimeImmutable $at, int $limit): array
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT XemTruocDatChoID
+             FROM XemTruocDatCho
+             WHERE TrangThai = 'VALID' AND HetHanLuc <= :at
+             ORDER BY HetHanLuc, XemTruocDatChoID
+             LIMIT :limit"
+        );
+        $statement->bindValue('at', $this->format($at));
+        $statement->bindValue('limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        return array_map('intval', $statement->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /** @return array{status: string, expiresAt: DateTimeImmutable}|null */
+    public function lockExpiryState(int $previewId): ?array
+    {
+        if (!$this->pdo->inTransaction()) {
+            throw new RuntimeException('Preview chỉ được khóa bên trong transaction.');
+        }
+        $statement = $this->pdo->prepare(
+            'SELECT TrangThai AS status, HetHanLuc AS expiresAt
+             FROM XemTruocDatCho
+             WHERE XemTruocDatChoID = :previewId
+             FOR UPDATE'
+        );
+        $statement->execute(['previewId' => $previewId]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($row)) {
+            return null;
+        }
+
+        return [
+            'status' => (string) $row['status'],
+            'expiresAt' => $this->dateTime((string) $row['expiresAt']),
+        ];
+    }
+
+    public function invalidateExpired(int $previewId, DateTimeImmutable $at): bool
+    {
+        $statement = $this->pdo->prepare(
+            "UPDATE XemTruocDatCho
+             SET TrangThai = 'INVALIDATED'
+             WHERE XemTruocDatChoID = :previewId
+               AND TrangThai = 'VALID'
+               AND HetHanLuc <= :at"
+        );
+        $statement->execute([
+            'previewId' => $previewId,
+            'at' => $this->format($at),
+        ]);
+
+        return $statement->rowCount() === 1;
+    }
+
     private function findById(int $previewId): ?BookingPreview
     {
         $statement = $this->pdo->prepare($this->selectSql() . ' WHERE XemTruocDatChoID = :previewId');
