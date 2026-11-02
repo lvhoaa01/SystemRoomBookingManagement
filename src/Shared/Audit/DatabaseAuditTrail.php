@@ -49,8 +49,19 @@ final readonly class DatabaseAuditTrail implements AuditTrail
         ?array $after,
         ?string $clientIp,
     ): void {
-        if (trim($action) === '' || trim($entityType) === '' || trim($entityId) === '') {
-            throw new InvalidArgumentException('Bản ghi audit phải có hành động và đối tượng.');
+        $action = trim($action);
+        $entityType = trim($entityType);
+        $entityId = trim($entityId);
+        $requestId = $requestId === null || trim($requestId) === '' ? null : trim($requestId);
+        if (preg_match('/^[A-Z][A-Z0-9_]{2,79}$/', $action) !== 1) {
+            throw new InvalidArgumentException('Action audit phải dùng UPPER_SNAKE_CASE và tối đa 80 ký tự.');
+        }
+        if (preg_match('/^[A-Za-z][A-Za-z0-9_]{0,79}$/', $entityType) !== 1
+            || $entityId === '' || strlen($entityId) > 80 || preg_match('/[\x00-\x1F\x7F]/', $entityId) === 1) {
+            throw new InvalidArgumentException('Đối tượng audit không hợp lệ.');
+        }
+        if ($requestId !== null && preg_match('/^[A-Za-z0-9._:-]{8,80}$/', $requestId) !== 1) {
+            throw new InvalidArgumentException('RequestID audit không hợp lệ.');
         }
         if ($actorId !== null && $actorId <= 0) {
             throw new InvalidArgumentException('ID người thực hiện audit không hợp lệ.');
@@ -70,10 +81,10 @@ final readonly class DatabaseAuditTrail implements AuditTrail
         );
         $statement->execute([
             'actorId' => $actorId,
-            'action' => trim($action),
-            'entityType' => trim($entityType),
-            'entityId' => trim($entityId),
-            'requestId' => $requestId === null || trim($requestId) === '' ? null : trim($requestId),
+            'action' => $action,
+            'entityType' => $entityType,
+            'entityId' => $entityId,
+            'requestId' => $requestId,
             'beforeJson' => $before === null ? null : CanonicalJson::encode($before),
             'afterJson' => $after === null ? null : CanonicalJson::encode($after),
             'clientIp' => $clientIp,
