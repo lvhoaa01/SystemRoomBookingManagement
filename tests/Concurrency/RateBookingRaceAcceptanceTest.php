@@ -22,11 +22,16 @@ use Tests\Support\TestCase;
 final class RateBookingRaceAcceptanceTest extends TestCase
 {
     private PDO $pdo;
+    private InventoryReservationService $inventory;
+    private TransactionManager $transactions;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->pdo = App::boot(dirname(__DIR__, 2))->container()->get(PDO::class);
+        $container = App::boot(dirname(__DIR__, 2))->container();
+        $this->pdo = $container->get(PDO::class);
+        $this->inventory = $container->get(InventoryReservationService::class);
+        $this->transactions = $container->get(TransactionManager::class);
     }
 
     public function test_booking_and_rate_edit_create_one_coherent_snapshot_or_reject_stale_preview(): void
@@ -219,9 +224,8 @@ final class RateBookingRaceAcceptanceTest extends TestCase
 
     private function deleteBooking(int $bookingId): void
     {
-        $container = App::boot(dirname(__DIR__, 2))->container();
-        $container->get(TransactionManager::class)->run(function () use ($container, $bookingId): void {
-            $container->get(InventoryReservationService::class)->releaseActive($bookingId, 'TEST_CLEANUP');
+        $this->transactions->run(function () use ($bookingId): void {
+            $this->inventory->releaseActive($bookingId, 'TEST_CLEANUP');
             $this->pdo->prepare("DELETE FROM NhatKyHeThong WHERE LoaiDoiTu='DatCho' AND DoiTuID=?")->execute([(string) $bookingId]);
             $this->pdo->prepare('DELETE FROM ThanhToan WHERE DatChoID=?')->execute([$bookingId]);
             $this->pdo->prepare('DELETE gt FROM GiuTonPhongDem gt INNER JOIN HangMucDatCho hm ON hm.HangMucDatChoID=gt.HangMucDatChoID WHERE hm.DatChoID=?')->execute([$bookingId]);
