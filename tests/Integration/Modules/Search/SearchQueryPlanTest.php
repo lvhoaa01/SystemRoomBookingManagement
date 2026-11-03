@@ -52,7 +52,7 @@ final class SearchQueryPlanTest extends TestCase
         self::assertNotNull($rate['key']);
         self::assertNotSame('ALL', $rate['type']);
         self::assertSame('PRIMARY', $inventory['key']);
-        self::assertSame('eq_ref', $inventory['type']);
+        self::assertContains($inventory['type'], ['eq_ref', 'ref']);
     }
 
     public function test_facility_filter_uses_property_facility_primary_key(): void

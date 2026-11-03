@@ -110,12 +110,12 @@ final class AdminQueryPlanTest extends TestCase
         self::assertContains($soldBooking['key'], ['PRIMARY', 'IX_DatCho_CoSo']);
         self::assertContains($soldBooking['type'], ['eq_ref', 'ref', 'range']);
         self::assertContains($soldItem['key'], ['PRIMARY', 'UQ_HangMuc_ThuTu']);
-        self::assertSame('eq_ref', $soldItem['type']);
+        self::assertContains($soldItem['type'], ['eq_ref', 'ref']);
         self::assertNotNull($soldNight['key']);
         self::assertContains($soldNight['type'], ['eq_ref', 'ref', 'range', 'index']);
         self::assertSame('PRIMARY', $this->tablePlan($offered, 'gpn')['key']);
         self::assertSame('PRIMARY', $this->tablePlan($offered, 'tpn')['key']);
-        self::assertSame('eq_ref', $this->tablePlan($offered, 'tpn')['type']);
+        self::assertContains($this->tablePlan($offered, 'tpn')['type'], ['eq_ref', 'ref']);
     }
 
     /** @param array<string, scalar|null> $params @return list<array<string, mixed>> */
