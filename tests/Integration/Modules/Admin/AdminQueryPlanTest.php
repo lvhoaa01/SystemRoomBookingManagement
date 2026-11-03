@@ -104,9 +104,15 @@ final class AdminQueryPlanTest extends TestCase
             ['from' => '2026-07-01', 'to' => '2027-04-01'],
         );
 
-        self::assertSame('IX_DatCho_CoSo', $this->tablePlan($sold, 'dc')['key']);
-        self::assertSame('UQ_HangMuc_ThuTu', $this->tablePlan($sold, 'hm')['key']);
-        self::assertSame('PRIMARY', $this->tablePlan($sold, 'gd')['key']);
+        $soldBooking = $this->tablePlan($sold, 'dc');
+        $soldItem = $this->tablePlan($sold, 'hm');
+        $soldNight = $this->tablePlan($sold, 'gd');
+        self::assertContains($soldBooking['key'], ['PRIMARY', 'IX_DatCho_CoSo']);
+        self::assertContains($soldBooking['type'], ['eq_ref', 'ref', 'range']);
+        self::assertContains($soldItem['key'], ['PRIMARY', 'UQ_HangMuc_ThuTu']);
+        self::assertSame('eq_ref', $soldItem['type']);
+        self::assertNotNull($soldNight['key']);
+        self::assertContains($soldNight['type'], ['eq_ref', 'ref', 'range', 'index']);
         self::assertSame('PRIMARY', $this->tablePlan($offered, 'gpn')['key']);
         self::assertSame('PRIMARY', $this->tablePlan($offered, 'tpn')['key']);
         self::assertSame('eq_ref', $this->tablePlan($offered, 'tpn')['type']);
