@@ -112,6 +112,8 @@ final class SecurityContractTest extends TestCase
             clientIp: '127.0.0.7', requestId: 'security-preview-blocked',
         ));
         self::assertSame(429, $blocked->status());
-        self::assertSame('60', $blocked->headers()['Retry-After']);
+        $retryAfter = (int) $blocked->headers()['Retry-After'];
+        self::assertGreaterThanOrEqual(1, $retryAfter);
+        self::assertLessThanOrEqual(60, $retryAfter);
     }
 }

@@ -129,6 +129,88 @@ final class BookingConcurrencyTest extends TestCase
         }
     }
 
+    public function test_double_click_with_same_client_request_id_returns_one_booking(): void
+    {
+        [$property, $allocation] = $this->selection();
+        $customerId = $this->customerId();
+        $preview = $this->previews->create(
+            $customerId,
+            $property->slug,
+            $this->criteria(),
+            'PAY_AT_PROPERTY',
+            $allocation->selectionFingerprint,
+            $this->mapping($allocation),
+        );
+        $this->previewIds[] = $preview->preview->id;
+        $clientRequestId = $this->uuid();
+
+        $results = $this->runConcurrently([
+            [
+                'previewToken' => $preview->token,
+                'customerId' => $customerId,
+                'clientRequestId' => $clientRequestId,
+                'requestId' => 'acceptance-double-click-a',
+            ],
+            [
+                'previewToken' => $preview->token,
+                'customerId' => $customerId,
+                'clientRequestId' => $clientRequestId,
+                'requestId' => 'acceptance-double-click-b',
+            ],
+        ]);
+
+        self::assertCount(2, array_filter($results, static fn (array $row): bool => $row['success'] === true));
+        $bookingIds = array_values(array_unique(array_map(
+            static fn (array $row): int => (int) $row['bookingId'],
+            $results,
+        )));
+        self::assertCount(1, $bookingIds);
+        $this->bookingIds[] = $bookingIds[0];
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM DatCho WHERE ClientRequestID=?');
+        $statement->execute([$clientRequestId]);
+        self::assertSame(1, (int) $statement->fetchColumn());
+    }
+
+    public function test_same_preview_with_different_request_ids_creates_only_one_booking(): void
+    {
+        [$property, $allocation] = $this->selection();
+        $customerId = $this->customerId();
+        $preview = $this->previews->create(
+            $customerId,
+            $property->slug,
+            $this->criteria(),
+            'PAY_AT_PROPERTY',
+            $allocation->selectionFingerprint,
+            $this->mapping($allocation),
+        );
+        $this->previewIds[] = $preview->preview->id;
+
+        $results = $this->runConcurrently([
+            [
+                'previewToken' => $preview->token,
+                'customerId' => $customerId,
+                'clientRequestId' => $this->uuid(),
+                'requestId' => 'acceptance-preview-race-a',
+            ],
+            [
+                'previewToken' => $preview->token,
+                'customerId' => $customerId,
+                'clientRequestId' => $this->uuid(),
+                'requestId' => 'acceptance-preview-race-b',
+            ],
+        ]);
+
+        $winners = array_values(array_filter($results, static fn (array $row): bool => $row['success'] === true));
+        $losers = array_values(array_filter($results, static fn (array $row): bool => $row['success'] === false));
+        self::assertCount(1, $winners);
+        self::assertCount(1, $losers);
+        self::assertSame('PREVIEW_NOT_USABLE', $losers[0]['error']);
+        $this->bookingIds[] = (int) $winners[0]['bookingId'];
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM DatCho WHERE XemTruocDatChoID=?');
+        $statement->execute([$preview->preview->id]);
+        self::assertSame(1, (int) $statement->fetchColumn());
+    }
+
     /** @return array{\App\Modules\Search\Application\PropertySearchSnapshot, AllocationResult} */
     private function selection(): array
     {

@@ -1,51 +1,133 @@
-# Accommodation Booking
+# StayBooking — Mini OTA đặt chỗ lưu trú
 
-> **Bản nháp:** README này chỉ giới thiệu đặc tả tổng quan của dự án. Nội dung sẽ được hoàn thiện sau khi toàn bộ lộ trình phát triển và nghiệm thu kết thúc.
+StayBooking là ứng dụng Mini OTA cho thị trường lưu trú tại Thành phố Hồ Chí Minh. Hệ thống hỗ trợ khách tìm kiếm,
+xem trước và đặt nhiều phòng; đối tác quản lý cơ sở, giá, tồn và booking; quản trị viên duyệt nội dung, theo dõi audit
+và báo cáo vận hành.
 
-## Giới thiệu
+Dự án dùng PHP 8.2+, MariaDB/MySQL và kiến trúc Modular Monolith, không phụ thuộc framework backend hoặc frontend.
+Dữ liệu đi kèm là fixture tổng hợp dành cho phát triển, không phải dữ liệu vận hành thật.
 
-Accommodation Booking là hệ thống Mini OTA hỗ trợ tìm kiếm và đặt chỗ lưu trú đa cơ sở tại Thành phố Hồ Chí Minh. Hệ thống hướng đến việc kết nối khách hàng với các cơ sở lưu trú, đồng thời cung cấp công cụ quản trị cho đối tác và quản trị viên nền tảng.
+## Chức năng chính
 
-## Mục tiêu
+- Identity: đăng ký, đăng nhập, phân quyền customer/partner/admin và tenant scope.
+- Properties/Commercial: cơ sở, loại phòng, tiện nghi, ảnh, sản phẩm, chính sách, giá ngày và khuyến mại.
+- Inventory/Search: tồn theo loại phòng-ngày, phân bổ nhiều phòng xác định, search/detail theo payment timing.
+- Bookings: preview 15 phút, booking trả tại cơ sở hoặc online mô phỏng, snapshot giá/chính sách.
+- Sau booking: sửa khách, hủy/refund, waiver, đổi ngày, no-show, completion và review verified.
+- Admin: account/facility, duyệt cơ sở, audit đã che PII, payment issues và báo cáo.
+- Vận hành: CSRF/CSP/rate limit, console jobs, backup đồng bộ database–uploads và bộ validator nghiệm thu.
 
-- Cho phép khách hàng tìm kiếm cơ sở lưu trú theo thời gian ở, số phòng và nhóm khách.
-- Hiển thị giá, chính sách, tình trạng phòng và thời điểm thanh toán nhất quán.
-- Hỗ trợ đặt chỗ trả trực tuyến hoặc trả tại cơ sở theo một phương thức thuần nhất cho mỗi booking.
-- Giúp đối tác quản lý cơ sở, loại phòng, sản phẩm phòng, giá, tồn và chính sách.
-- Giúp quản trị viên duyệt cơ sở, quản lý tài khoản, theo dõi audit và báo cáo vận hành.
+## Yêu cầu môi trường
 
-## Vai trò người dùng
+- PHP `>= 8.2` với `pdo_mysql`, `fileinfo` và session.
+- MariaDB 10.4+ hoặc MySQL 8.x.
+- Composer 2.
+- Apache/Nginx trỏ document root tới `public/`, hoặc XAMPP cho môi trường Windows.
 
-- **Khách hàng:** tìm kiếm, xem chi tiết, đặt chỗ, thanh toán, hủy và đánh giá.
-- **Đối tác:** quản lý dữ liệu lưu trú trong phạm vi tổ chức của mình.
-- **Quản trị viên:** kiểm duyệt, giám sát và vận hành nền tảng.
+## Cài đặt
 
-## Phạm vi chức năng dự kiến
+```powershell
+git clone https://github.com/lvhoaa01/SystemRoomBookingManagement.git DuAnNhom
+cd DuAnNhom
+composer install
+Copy-Item .env.example .env
+```
 
-1. Đăng ký, đăng nhập và phân quyền theo vai trò.
-2. Quản lý cơ sở lưu trú, loại phòng, tiện nghi và hình ảnh.
-3. Quản lý sản phẩm phòng, giá theo ngày, khuyến mại và chính sách hủy.
-4. Quản lý tồn phòng an toàn khi có nhiều yêu cầu đồng thời.
-5. Tìm kiếm, phân bổ phòng và tính giá xác định.
-6. Xem trước booking, đặt chỗ và thanh toán mô phỏng.
-7. Quản lý booking, hủy, hoàn tiền, đổi ngày và no-show.
-8. Đánh giá sau lưu trú, audit và báo cáo quản trị.
+Chỉnh `.env` theo MariaDB/MySQL local. Cấu hình XAMPP mặc định của dự án dùng database `hotel_booking`, user `root`
+và cổng `3307`.
 
-## Nguyên tắc nghiệp vụ cốt lõi
+Tạo database UTF-8 rồi import đúng thứ tự:
 
-- Tồn phòng được quản lý theo loại phòng và ngày lưu trú.
-- Một booking chỉ sử dụng một thời điểm thanh toán: `PAY_ONLINE` hoặc `PAY_AT_PROPERTY`.
-- Giá và chính sách của booking được lưu snapshot để không bị thay đổi theo dữ liệu hiện tại.
-- Các thao tác giữ và trả tồn phải bảo đảm transaction, idempotency và không vượt bán.
-- Dữ liệu của đối tác phải luôn được giới hạn theo phạm vi tổ chức.
-- Tiền tệ của MVP là VND và không được tính bằng số thực `float`.
+```powershell
+mysql -u root -P 3307 -e "CREATE DATABASE hotel_booking CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+mysql -u root -P 3307 hotel_booking -e "source database/migrations/001_create_schema.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/seeds/001_reference.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/seeds/002_accounts_partners.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/seeds/003_properties.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/seeds/004_products_policies.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/seeds/005_inventory_prices.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/seeds/006_operational.sql"
+```
 
-## Kiến trúc định hướng
+Với XAMPP đặt tại `C:\DDrive\xampp`, thay `mysql` bằng `C:\DDrive\xampp\mysql\bin\mysql.exe`.
 
-Dự án sử dụng PHP 8.2+, MySQL/MariaDB và kiến trúc Modular Monolith. Mỗi module sở hữu nghiệp vụ riêng; các primitive và contract thực sự dùng chung được đặt trong Shared Kernel.
+## Chạy ứng dụng
 
-Các module dự kiến gồm Identity, Properties, Commercial, Inventory, Search, Bookings, Reviews và Admin.
+Khi dùng XAMPP và repository nằm trong `htdocs/DuAnNhom`, mở:
 
-## Trạng thái
+- Trang chủ: `http://localhost/DuAnNhom/public/`
+- Health check: `http://localhost/DuAnNhom/public/api/health`
+- Nguồn ảnh: `http://localhost/DuAnNhom/public/image-sources`
 
-Dự án đang trong quá trình phát triển. Các chức năng, giao diện và tài liệu vận hành chưa phải phiên bản hoàn chỉnh.
+Có thể chạy server phát triển PHP:
+
+```powershell
+php -S 127.0.0.1:8080 -t public
+```
+
+Sau đó cập nhật `APP_URL=http://127.0.0.1:8080` và mở địa chỉ tương ứng.
+
+## Tài khoản fixture
+
+Mật khẩu chung: `Ntu@123456`.
+
+| Vai trò | Tài khoản |
+|---|---|
+| Admin | `admin@accommodation.local` hoặc `ADMIN001` |
+| Partner | `partner01@accommodation.local` hoặc `DT001` |
+| Customer | `customer0001@example.test` hoặc `KH0001` |
+
+Không dùng các tài khoản/mật khẩu fixture trong production.
+
+## Kiểm thử và validator
+
+```powershell
+composer test
+composer run verify
+```
+
+`composer test` chạy unit, integration và concurrency suite. `composer run verify` kiểm checksum/số lượng fixture,
+constraint từ chối dữ liệu sai, đúng 22 bảng và 33 invariant SQL. Database phải được import từ seed chuẩn trước khi
+chạy toàn bộ nghiệm thu.
+
+## Tác vụ vận hành
+
+```powershell
+php bin/console.php payment:expire 100
+php bin/console.php booking:complete 100
+php bin/console.php preview:invalidate-expired 100
+php bin/console.php inventory:reconcile 2026-11-03 2026-12-03 1 100
+```
+
+Chi tiết batch, run ID, audit, backup và restore nằm tại [docs/OPERATIONS.md](docs/OPERATIONS.md).
+
+## Cấu trúc chính
+
+```text
+public/                 Front controller và static assets
+src/Bootstrap/          Container, session và application bootstrap
+src/Http/               Router, request/response và middleware
+src/Modules/            Identity, Properties, Commercial, Inventory, Search, Bookings, Reviews, Admin
+src/Shared/             Primitive và dịch vụ dùng chung
+database/               Migration, seed, fixture manifest và SQL validator
+tests/                  Unit, integration, concurrency và support workers
+scripts/operations/     Công cụ backup
+scripts/validation/     Fixture/integrity validator
+views/                  Layout và view PHP
+```
+
+## Bất biến quan trọng
+
+- Một booking thuộc một cơ sở và chỉ có một payment timing.
+- Preview không giữ tồn; booking mới giữ counter và ledger trong cùng transaction.
+- Counter tồn luôn bằng số ledger active và không vượt tổng mở bán.
+- Giá, khách và chính sách lịch sử được đọc từ snapshot.
+- Payment provider không được gọi khi transaction đang giữ khóa tồn.
+- Partner luôn bị scope theo organization ở server.
+- Tiền VND dùng kiểu thập phân/`Money`, không dùng `float`.
+
+## Phạm vi MVP
+
+Không bao gồm payment gateway thật, lưu thẻ, email/SMS, loyalty, quản lý phòng vật lý/PMS, bản đồ runtime,
+microservice hoặc cơ sở ngoài Thành phố Hồ Chí Minh. Giao diện lấy cảm hứng từ mô hình OTA nhưng không sao chép nội
+dung, tài sản hay thuật toán nội bộ của Booking.com.

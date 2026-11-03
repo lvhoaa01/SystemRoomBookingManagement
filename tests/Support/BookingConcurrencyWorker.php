@@ -14,6 +14,10 @@ try {
     if (!is_array($payload)) {
         throw new RuntimeException('Payload worker không hợp lệ.');
     }
+    $startAt = (float) ($payload['startAt'] ?? 0);
+    while (microtime(true) < $startAt) {
+        usleep(1_000);
+    }
     $service = App::boot(dirname(__DIR__, 2))->container()->get(BookingService::class);
     $created = $service->createPayAtProperty(
         (string) ($payload['previewToken'] ?? ''),

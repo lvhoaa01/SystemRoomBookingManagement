@@ -108,10 +108,10 @@ try {
         '--triggers',
         '--events',
         '--default-character-set=utf8mb4',
-        '--host=' + $envValues['DB_HOST'],
-        '--port=' + $envValues['DB_PORT'],
-        '--user=' + $envValues['DB_USERNAME'],
-        '--result-file=' + $databaseFile,
+        ("--host=$($envValues['DB_HOST'])"),
+        ("--port=$($envValues['DB_PORT'])"),
+        ("--user=$($envValues['DB_USERNAME'])"),
+        ("--result-file=$databaseFile"),
         $envValues['DB_DATABASE']
     )
     & $dumpExecutable @dumpArguments
