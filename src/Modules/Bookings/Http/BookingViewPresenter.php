@@ -10,6 +10,32 @@ use App\Modules\Bookings\Domain\Booking;
 final class BookingViewPresenter
 {
     /** @return array<string, mixed> */
+    public function confirmation(Booking $booking): array
+    {
+        return [
+            'code' => $booking->code,
+            'property' => ['name' => $booking->propertyName, 'address' => $booking->propertyAddress],
+            'checkIn' => $booking->checkIn,
+            'checkOut' => $booking->checkOut,
+            'booker' => [
+                'name' => $booking->bookerName,
+                'email' => $booking->bookerEmail,
+                'phone' => $booking->bookerPhone,
+                'specialRequest' => $booking->specialRequest,
+            ],
+            'paymentTiming' => $booking->paymentTiming,
+            'currency' => 'VND',
+            'grandTotal' => $booking->grandTotal->decimal(),
+            'status' => $booking->status,
+            'confirmedAt' => $booking->confirmedAt?->format(DATE_ATOM),
+            'items' => array_map(fn (array $item): array => [
+                ...$item,
+                'party' => $this->partySummary($item['party']),
+            ], $booking->items),
+        ];
+    }
+
+    /** @return array<string, mixed> */
     public function page(BookingListPage $page): array
     {
         return [
@@ -75,5 +101,31 @@ final class BookingViewPresenter
             ];
         }
         return $guests;
+    }
+
+    /** @param array<mixed> $party @return array{adults: int, childAges: list<int>} */
+    private function partySummary(array $party): array
+    {
+        if (!array_is_list($party)) {
+            return [
+                'adults' => max(0, (int) ($party['adults'] ?? 0)),
+                'childAges' => array_map(
+                    'intval',
+                    is_array($party['childAges'] ?? null) ? array_values($party['childAges']) : [],
+                ),
+            ];
+        }
+
+        $adults = 0;
+        $childAges = [];
+        foreach ($party as $guest) {
+            if (!is_array($guest) || strtoupper((string) ($guest['type'] ?? 'ADULT')) !== 'CHILD') {
+                ++$adults;
+                continue;
+            }
+            $childAges[] = max(0, (int) ($guest['age'] ?? 0));
+        }
+
+        return ['adults' => $adults, 'childAges' => $childAges];
     }
 }

@@ -129,6 +129,21 @@ final class BookingHttpFlowTest extends TestCase
         self::assertStringNotContainsString($rawToken, $confirmation->body());
     }
 
+    public function test_confirmation_counts_guests_from_seeded_guest_list(): void
+    {
+        $this->loginCustomer();
+
+        $confirmation = $this->app->handle(new Request(
+            'GET',
+            '/bookings/BK0000001501/confirmation',
+            requestId: 'booking-confirmation-party-count',
+        ));
+
+        self::assertSame(200, $confirmation->status());
+        self::assertStringContainsString('2 người lớn', $confirmation->body());
+        self::assertStringNotContainsString('0 người lớn', $confirmation->body());
+    }
+
     public function test_booking_route_requires_login_and_csrf(): void
     {
         $anonymous = $this->app->handle(new Request(

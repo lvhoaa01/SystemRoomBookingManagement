@@ -667,6 +667,7 @@ final class App
                 $container->get(BookingService::class),
                 $container->get(OnlinePaymentService::class),
                 $container->get(PreviewTokenSession::class),
+                $container->get(BookingViewPresenter::class),
                 $container->get(IdentitySession::class),
                 $container->get(SessionBootstrap::class),
                 $container->get(ViewRenderer::class),

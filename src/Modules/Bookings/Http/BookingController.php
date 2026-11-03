@@ -31,6 +31,7 @@ final readonly class BookingController
         private BookingService $bookings,
         private OnlinePaymentService $onlinePayments,
         private PreviewTokenSession $tokens,
+        private BookingViewPresenter $presenter,
         private IdentitySession $identity,
         private SessionBootstrap $session,
         private ViewRenderer $views,
@@ -103,7 +104,7 @@ final readonly class BookingController
         } catch (BookingException) {
             throw new NotFoundHttpException();
         }
-        $payload = $this->payload($booking);
+        $payload = $this->presenter->confirmation($booking);
         $headers = $this->securityHeaders();
         if ($request->expectsJson()) {
             return Response::json(['booking' => $payload], 200, $headers);
