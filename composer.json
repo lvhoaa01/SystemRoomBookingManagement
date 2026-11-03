@@ -20,6 +20,12 @@
     }
   },
   "scripts": {
-    "test": "phpunit --configuration phpunit.xml"
+    "test": "phpunit --configuration phpunit.xml",
+    "validate:fixture": "php scripts/validation/validate_fixture.php",
+    "validate:integrity": "php scripts/validation/run_integrity.php",
+    "verify": [
+      "@validate:fixture",
+      "@validate:integrity"
+    ]
   }
 }
