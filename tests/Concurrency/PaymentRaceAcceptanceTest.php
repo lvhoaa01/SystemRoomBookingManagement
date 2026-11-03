@@ -38,6 +38,14 @@ final class PaymentRaceAcceptanceTest extends TestCase
 
         try {
             $expiredAt = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify('-1 minute')->format('Y-m-d H:i:s.u');
+            $this->pdo->prepare(
+                "UPDATE GiuTonPhongDem gt
+                 INNER JOIN HangMucDatCho hm ON hm.HangMucDatChoID=gt.HangMucDatChoID
+                 INNER JOIN DatCho dc ON dc.DatChoID=hm.DatChoID
+                 SET gt.HetHanLuc='2099-12-31 23:59:59.000000'
+                 WHERE dc.DatChoID<>? AND dc.TrangThai='PENDING_PAYMENT'
+                   AND gt.TrangThai='ACTIVE' AND gt.HetHanLuc IS NOT NULL",
+            )->execute([$bookingId]);
             $this->pdo->prepare('UPDATE DatCho SET HetHanThanhToanLuc=? WHERE DatChoID=?')->execute([$expiredAt, $bookingId]);
             $this->pdo->prepare(
                 "UPDATE GiuTonPhongDem gt INNER JOIN HangMucDatCho hm ON hm.HangMucDatChoID=gt.HangMucDatChoID
@@ -117,6 +125,14 @@ final class PaymentRaceAcceptanceTest extends TestCase
             'holds' => $holds,
             'inventory' => array_values($inventory),
             'audits' => $this->rows("SELECT * FROM NhatKyHeThong WHERE LoaiDoiTu='DatCho' AND DoiTuID='{$bookingId}'"),
+            'otherExpiries' => $this->rows(
+                "SELECT gt.GiuTonPhongDemID AS id, gt.HetHanLuc AS expiresAt
+                 FROM GiuTonPhongDem gt
+                 INNER JOIN HangMucDatCho hm ON hm.HangMucDatChoID=gt.HangMucDatChoID
+                 INNER JOIN DatCho dc ON dc.DatChoID=hm.DatChoID
+                 WHERE dc.DatChoID<>{$bookingId} AND dc.TrangThai='PENDING_PAYMENT'
+                   AND gt.TrangThai='ACTIVE' AND gt.HetHanLuc IS NOT NULL",
+            ),
         ];
     }
 
@@ -148,6 +164,10 @@ final class PaymentRaceAcceptanceTest extends TestCase
             }
             foreach ($state['holds'] as $row) {
                 $this->update('GiuTonPhongDem', ['GiuTonPhongDemID'], $row);
+            }
+            $restoreExpiry = $this->pdo->prepare('UPDATE GiuTonPhongDem SET HetHanLuc=? WHERE GiuTonPhongDemID=?');
+            foreach ($state['otherExpiries'] as $row) {
+                $restoreExpiry->execute([$row['expiresAt'], $row['id']]);
             }
             $this->update('ThanhToan', ['ThanhToanID'], $state['payment']);
             $this->update('DatCho', ['DatChoID'], $state['booking']);
