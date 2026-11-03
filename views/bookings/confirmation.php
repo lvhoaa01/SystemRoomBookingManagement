@@ -8,6 +8,7 @@ $money = static fn (mixed $amount): string => number_format((float) $amount, 0, 
 $mealLabels = ['ROOM_ONLY' => 'Không kèm bữa ăn', 'BREAKFAST_INCLUDED' => 'Bao gồm bữa sáng', 'HALF_BOARD' => 'Bao gồm hai bữa'];
 $confirmed = $booking['status'] === 'CONFIRMED';
 $pending = $booking['status'] === 'PENDING_PAYMENT';
+$date = static fn (mixed $value): string => (new DateTimeImmutable((string)$value))->format('d/m/Y');
 ?>
 <nav class="public-breadcrumb"><a href="<?= $baseUrl ?>/">Trang chủ</a><span>›</span><span>Trạng thái đặt phòng</span></nav>
 
@@ -22,7 +23,7 @@ $pending = $booking['status'] === 'PENDING_PAYMENT';
     <div class="booking-confirmation-main">
         <section class="confirmation-card">
             <div class="checkout-section-heading"><span>01</span><div><h2><?= $escape($booking['property']['name']) ?></h2><p><?= $escape($booking['property']['address']) ?></p></div></div>
-            <div class="checkout-stay-facts"><div><span>Nhận phòng</span><strong><?= $escape($booking['checkIn']) ?></strong></div><div><span>Trả phòng</span><strong><?= $escape($booking['checkOut']) ?></strong></div><div><span>Trạng thái</span><strong><?= $escape($booking['status']) ?></strong><small><?= $booking['paymentTiming'] === 'PAY_ONLINE' ? 'Thanh toán trực tuyến' : 'Thanh toán tại cơ sở' ?></small></div></div>
+            <div class="checkout-stay-facts"><div><span>Nhận phòng</span><strong><?= $date($booking['checkIn']) ?></strong></div><div><span>Trả phòng</span><strong><?= $date($booking['checkOut']) ?></strong></div><div><span>Trạng thái</span><strong><?= $escape($booking['status']) ?></strong><small class="payment-timing-badge payment-timing-badge--<?= $booking['paymentTiming']==='PAY_ONLINE'?'online':'property' ?>"><?= $booking['paymentTiming'] === 'PAY_ONLINE' ? 'Thanh toán trực tuyến' : 'Thanh toán tại cơ sở' ?></small></div></div>
         </section>
 
         <section class="confirmation-card">
@@ -31,7 +32,7 @@ $pending = $booking['status'] === 'PENDING_PAYMENT';
                 <article class="checkout-room">
                     <header><div><span>Phòng <?= $escape($item['roomOrder']) ?></span><h3><?= $escape($item['roomTypeName']) ?></h3><p><?= $escape($item['productName']) ?> · <?= $escape($mealLabels[$item['mealType']] ?? $item['mealType']) ?></p></div><strong><?= $money($item['grandTotal']) ?></strong></header>
                     <div class="checkout-room__party"><b><?= $escape($item['party']['adults'] ?? 0) ?> người lớn</b><span><?= count($item['party']['childAges'] ?? []) ?> trẻ em</span></div>
-                    <div class="night-price-table"><div class="night-price-table__head"><span>Đêm</span><span>Giá gốc</span><span>Giảm</span><span>Thuế & phí</span><span>Thành tiền</span></div><?php foreach ($item['nights'] as $night): ?><div><span><?= $escape($night['stayDate']) ?></span><span><?= $money($night['basePrice']) ?></span><span>-<?= $money($night['discount']) ?></span><span><?= $money((float) $night['includedTaxFee'] + (float) $night['taxFeeAtProperty']) ?></span><strong><?= $money($night['total']) ?></strong></div><?php endforeach; ?></div>
+                    <div class="night-price-table"><div class="night-price-table__head"><span>Đêm</span><span>Giá gốc</span><span>Giảm</span><span>Thuế & phí</span><span>Thành tiền</span></div><?php foreach ($item['nights'] as $night): ?><div><span><?= $date($night['stayDate']) ?></span><span><?= $money($night['basePrice']) ?></span><span>-<?= $money($night['discount']) ?></span><span><?= $money((float) $night['includedTaxFee'] + (float) $night['taxFeeAtProperty']) ?></span><strong><?= $money($night['total']) ?></strong></div><?php endforeach; ?></div>
                 </article>
             <?php endforeach; ?>
         </section>
@@ -43,7 +44,7 @@ $pending = $booking['status'] === 'PENDING_PAYMENT';
     </div>
 
     <aside class="checkout-summary confirmation-summary">
-        <span class="checkout-summary__badge"><?= $booking['paymentTiming'] === 'PAY_ONLINE' ? 'Thanh toán trực tuyến' : 'Thanh toán tại cơ sở' ?></span>
+        <span class="checkout-summary__badge payment-timing-badge payment-timing-badge--<?= $booking['paymentTiming']==='PAY_ONLINE'?'online':'property' ?>"><?= $booking['paymentTiming'] === 'PAY_ONLINE' ? 'Thanh toán trực tuyến' : 'Thanh toán tại cơ sở' ?></span>
         <h2>Tổng đặt phòng</h2>
         <div class="checkout-summary__total"><span>Tổng cộng</span><strong><?= $money($booking['grandTotal']) ?></strong></div>
         <div><span>Trả trực tuyến</span><strong><?= $booking['paymentTiming'] === 'PAY_ONLINE' ? $money($booking['grandTotal']) : '0 ₫' ?></strong></div>

@@ -42,7 +42,7 @@ $pageUrl = static function (int $page) use ($baseUrl, $listPath, $statusFilter, 
                 <?php foreach ($pageData['items'] as $item): ?>
                     <tr>
                         <td><div class="booking-code"><a href="<?= $baseUrl . $listPath ?>/<?= rawurlencode((string) $item['code']) ?>"><?= $item['code'] ?></a><small><?= $item['propertyName'] ?> · <?= (int) $item['roomCount'] ?> phòng</small></div></td>
-                        <td><strong><?= $date($item['checkIn']) ?> → <?= $date($item['checkOut']) ?></strong><small><?= $item['paymentTiming'] === 'PAY_ONLINE' ? 'Thanh toán trực tuyến' : 'Thanh toán tại cơ sở' ?></small></td>
+                        <td><strong><?= $date($item['checkIn']) ?> → <?= $date($item['checkOut']) ?></strong><small class="payment-timing-badge payment-timing-badge--<?= $item['paymentTiming']==='PAY_ONLINE'?'online':'property' ?>"><?= $item['paymentTiming'] === 'PAY_ONLINE' ? 'Thanh toán trực tuyến' : 'Thanh toán tại cơ sở' ?></small></td>
                         <td><?= $item['bookerName'] ?><small><?= $item['bookerEmail'] ?></small></td>
                         <td><strong><?= $money($item['grandTotal']) ?></strong></td>
                         <td><span class="booking-status booking-status--<?= strtolower((string) $item['status']) ?>"><i></i><?= $statusLabels[$item['status']] ?? $item['status'] ?></span></td>

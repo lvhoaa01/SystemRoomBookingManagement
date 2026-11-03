@@ -92,9 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
         list.append(total);
     };
 
-    buttons.forEach((button) => button.addEventListener('click', async () => {
+    const loadTiming = async (button) => {
         if (button.disabled || button.classList.contains('is-active')) return;
         buttons.forEach((item) => { item.disabled = true; });
+        root.setAttribute('aria-busy', 'true');
         status.textContent = 'Đang kiểm tra lại giá và tình trạng phòng…';
         const endpoint = new URL(root.dataset.endpoint, window.location.origin);
         endpoint.search = window.location.search;
@@ -116,9 +117,19 @@ document.addEventListener('DOMContentLoaded', () => {
             pageUrl.searchParams.delete('selectionFingerprint'); pageUrl.searchParams.delete('selected');
             window.history.replaceState({}, '', pageUrl);
         } catch (error) {
-            status.textContent = error.message;
+            status.replaceChildren();
+            const message = document.createElement('span');
+            message.textContent = error.message;
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'button button--secondary button--small';
+            retry.textContent = 'Thử lại';
+            retry.addEventListener('click', () => loadTiming(button));
+            status.append(message, retry);
         } finally {
+            root.removeAttribute('aria-busy');
             buttons.forEach((item) => { item.disabled = item.dataset.available === 'false'; });
         }
-    }));
+    };
+    buttons.forEach((button) => button.addEventListener('click', () => loadTiming(button)));
 });

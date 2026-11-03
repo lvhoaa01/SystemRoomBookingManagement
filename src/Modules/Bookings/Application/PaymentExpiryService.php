@@ -11,6 +11,7 @@ use App\Modules\Inventory\Application\InventoryReservationService;
 use App\Shared\Audit\AuditTrail;
 use App\Shared\Clock\ClockInterface;
 use App\Shared\Database\TransactionManager;
+use InvalidArgumentException;
 
 final readonly class PaymentExpiryService
 {
@@ -24,9 +25,12 @@ final readonly class PaymentExpiryService
     ) {
     }
 
-    public function expireDue(int $limit = 100): int
+    public function expireDue(int $limit = 100, ?string $runId = null): int
     {
-        $runId = 'payment-expire-' . bin2hex(random_bytes(12));
+        if ($limit < 1 || $limit > 1_000) {
+            throw new InvalidArgumentException('Batch payment phải từ 1 đến 1000.');
+        }
+        $runId ??= 'payment-expire-' . bin2hex(random_bytes(12));
         $ids = $this->inventory->findExpiredBookingIds($this->clock->now(), $limit);
         $expired = 0;
         foreach ($ids as $bookingId) {

@@ -32,7 +32,7 @@ $statusLabels = ['DRAFT' => 'Bản nháp', 'PENDING_REVIEW' => 'Chờ duyệt', 
     <main class="detail-main">
         <section id="overview" class="detail-surface completion-surface">
             <div class="surface-heading"><div><h2>Hoàn thiện thông tin</h2><p>Các mục cần thiết trước khi gửi cơ sở đi kiểm duyệt.</p></div><strong><?= $completion ?>%</strong></div>
-            <div class="progress-track" aria-label="Hoàn thiện <?= $completion ?> phần trăm"><span style="width: <?= $completion ?>%"></span></div>
+            <progress class="progress-track" max="100" value="<?= $completion ?>" aria-label="Hoàn thiện <?= $completion ?> phần trăm"><?= $completion ?>%</progress>
             <div class="completion-list"><?php foreach ($checks as $check): ?><div><svg class="app-icon <?= $check['done'] ? 'is-complete' : '' ?>"><use href="#icon-<?= $check['done'] ? 'check-circle' : 'circle' ?>"/></svg><span><strong><?= $e($check['label']) ?></strong><small><?= $e($check['help']) ?></small></span><svg class="app-icon completion-list__arrow"><use href="#icon-chevron"/></svg></div><?php endforeach; ?></div>
         </section>
 

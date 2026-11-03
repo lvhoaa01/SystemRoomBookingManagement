@@ -97,7 +97,7 @@ final class AuthControllerTest extends TestCase
         self::assertMatchesRegularExpression('~/assets/css/app\.css\?v=\d+~', $response->body());
         self::assertMatchesRegularExpression('~/assets/js/properties\.js\?v=\d+~', $response->body());
         self::assertMatchesRegularExpression('~/assets/images/accommodation/shared/logoNew\.png\?v=\d+~', $response->body());
-        self::assertStringContainsString('.app-icon { width: 20px; height: 20px;', $response->body());
+        self::assertStringNotContainsString('<style', $response->body());
         self::assertStringContainsString('name="_token"', $response->body());
         self::assertStringContainsString('Tạo tài khoản', $response->body());
     }
@@ -150,6 +150,24 @@ final class AuthControllerTest extends TestCase
         ]));
         self::assertSame(303, $success->status());
         self::assertNotNull($this->identitySession->currentUser());
+    }
+
+    public function test_login_throttle_returns_http_429_and_retry_after(): void
+    {
+        for ($attempt = 0; $attempt < 5; ++$attempt) {
+            $failed = $this->login->store(new Request('POST', '/auth/login', body: [
+                'identifier' => 'blocked@example.test',
+                'password' => 'Wrong123',
+            ], clientIp: '127.0.0.9'));
+            self::assertSame(422, $failed->status());
+        }
+
+        $blocked = $this->login->store(new Request('POST', '/auth/login', body: [
+            'identifier' => 'blocked@example.test',
+            'password' => 'Wrong123',
+        ], clientIp: '127.0.0.9'));
+        self::assertSame(429, $blocked->status());
+        self::assertGreaterThan(0, (int) $blocked->headers()['Retry-After']);
     }
 
     public function test_logout_controller_destroys_authenticated_session(): void

@@ -37,6 +37,7 @@ use App\Modules\Bookings\Application\OnlinePaymentService;
 use App\Modules\Bookings\Application\PaymentExpiryService;
 use App\Modules\Bookings\Application\PaymentGateway;
 use App\Modules\Bookings\Application\PreviewService;
+use App\Modules\Bookings\Application\PreviewExpiryService;
 use App\Modules\Bookings\Application\PreviewSnapshotFactory;
 use App\Modules\Bookings\Application\WaiverService;
 use App\Modules\Bookings\Application\NoShowService;
@@ -97,6 +98,7 @@ use App\Modules\Properties\Application\UpdateFacilitiesService;
 use App\Modules\Properties\Application\UpdatePropertyService;
 use App\Modules\Properties\Domain\PropertyReadinessChecker;
 use App\Modules\Properties\Http\AdminPropertyController;
+use App\Modules\Properties\Http\ImageSourceController;
 use App\Modules\Properties\Http\PartnerPropertyController;
 use App\Modules\Properties\Http\PropertyImageController;
 use App\Modules\Properties\Infrastructure\FacilityRepository;
@@ -118,14 +120,17 @@ use App\Shared\Audit\AuditTrail;
 use App\Shared\Audit\DatabaseAuditTrail;
 use App\Shared\Clock\ClockInterface;
 use App\Shared\Clock\SystemClock;
+use App\Shared\Console\ConsoleJobRunner;
 use App\Shared\Database\Connection;
 use App\Shared\Database\TransactionManager;
 use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\FlashBag;
+use App\Shared\Http\SecurityHeaders;
 use App\Shared\Http\ViewRenderer;
 use App\Shared\Logging\FileLogger;
 use App\Shared\Logging\Logger;
 use App\Shared\Security\Hasher;
+use App\Shared\Security\SessionRateLimiter;
 use App\Shared\Security\TokenGenerator;
 use PDO;
 use Throwable;
@@ -136,6 +141,7 @@ final class App
         private readonly Router $router,
         private readonly Container $container,
         private readonly ExceptionHandler $exceptionHandler,
+        private readonly SecurityHeaders $securityHeaders,
     ) {
     }
 
@@ -154,6 +160,12 @@ final class App
 
         $container->singleton(ClockInterface::class, static fn (Container $_): ClockInterface => new SystemClock());
         $container->singleton(TokenGenerator::class, static fn (Container $_): TokenGenerator => new TokenGenerator());
+        $container->singleton(
+            SessionRateLimiter::class,
+            static fn (Container $container): SessionRateLimiter => new SessionRateLimiter(
+                $container->get(ClockInterface::class),
+            ),
+        );
         $container->singleton(Hasher::class, 
         static fn (Container $_): Hasher => new Hasher());
 
@@ -170,6 +182,13 @@ final class App
             Logger::class,
             static fn (Container $container): Logger => new FileLogger(
                 $projectRoot . '/storage/logs/app.log',
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            ConsoleJobRunner::class,
+            static fn (Container $container): ConsoleJobRunner => new ConsoleJobRunner(
+                $container->get(Logger::class),
                 $container->get(ClockInterface::class),
             ),
         );
@@ -634,6 +653,15 @@ final class App
             ),
         );
         $container->singleton(
+            PreviewExpiryService::class,
+            static fn (Container $container): PreviewExpiryService => new PreviewExpiryService(
+                $container->get(PreviewRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
             BookingController::class,
             static fn (Container $container): BookingController => new BookingController(
                 $container->get(BookingService::class),
@@ -948,6 +976,15 @@ final class App
             PropertyImageController::class,
             new PropertyImageController($projectRoot . '/storage/uploads/properties'),
         );
+        $container->singleton(
+            ImageSourceController::class,
+            static fn (Container $container): ImageSourceController => new ImageSourceController(
+                $projectRoot . '/public/assets/images/accommodation/majestic/ASSET_LOCK.json',
+                $container->get(IdentitySession::class), $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class), $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
+        );
 
         // Đăng ký router
         $router = new Router();
@@ -959,8 +996,10 @@ final class App
         $container->instance(Router::class, $router);
         $exceptionHandler = new ExceptionHandler($appConfig, $container->get(Logger::class));
         $container->instance(ExceptionHandler::class, $exceptionHandler);
+        $securityHeaders = new SecurityHeaders($appConfig);
+        $container->instance(SecurityHeaders::class, $securityHeaders);
 
-        return new self($router, $container, $exceptionHandler);
+        return new self($router, $container, $exceptionHandler, $securityHeaders);
     }
 
     public function container(): Container
@@ -978,7 +1017,7 @@ final class App
             $response = $this->exceptionHandler->handle($exception, $request);
         }
 
-        $response->send();
+        $this->securityHeaders->apply($response)->send();
     }
 
     public function handle(Request $request): Response
@@ -989,6 +1028,8 @@ final class App
             $response = $this->exceptionHandler->handle($exception, $request);
         }
 
-        return $response->withHeader('X-Request-ID', $request->requestId);
+        return $this->securityHeaders->apply(
+            $response->withHeader('X-Request-ID', $request->requestId),
+        );
     }
 }
