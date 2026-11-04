@@ -114,8 +114,29 @@ final class AuthControllerTest extends TestCase
 
         self::assertSame(422, $response->status());
         self::assertStringContainsString('Email không hợp lệ.', $response->body());
+        self::assertStringContainsString('Mật khẩu nhập lại không khớp.', $response->body());
+        self::assertStringContainsString('Không thể tạo tài khoản', $response->body());
+        self::assertStringContainsString('field-grid field-grid--passwords', $response->body());
+        self::assertStringContainsString('id="passwordConfirmation-error"', $response->body());
         self::assertStringNotContainsString('secret-value', $response->body());
         self::assertStringNotContainsString('different-value', $response->body());
+    }
+
+    public function test_registration_renders_duplicate_email_as_visible_error(): void
+    {
+        $response = $this->register->store(new Request('POST', '/auth/register', body: [
+            'fullName' => 'Khách trùng email',
+            'email' => 'customer0001@example.test',
+            'phone' => '0901234567',
+            'password' => 'Secret123',
+            'passwordConfirmation' => 'Secret123',
+        ]));
+
+        self::assertSame(422, $response->status());
+        self::assertStringContainsString('Không thể tạo tài khoản', $response->body());
+        self::assertStringContainsString('Email này đã được sử dụng.', $response->body());
+        self::assertStringContainsString('id="email-error" class="field-error"', $response->body());
+        self::assertStringContainsString('aria-invalid="true"', $response->body());
     }
 
     public function test_successful_registration_redirects_to_login_with_flash_message(): void

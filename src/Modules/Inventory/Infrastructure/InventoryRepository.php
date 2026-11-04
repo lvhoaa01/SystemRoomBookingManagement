@@ -206,7 +206,7 @@ final readonly class InventoryRepository
         }
         $expected = array_column($items, 'roomTypeId', 'bookingItemId');
         foreach ($rows as $row) {
-            if (!in_array((string) $row['bookingStatus'], ['PENDING_PAYMENT', 'CONFIRMED'], true)) {
+            if (!in_array((string) $row['bookingStatus'], ['PENDING_PAYMENT', 'CONFIRMED', 'CHECKED_IN'], true)) {
                 throw new DomainException('Trạng thái booking không được phép có ledger active.');
             }
             if (($expected[(int) $row['bookingItemId']] ?? null) !== (int) $row['roomTypeId']) {

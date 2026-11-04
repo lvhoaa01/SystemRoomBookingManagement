@@ -666,6 +666,14 @@ summary:focus-visible,
     gap: 16px;
 }
 
+.field-grid--passwords {
+    align-items: start;
+}
+
+.field-grid--passwords .field input {
+    height: 46px;
+}
+
 .field {
     display: grid;
     gap: 7px;
@@ -696,9 +704,25 @@ summary:focus-visible,
     border-color: var(--blue-800);
 }
 
-.field-error {
+.field small.field-error {
+    display: block;
     color: var(--danger);
     font-weight: 600;
+}
+
+.field input[aria-invalid="true"] {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+}
+
+.form-error-summary strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.form-error-summary ul {
+    margin: 0;
+    padding-left: 20px;
 }
 
 .auth-switch {
@@ -1481,6 +1505,13 @@ button:disabled, input[type="submit"]:disabled { cursor: not-allowed; opacity: .
 .source-entry small { margin-top: 4px; color: var(--ink-500); }
 .source-entry > span { color: var(--blue-900); font-size: .72rem; font-weight: 800; }
 .source-entry nav { display: flex; gap: 12px; }
+
+.resource-header__actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.resource-header__actions form { margin: 0; }
+.settlement-create { margin-bottom: 18px; }
+.settlement-metrics { margin-bottom: 18px; }
+.resource-table td small { display: block; margin-top: 3px; color: #6b7785; }
+.empty-cell { padding: 30px !important; color: #6b7785; text-align: center; }
 .source-entry a { color: var(--blue-700); font-size: .72rem; font-weight: 750; }
 .error-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(145deg,#eff6ff,#fff); }
 .error-state { width: min(620px,100%); padding: 40px; border: 1px solid #c9dbed; border-radius: 18px; background: #fff; text-align: center; box-shadow: var(--shadow); }
@@ -1673,7 +1704,7 @@ button:disabled, input[type="submit"]:disabled { cursor: not-allowed; opacity: .
 .booking-code a:hover { color: var(--blue-700); }
 .booking-status { width: fit-content; display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border-radius: 999px; background: #edf3f9; color: #526273; font-size: .69rem; font-weight: 800; white-space: nowrap; }
 .booking-status i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.booking-status--confirmed, .booking-status--completed { background: #e8f7ef; color: #177245; }
+.booking-status--confirmed, .booking-status--checked_in, .booking-status--completed { background: #e8f7ef; color: #177245; }
 .booking-status--pending_payment { background: #fff4d6; color: #8a5b00; }
 .booking-status--payment_failed, .booking-status--cancelled, .booking-status--no_show { background: #fcebed; color: #a23543; }
 .booking-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -1793,3 +1824,36 @@ button:disabled, input[type="submit"]:disabled { cursor: not-allowed; opacity: .
     .booking-night-list { overflow-x: auto; }
     .booking-night-list > div { min-width: 530px; }
 }
+
+/* Invoice document */
+.invoice-sheet { max-width: 960px; margin: 0 auto; padding: 36px; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-soft); }
+.invoice-header { display: flex; justify-content: space-between; gap: 24px; padding-bottom: 24px; border-bottom: 2px solid var(--blue-900); }
+.invoice-header h1 { margin: 5px 0; color: var(--blue-950); font-size: 1.65rem; }
+.invoice-header p { margin: 0; color: var(--ink-500); font-size: .75rem; }
+.invoice-status { display: grid; align-content: start; justify-items: end; gap: 7px; }
+.invoice-status span { padding: 5px 9px; border-radius: 999px; background: #e8f7ef; color: #177245; font-size: .64rem; font-weight: 850; }
+.invoice-status strong { color: var(--blue-950); font-size: .8rem; }
+.invoice-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; padding: 25px 0; }
+.invoice-parties span, .invoice-stay span { color: var(--ink-500); font-size: .63rem; font-weight: 800; text-transform: uppercase; }
+.invoice-parties h2 { margin: 6px 0; color: var(--blue-950); font-size: 1rem; }
+.invoice-parties p { margin: 0; color: var(--ink-600); font-size: .74rem; line-height: 1.6; }
+.invoice-stay { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; overflow: hidden; margin-bottom: 24px; border: 1px solid var(--line); border-radius: 10px; background: var(--line); }
+.invoice-stay div { display: grid; gap: 6px; padding: 13px; background: #f8fafc; }
+.invoice-stay strong { color: var(--ink-900); font-size: .74rem; }
+.invoice-table-wrap { overflow-x: auto; }
+.invoice-table { width: 100%; border-collapse: collapse; font-size: .75rem; }
+.invoice-table th { padding: 11px; background: var(--blue-950); color: #fff; text-align: left; }
+.invoice-table th:nth-last-child(-n+3), .invoice-table td:nth-last-child(-n+3) { text-align: right; }
+.invoice-table td { padding: 13px 11px; border-bottom: 1px solid var(--line); color: var(--ink-700); }
+.invoice-table td small { display: block; margin-top: 4px; color: var(--ink-500); }
+.invoice-total { display: grid; grid-template-columns: 1fr 320px; gap: 30px; padding-top: 25px; }
+.invoice-total p { margin: 0 0 8px; color: var(--ink-700); font-size: .72rem; }
+.invoice-total small { color: var(--ink-500); font-size: .66rem; line-height: 1.5; }
+.invoice-total dl { margin: 0; }
+.invoice-total dl div { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.invoice-total dt { color: var(--ink-600); font-size: .72rem; }
+.invoice-total dd { margin: 0; color: var(--blue-950); font-size: .78rem; font-weight: 800; }
+.invoice-total .invoice-balance { border-bottom: 0; }
+.invoice-actions { display: flex; justify-content: flex-end; gap: 10px; max-width: 960px; margin: 18px auto 0; }
+@media (max-width: 720px) { .invoice-sheet { padding: 20px; } .invoice-header { align-items: flex-start; flex-direction: column; } .invoice-status { justify-items: start; } .invoice-parties, .invoice-total { grid-template-columns: 1fr; } .invoice-stay { grid-template-columns: 1fr 1fr; } }
+@media print { .app-sidebar, .app-topbar, .invoice-no-print, .invoice-actions { display: none !important; } .app-main, .app-content { margin: 0 !important; padding: 0 !important; } .invoice-sheet { max-width: none; padding: 0; border: 0; box-shadow: none; } }

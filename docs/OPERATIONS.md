@@ -10,7 +10,12 @@ php bin/console.php payment:expire 100
 php bin/console.php booking:complete 100
 php bin/console.php preview:invalidate-expired 100
 php bin/console.php inventory:reconcile 2026-11-03 2026-12-03 1 100
+php bin/console.php notification:dispatch 100
 ```
+
+`notification:dispatch` xử lý transactional outbox theo batch. Transport `file` ghi `.eml` vào
+`storage/mail`; transport `native` dùng cấu hình mail của PHP. Bản ghi lỗi được thử lại với backoff và
+bản ghi `SENDING` treo quá 15 phút có thể được worker khác nhận lại.
 
 - Tham số cuối của ba lệnh mutation là batch size, nhận từ 1 đến 1.000.
 - `inventory:reconcile` nhận lần lượt ngày đầu, ngày cuối, ID loại phòng và giới hạn dòng hiển thị. Bỏ ID loại phòng
@@ -18,6 +23,20 @@ php bin/console.php inventory:reconcile 2026-11-03 2026-12-03 1 100
 - `payment:expire`, `booking:complete` và `preview:invalidate-expired` khóa rồi kiểm tra lại từng bản ghi trong transaction;
   chạy lại không lặp side effect đã hoàn tất.
 - Mọi thay đổi trạng thái nghiệp vụ đều có audit. Dùng `Run ID` trong output và log để điều tra một lần chạy.
+
+## Vòng đời hoàn tất lưu trú
+
+Thứ tự vận hành chuẩn của booking trả tại cơ sở:
+
+1. Partner nhận khách trên `/partner/bookings/{code}`; booking chuyển `CONFIRMED → CHECKED_IN`.
+2. Partner ghi nhận đủ tiền bằng tiền mặt, chuyển khoản hoặc thẻ tại cơ sở.
+3. Partner xác nhận trả phòng; booking, inventory, invoice và outbox cùng được commit.
+4. Scheduler chạy `php bin/console.php notification:dispatch 100` để gửi email hóa đơn.
+5. Partner vào `/partner/settlements`, tạo bản nháp theo cơ sở/kỳ, kiểm tra rồi chốt.
+6. Tải CSV từ trang chi tiết kỳ để lưu chứng từ đối soát.
+
+Không sửa trực tiếp booking/payment/invoice/settlement bằng SQL trong vận hành. Kỳ `FINALIZED` là snapshot bất biến;
+nếu phát hiện sai nguồn, điều tra audit và xử lý nghiệp vụ nguồn thay vì sửa số đã chốt.
 
 ## Backup database và uploads
 

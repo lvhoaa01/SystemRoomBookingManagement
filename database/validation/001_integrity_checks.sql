@@ -1,7 +1,7 @@
 USE hotel_booking;
 
 -- Mọi dòng kết quả phải có Violations = 0.
-SELECT 'schema_table_count_not_22' AS CheckName, ABS(COUNT(*) - 22) AS Violations
+SELECT 'schema_table_count_not_28' AS CheckName, ABS(COUNT(*) - 28) AS Violations
 FROM information_schema.tables
 WHERE table_schema = 'hotel_booking' AND table_type = 'BASE TABLE'
 UNION ALL
@@ -24,7 +24,7 @@ SELECT 'active_ledger_bad_booking_state', COUNT(*)
 FROM GiuTonPhongDem l
 JOIN HangMucDatCho i ON i.HangMucDatChoID=l.HangMucDatChoID
 JOIN DatCho b ON b.DatChoID=i.DatChoID
-WHERE l.TrangThai='ACTIVE' AND b.TrangThai NOT IN ('PENDING_PAYMENT','CONFIRMED')
+WHERE l.TrangThai='ACTIVE' AND b.TrangThai NOT IN ('PENDING_PAYMENT','CONFIRMED','CHECKED_IN')
 UNION ALL
 SELECT 'terminal_booking_has_active_ledger', COUNT(*)
 FROM GiuTonPhongDem l
@@ -119,10 +119,13 @@ SELECT 'payment_booking_mismatch', COUNT(*)
 FROM DatCho b
 LEFT JOIN ThanhToan p ON p.DatChoID=b.DatChoID
 WHERE p.ThanhToanID IS NULL OR p.TongPhaiTra<>b.TongTien OR p.ThoiDiemThanhToan<>b.ThoiDiemThanhToan
-   OR (b.ThoiDiemThanhToan='PAY_AT_PROPERTY' AND (p.TrangThai<>'NOT_TRACKED' OR p.DaThanhToan<>0 OR p.DaHoan<>0))
+   OR (b.ThoiDiemThanhToan='PAY_AT_PROPERTY' AND NOT (
+       (p.TrangThai='NOT_TRACKED' AND p.DaThanhToan=0 AND p.DaHoan=0) OR
+       (p.TrangThai='PAID' AND p.DaThanhToan=p.TongPhaiTra AND p.DaHoan=0)
+   ))
    OR (b.TrangThai='PENDING_PAYMENT' AND p.TrangThai<>'PROCESSING')
    OR (b.TrangThai='PAYMENT_FAILED' AND p.TrangThai<>'FAILED')
-   OR (b.ThoiDiemThanhToan='PAY_ONLINE' AND b.TrangThai IN ('CONFIRMED','COMPLETED','NO_SHOW','CANCELLED') AND p.TrangThai<>'PAID')
+   OR (b.ThoiDiemThanhToan='PAY_ONLINE' AND b.TrangThai IN ('CONFIRMED','CHECKED_IN','COMPLETED','NO_SHOW','CANCELLED') AND p.TrangThai<>'PAID')
 UNION ALL
 SELECT 'cancellation_metadata_or_refund_mismatch', COUNT(*)
 FROM DatCho b
@@ -179,4 +182,98 @@ WHERE (GoogleMatchStatus='NOT_CHECKED' AND (GooglePlaceID IS NOT NULL OR GoogleV
 UNION ALL
 SELECT 'daily_rate_invalid_restriction', COUNT(*)
 FROM GiaPhongNgay
-WHERE SoDemToiThieu<1 OR SoDemToiThieu>30 OR (SoDemToiDa IS NOT NULL AND (SoDemToiDa<SoDemToiThieu OR SoDemToiDa>30));
+WHERE SoDemToiThieu<1 OR SoDemToiThieu>30 OR (SoDemToiDa IS NOT NULL AND (SoDemToiDa<SoDemToiThieu OR SoDemToiDa>30))
+UNION ALL
+SELECT 'checked_in_missing_metadata', COUNT(*)
+FROM DatCho
+WHERE TrangThai='CHECKED_IN' AND (NhanPhongLuc IS NULL OR NguoiNhanPhongID IS NULL)
+UNION ALL
+SELECT 'check_in_metadata_pair_mismatch', COUNT(*)
+FROM DatCho
+WHERE (NhanPhongLuc IS NULL) <> (NguoiNhanPhongID IS NULL)
+UNION ALL
+SELECT 'property_payment_collection_mismatch', COUNT(*)
+FROM ThanhToan p
+LEFT JOIN (
+  SELECT ThanhToanID, COUNT(*) AS TransactionCount, SUM(SoTien) AS Collected
+  FROM GiaoDichThanhToan
+  WHERE LoaiGiaoDich='COLLECTION' AND TrangThai='SUCCEEDED'
+  GROUP BY ThanhToanID
+) t ON t.ThanhToanID=p.ThanhToanID
+WHERE p.ThoiDiemThanhToan='PAY_AT_PROPERTY'
+  AND ((p.TrangThai='NOT_TRACKED' AND COALESCE(t.TransactionCount,0)<>0)
+       OR (p.TrangThai='PAID' AND (COALESCE(t.TransactionCount,0)<>1 OR t.Collected<>p.DaThanhToan)))
+UNION ALL
+SELECT 'property_collection_wrong_booking_state', COUNT(*)
+FROM GiaoDichThanhToan g
+JOIN ThanhToan p ON p.ThanhToanID=g.ThanhToanID
+JOIN DatCho b ON b.DatChoID=p.DatChoID
+WHERE p.ThoiDiemThanhToan<>'PAY_AT_PROPERTY'
+   OR b.TrangThai NOT IN ('CHECKED_IN','COMPLETED')
+UNION ALL
+SELECT 'invoice_booking_state_invalid', COUNT(*)
+FROM HoaDon h JOIN DatCho b ON b.DatChoID=h.DatChoID
+WHERE b.TrangThai<>'COMPLETED'
+UNION ALL
+SELECT 'invoice_payment_total_mismatch', COUNT(*)
+FROM HoaDon h
+JOIN DatCho b ON b.DatChoID=h.DatChoID
+JOIN ThanhToan p ON p.DatChoID=b.DatChoID
+WHERE h.TongTien<>b.TongTien OR h.DaThanhToan<>h.TongTien
+   OR p.TrangThai<>'PAID' OR (p.DaThanhToan-p.DaHoan)<>h.TongTien
+UNION ALL
+SELECT 'invoice_line_total_mismatch', COUNT(*)
+FROM HoaDon h
+LEFT JOIN (
+  SELECT HoaDonID, SUM(ThanhTien) AS LineTotal FROM ChiTietHoaDon GROUP BY HoaDonID
+) l ON l.HoaDonID=h.HoaDonID
+WHERE COALESCE(l.LineTotal,0)<>h.TongTien
+UNION ALL
+SELECT 'invoice_notification_missing_or_duplicate', COUNT(*)
+FROM HoaDon h
+LEFT JOIN (
+  SELECT HoaDonID, COUNT(*) AS NotificationCount
+  FROM HangDoiThongBao WHERE LoaiThongBao='INVOICE_ISSUED' GROUP BY HoaDonID
+) q ON q.HoaDonID=h.HoaDonID
+WHERE COALESCE(q.NotificationCount,0)<>1
+UNION ALL
+SELECT 'invoice_notification_snapshot_mismatch', COUNT(*)
+FROM HangDoiThongBao q
+JOIN HoaDon h ON h.HoaDonID=q.HoaDonID
+JOIN DatCho b ON b.DatChoID=h.DatChoID
+WHERE q.EmailNguoiNhan<>JSON_UNQUOTE(JSON_EXTRACT(h.SnapshotJSON, '$.booker.email'))
+   OR JSON_UNQUOTE(JSON_EXTRACT(q.PayloadJSON, '$.invoiceNumber'))<>h.SoHoaDon
+   OR JSON_UNQUOTE(JSON_EXTRACT(q.PayloadJSON, '$.bookingCode'))<>b.MaDatCho
+UNION ALL
+SELECT 'settlement_property_scope_mismatch', COUNT(*)
+FROM KyDoiSoat k JOIN CoSoLuuTru c ON c.CoSoLuuTruID=k.CoSoLuuTruID
+WHERE k.ToChucDoiTacID<>c.ToChucDoiTacID
+UNION ALL
+SELECT 'settlement_header_detail_mismatch', COUNT(*)
+FROM KyDoiSoat k
+LEFT JOIN (
+  SELECT KyDoiSoatID, COUNT(*) AS BookingCount,
+         SUM(TongTien) AS Gross, SUM(DaHoan) AS Refunded, SUM(DoanhThuThuan) AS Net,
+         SUM(CASE WHEN ThoiDiemThanhToan='PAY_ONLINE' THEN TongTien ELSE 0 END) AS OnlineTotal,
+         SUM(CASE WHEN ThoiDiemThanhToan='PAY_AT_PROPERTY' THEN TongTien ELSE 0 END) AS AtPropertyTotal
+  FROM ChiTietDoiSoat GROUP BY KyDoiSoatID
+) d ON d.KyDoiSoatID=k.KyDoiSoatID
+WHERE k.SoDatCho<>COALESCE(d.BookingCount,0)
+   OR k.DoanhThuGop<>COALESCE(d.Gross,0) OR k.DaHoan<>COALESCE(d.Refunded,0)
+   OR k.DoanhThuThuan<>COALESCE(d.Net,0) OR k.ThuTrucTuyen<>COALESCE(d.OnlineTotal,0)
+   OR k.ThuTaiCoSo<>COALESCE(d.AtPropertyTotal,0)
+UNION ALL
+SELECT 'settlement_line_source_mismatch', COUNT(*)
+FROM ChiTietDoiSoat d
+JOIN KyDoiSoat k ON k.KyDoiSoatID=d.KyDoiSoatID
+JOIN HoaDon h ON h.HoaDonID=d.HoaDonID
+JOIN DatCho b ON b.DatChoID=h.DatChoID
+WHERE h.CoSoLuuTruID<>k.CoSoLuuTruID OR DATE(h.PhatHanhLuc) NOT BETWEEN k.TuNgay AND k.DenNgay
+   OR d.SoHoaDon<>h.SoHoaDon OR d.MaDatCho<>b.MaDatCho OR d.TongTien<>h.TongTien
+   OR d.ThoiDiemThanhToan<>b.ThoiDiemThanhToan
+UNION ALL
+SELECT 'finalized_settlement_period_overlap', COUNT(*)
+FROM KyDoiSoat a JOIN KyDoiSoat b
+  ON b.CoSoLuuTruID=a.CoSoLuuTruID AND b.KyDoiSoatID>a.KyDoiSoatID
+ AND b.TrangThai='FINALIZED' AND a.TrangThai='FINALIZED'
+ AND a.TuNgay<=b.DenNgay AND a.DenNgay>=b.TuNgay;

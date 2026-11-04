@@ -9,8 +9,8 @@ use PDO;
 
 final readonly class ReportRepository
 {
-    private const BOOKED_STATUSES = "'CONFIRMED','COMPLETED','NO_SHOW'";
-    private const DUE_STATUSES = "'CONFIRMED','COMPLETED','CANCELLED','NO_SHOW'";
+    private const BOOKED_STATUSES = "'CONFIRMED','CHECKED_IN','COMPLETED','NO_SHOW'";
+    private const DUE_STATUSES = "'CONFIRMED','CHECKED_IN','COMPLETED','CANCELLED','NO_SHOW'";
 
     public function __construct(private PDO $pdo)
     {

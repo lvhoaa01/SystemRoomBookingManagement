@@ -381,10 +381,14 @@ final readonly class BookingRepository
                        dc.NgayNhanPhong AS checkIn, dc.NgayTraPhong AS checkOut,
                        dc.TenNguoiDat AS bookerName, dc.EmailNguoiDat AS bookerEmail,
                        dc.DienThoaiNguoiDat AS bookerPhone, dc.YeuCauDacBiet AS specialRequest,
-                       dc.ThoiDiemThanhToan AS paymentTiming, dc.TongTien AS grandTotal,
-                       dc.TrangThai AS status, dc.XacNhanLuc AS confirmedAt, dc.TaoLuc AS createdAt
+                        dc.ThoiDiemThanhToan AS paymentTiming, dc.TongTien AS grandTotal,
+                        tt.TrangThai AS paymentStatus, tt.DaThanhToan AS paidAmount,
+                        tt.DaHoan AS refundedAmount,
+                        dc.TrangThai AS status, dc.XacNhanLuc AS confirmedAt,
+                        dc.NhanPhongLuc AS checkedInAt, dc.TaoLuc AS createdAt
                 FROM DatCho dc
-                INNER JOIN CoSoLuuTru cs ON cs.CoSoLuuTruID = dc.CoSoLuuTruID';
+                INNER JOIN CoSoLuuTru cs ON cs.CoSoLuuTruID = dc.CoSoLuuTruID
+                INNER JOIN ThanhToan tt ON tt.DatChoID = dc.DatChoID';
     }
 
     /** @param array<string, mixed> $row */
@@ -407,8 +411,12 @@ final readonly class BookingRepository
             $row['specialRequest'] === null ? null : (string) $row['specialRequest'],
             (string) $row['paymentTiming'],
             Money::vnd((string) $row['grandTotal']),
+            (string) $row['paymentStatus'],
+            Money::vnd((string) $row['paidAmount']),
+            Money::vnd((string) $row['refundedAmount']),
             (string) $row['status'],
             $row['confirmedAt'] === null ? null : $this->dateTime((string) $row['confirmedAt']),
+            $row['checkedInAt'] === null ? null : $this->dateTime((string) $row['checkedInAt']),
             $this->dateTime((string) $row['createdAt']),
             $this->items((int) $row['id']),
         );

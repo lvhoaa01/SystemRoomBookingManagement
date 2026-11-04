@@ -6,6 +6,7 @@ use App\Bootstrap\App;
 use App\Modules\Bookings\Application\CancellationCommand;
 use App\Modules\Bookings\Application\CancellationService;
 use App\Modules\Bookings\Application\CompletionService;
+use App\Modules\Bookings\Application\CheckInService;
 use App\Modules\Bookings\Application\NoShowService;
 use App\Modules\Bookings\Application\OnlinePaymentService;
 use App\Modules\Bookings\Application\PaymentGatewayResult;
@@ -71,6 +72,15 @@ try {
             '127.0.0.1',
         );
         $result = ['success' => true, 'status' => 'CANCELLED'];
+    } elseif ($action === 'check_in') {
+        $container->get(CheckInService::class)->checkIn(
+            (string) $payload['code'],
+            (int) $payload['organizationId'],
+            (int) $payload['actorId'],
+            (string) $payload['requestId'],
+            '127.0.0.1',
+        );
+        $result = ['success' => true, 'status' => 'CHECKED_IN'];
     } elseif ($action === 'complete') {
         $changed = $container->get(CompletionService::class)->completeDue(1);
         $result = ['success' => $changed === 1, 'status' => $changed === 1 ? 'COMPLETED' : 'UNCHANGED'];

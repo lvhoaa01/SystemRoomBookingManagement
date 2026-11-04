@@ -6,6 +6,7 @@ declare(strict_types=1);
 $statusLabels = [
     'PENDING_PAYMENT' => 'Chờ thanh toán',
     'CONFIRMED' => 'Đã xác nhận',
+    'CHECKED_IN' => 'Đã nhận khách',
     'PAYMENT_FAILED' => 'Thanh toán thất bại',
     'CANCELLED' => 'Đã hủy',
     'NO_SHOW' => 'Không đến',

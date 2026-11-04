@@ -33,6 +33,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
     <script src="<?= $assetUrl('/assets/js/app.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/properties.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/search.js') ?>" defer></script>
+    <script src="<?= $assetUrl('/assets/js/invoice.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/booking.js') ?>" defer></script>
 </head>
 <body class="<?= $useAppShell ? 'has-app-shell' : 'has-public-shell' ?>">
@@ -99,6 +100,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
                         <span class="is-disabled"><svg class="app-icon"><use href="#icon-users"/></svg><span>Khách hàng</span></span>
                         <span class="is-disabled"><svg class="app-icon"><use href="#icon-chart"/></svg><span>Doanh thu</span></span>
                         <a<?= $activeNavigation === 'reports' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/partner/reports"><svg class="app-icon"><use href="#icon-file"/></svg><span>Báo cáo</span></a>
+                        <a<?= $activeNavigation === 'settlements' ? ' class="is-active"' : '' ?> href="<?= $baseUrl ?>/partner/settlements"><svg class="app-icon"><use href="#icon-chart"/></svg><span>Đối soát</span></a>
                     <?php endif; ?>
                 </nav>
                 <div class="app-sidebar__footer"><span class="is-disabled"><svg class="app-icon"><use href="#icon-settings"/></svg><span>Cài đặt</span></span></div>

@@ -33,7 +33,7 @@ if ($manifestJson === false) {
 $manifest = json_decode($manifestJson, true, 64, JSON_THROW_ON_ERROR);
 $check(is_array($manifest), 'Manifest là JSON object');
 $check(($manifest['syntheticData'] ?? null) === true, 'Dữ liệu được gắn nhãn synthetic');
-$check(($manifest['tableCount'] ?? null) === 22, 'Manifest khai báo đúng 22 bảng');
+$check(($manifest['tableCount'] ?? null) === 22, 'Manifest fixture gốc khai báo đúng 22 bảng');
 
 /** @var array<string, string> $requiredFiles */
 $requiredFiles = array_merge(
@@ -72,7 +72,7 @@ foreach ($optionalSources as $relativePath => $expectedHash) {
 $tableCount = (int) $pdo->query(
     "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'",
 )->fetchColumn();
-$check($tableCount === 22, 'Database có đúng 22 bảng', (string) $tableCount);
+$check($tableCount === 28, 'Database có đúng 28 bảng sau mở rộng notification và đối soát', (string) $tableCount);
 
 $countMap = [
     'facilities' => 'TienNghi',

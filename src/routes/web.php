@@ -24,9 +24,12 @@ use App\Modules\Bookings\Http\BookingController;
 use App\Modules\Bookings\Http\BookingPortalController;
 use App\Modules\Commercial\Http\PartnerCommercialController;
 use App\Modules\Inventory\Http\PartnerInventoryController;
+use App\Modules\Payments\Http\PartnerPaymentController;
+use App\Modules\Payments\Http\InvoiceController;
 use App\Modules\Properties\Http\AdminPropertyController;
 use App\Modules\Properties\Http\ImageSourceController;
 use App\Modules\Properties\Http\PartnerPropertyController;
+use App\Modules\Reports\Http\PartnerRevenueSettlementController;
 use App\Modules\Properties\Http\PropertyImageController;
 use App\Modules\Search\Http\PublicSearchController;
 use App\Modules\Reviews\Http\ReviewController;
@@ -138,6 +141,12 @@ return static function (Router $router, Container $container): void {
     $bookingPortal = $container->get(BookingPortalController::class);
     $router->get('/account/bookings', $bookingPortal->customerIndex(...), $customerRead, 'account.bookings.index');
     $router->get('/account/bookings/{code}', $bookingPortal->customerShow(...), $customerRead, 'account.bookings.show');
+    $router->get(
+        '/account/bookings/{code}/invoice',
+        $container->get(InvoiceController::class)->customerShow(...),
+        $customerRead,
+        'account.bookings.invoice',
+    );
     $router->post(
         '/account/bookings/{code}/guest-details',
         $bookingPortal->customerUpdate(...),
@@ -160,9 +169,29 @@ return static function (Router $router, Container $container): void {
     $partnerBookingWrite = [$requestId, $csrf, $auth, $partnerRole];
     $router->get('/partner/bookings', $bookingPortal->partnerIndex(...), $partnerBookingRead, 'partner.bookings.index');
     $router->get('/partner/bookings/{code}', $bookingPortal->partnerShow(...), $partnerBookingRead, 'partner.bookings.show');
+    $router->post('/partner/bookings/{code}/check-in', $bookingPortal->partnerCheckIn(...), $partnerBookingWrite, 'partner.bookings.check-in');
+    $router->post(
+        '/partner/bookings/{code}/payments',
+        $container->get(PartnerPaymentController::class)->record(...),
+        $partnerBookingWrite,
+        'partner.bookings.payments.store',
+    );
+    $router->post('/partner/bookings/{code}/checkout', $bookingPortal->partnerCheckout(...), $partnerBookingWrite, 'partner.bookings.checkout');
+    $router->get(
+        '/partner/bookings/{code}/invoice',
+        $container->get(InvoiceController::class)->partnerShow(...),
+        $partnerBookingRead,
+        'partner.bookings.invoice',
+    );
     $router->post('/partner/bookings/{code}/no-show', $bookingPortal->partnerNoShow(...), $partnerBookingWrite, 'partner.bookings.no-show');
     $adminOperations = $container->get(AdminOperationsController::class);
     $router->get('/partner/reports', $adminOperations->partnerReports(...), $partnerBookingRead, 'partner.reports.index');
+    $settlements = $container->get(PartnerRevenueSettlementController::class);
+    $router->get('/partner/settlements', $settlements->index(...), $partnerBookingRead, 'partner.settlements.index');
+    $router->post('/partner/settlements', $settlements->store(...), $partnerBookingWrite, 'partner.settlements.store');
+    $router->get('/partner/settlements/{settlementId}', $settlements->show(...), $partnerBookingRead, 'partner.settlements.show');
+    $router->post('/partner/settlements/{settlementId}/finalize', $settlements->finalize(...), $partnerBookingWrite, 'partner.settlements.finalize');
+    $router->get('/partner/settlements/{settlementId}/export', $settlements->export(...), $partnerBookingRead, 'partner.settlements.export');
     $router->get('/partner/waivers', $bookingPortal->partnerWaivers(...), $partnerBookingRead, 'partner.waivers.index');
     $router->post('/partner/waivers/{waiverId}/decision', $bookingPortal->partnerWaiverDecision(...), $partnerBookingWrite, 'partner.waivers.decision');
     $router->get('/partner/properties', $partner->index(...), $partnerRead, 'partner.properties.index');

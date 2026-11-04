@@ -28,8 +28,12 @@ final readonly class Booking
         public ?string $specialRequest,
         public string $paymentTiming,
         public Money $grandTotal,
+        public string $paymentStatus,
+        public Money $paidAmount,
+        public Money $refundedAmount,
         public string $status,
         public ?DateTimeImmutable $confirmedAt,
+        public ?DateTimeImmutable $checkedInAt,
         public DateTimeImmutable $createdAt,
         public array $items,
     ) {
@@ -40,12 +44,16 @@ final readonly class Booking
             throw new InvalidArgumentException('Booking phải có mã và ít nhất một hạng mục.');
         }
         if (!in_array($this->paymentTiming, ['PAY_AT_PROPERTY', 'PAY_ONLINE'], true)
-            || !in_array($this->status, ['PENDING_PAYMENT', 'CONFIRMED', 'PAYMENT_FAILED', 'CANCELLED', 'NO_SHOW', 'COMPLETED'], true)) {
+            || !in_array($this->paymentStatus, ['NOT_TRACKED', 'PROCESSING', 'PAID', 'FAILED'], true)
+            || !in_array($this->status, ['PENDING_PAYMENT', 'CONFIRMED', 'CHECKED_IN', 'PAYMENT_FAILED', 'CANCELLED', 'NO_SHOW', 'COMPLETED'], true)) {
             throw new InvalidArgumentException('Timing hoặc trạng thái booking chưa hợp lệ.');
         }
-        $confirmedLifecycle = in_array($this->status, ['CONFIRMED', 'CANCELLED', 'NO_SHOW', 'COMPLETED'], true);
+        $confirmedLifecycle = in_array($this->status, ['CONFIRMED', 'CHECKED_IN', 'CANCELLED', 'NO_SHOW', 'COMPLETED'], true);
         if ($confirmedLifecycle !== ($this->confirmedAt !== null)) {
             throw new InvalidArgumentException('Thời điểm xác nhận phải khớp trạng thái booking.');
+        }
+        if ($this->status === 'CHECKED_IN' && $this->checkedInAt === null) {
+            throw new InvalidArgumentException('Booking CHECKED_IN phải có thời điểm nhận khách.');
         }
     }
 }

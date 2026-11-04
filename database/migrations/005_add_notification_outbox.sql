@@ -1,0 +1,32 @@
+USE hotel_booking;
+
+CREATE TABLE HangDoiThongBao (
+  ThongBaoID BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  HoaDonID BIGINT UNSIGNED NOT NULL,
+  LoaiThongBao VARCHAR(32) NOT NULL,
+  Kenh VARCHAR(16) NOT NULL,
+  EmailNguoiNhan VARCHAR(190) NOT NULL,
+  TieuDe VARCHAR(255) NOT NULL,
+  PayloadJSON JSON NOT NULL,
+  TrangThai VARCHAR(16) NOT NULL,
+  SoLanThu SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  GuiSauLuc DATETIME(6) NOT NULL,
+  GuiLuc DATETIME(6) NULL,
+  LoiCuoi VARCHAR(500) NULL,
+  IdempotencyKey VARCHAR(100) NOT NULL,
+  TaoLuc DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  CapNhatLuc DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  UNIQUE KEY UQ_HangDoiThongBao_Key (IdempotencyKey),
+  UNIQUE KEY UQ_HangDoiThongBao_HoaDonLoai (HoaDonID, LoaiThongBao),
+  KEY IX_HangDoiThongBao_Gui (TrangThai, GuiSauLuc, SoLanThu),
+  CONSTRAINT FK_HangDoiThongBao_HoaDon FOREIGN KEY (HoaDonID) REFERENCES HoaDon(HoaDonID),
+  CONSTRAINT CK_HangDoiThongBao_Loai CHECK (LoaiThongBao = 'INVOICE_ISSUED'),
+  CONSTRAINT CK_HangDoiThongBao_Kenh CHECK (Kenh = 'EMAIL'),
+  CONSTRAINT CK_HangDoiThongBao_TrangThai CHECK (
+    TrangThai IN ('PENDING','SENDING','SENT','FAILED')
+  ),
+  CONSTRAINT CK_HangDoiThongBao_Gui CHECK (
+    (TrangThai = 'SENT' AND GuiLuc IS NOT NULL AND LoiCuoi IS NULL) OR
+    (TrangThai <> 'SENT' AND GuiLuc IS NULL)
+  )
+) ENGINE=InnoDB;

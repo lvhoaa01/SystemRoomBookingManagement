@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Bookings\Application;
 
 use App\Modules\Bookings\Infrastructure\BookingLifecycleRepository;
+use App\Modules\Bookings\Infrastructure\PaymentRepository;
 use App\Modules\Inventory\Application\InventoryReservationService;
+use App\Modules\Payments\Application\IssueInvoiceService;
 use App\Shared\Audit\AuditTrail;
 use App\Shared\Clock\ClockInterface;
 use App\Shared\Database\TransactionManager;
@@ -17,7 +19,9 @@ final readonly class CompletionService
 {
     public function __construct(
         private BookingLifecycleRepository $lifecycle,
+        private PaymentRepository $payments,
         private InventoryReservationService $inventory,
+        private IssueInvoiceService $invoiceIssuer,
         private TransactionManager $transactions,
         private AuditTrail $audit,
         private ClockInterface $clock,
@@ -40,7 +44,7 @@ final readonly class CompletionService
             }
             $changed = $this->transactions->run(function () use ($candidate): bool {
                 $context = $this->lifecycle->lockById($candidate['id']);
-                if ($context === null || $context['status'] !== 'CONFIRMED') {
+                if ($context === null || $context['status'] !== 'CHECKED_IN') {
                     return false;
                 }
                 $cutoff = new DateTimeImmutable(
@@ -50,13 +54,20 @@ final readonly class CompletionService
                 if ($this->clock->now() < $cutoff) {
                     return false;
                 }
+                $payment = $this->payments->lockByBookingId((int) $context['id']);
+                if ($payment === null || $payment->status !== 'PAID'
+                    || !$payment->refunded->isZero() || !$payment->paid->equals($payment->total)) {
+                    return false;
+                }
                 $released = $this->inventory->releaseActive((int) $context['id'], 'BOOKING_COMPLETED');
                 $this->lifecycle->markCompleted((int) $context['id'], $this->clock->now());
+                $invoice = $this->invoiceIssuer->issue((int) $context['id'], null, $this->clock->now());
                 $requestId = 'completion:' . $context['id'];
                 if ($this->audit->findByRequestId($requestId) === null) {
                     $this->audit->record(null, 'BOOKING_COMPLETED', 'DatCho', (string) $context['id'], $requestId,
-                        ['status' => 'CONFIRMED', 'activeLedgerCount' => $released],
-                        ['status' => 'COMPLETED', 'completedAt' => $this->clock->now()->format(DATE_ATOM)], null);
+                        ['status' => $context['status'], 'activeLedgerCount' => $released],
+                        ['status' => 'COMPLETED', 'completedAt' => $this->clock->now()->format(DATE_ATOM),
+                            'invoiceId' => $invoice->id, 'invoiceNumber' => $invoice->number], null);
                 }
                 return true;
             });

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Bookings;
 
 use App\Bootstrap\App;
+use App\Config\AppConfig;
 use App\Modules\Bookings\Application\BookingException;
 use App\Modules\Bookings\Application\CancellationCommand;
 use App\Modules\Bookings\Application\CancellationService;
@@ -19,6 +20,10 @@ use App\Modules\Bookings\Infrastructure\PaymentRepository;
 use App\Modules\Commercial\Application\NoShowFeeCalculator;
 use App\Modules\Inventory\Application\TransactionalInventoryReservationService;
 use App\Modules\Inventory\Infrastructure\InventoryRepository;
+use App\Modules\Notifications\Application\QueueInvoiceNotificationService;
+use App\Modules\Notifications\Infrastructure\NotificationRepository;
+use App\Modules\Payments\Application\IssueInvoiceService;
+use App\Modules\Payments\Infrastructure\InvoiceRepository;
 use App\Modules\Reviews\Application\ReviewRequest;
 use App\Modules\Reviews\Application\ReviewService;
 use App\Modules\Reviews\Infrastructure\ReviewRepository;
@@ -172,9 +177,14 @@ final class LifecycleAndReviewServiceTest extends TestCase
     public function test_completion_batch_releases_inventory_and_running_again_is_safe(): void
     {
         $bookings = $this->rows(
-            "SELECT dc.*, cs.GioTraPhong checkOutTime, cs.MuiGio timezone
+            "SELECT dc.*, cs.GioTraPhong checkOutTime, cs.MuiGio timezone,
+                    (SELECT MIN(tv.NguoiDungID) FROM ThanhVienDoiTac tv
+                     WHERE tv.ToChucDoiTacID=cs.ToChucDoiTacID) actorId
              FROM DatCho dc INNER JOIN CoSoLuuTru cs ON cs.CoSoLuuTruID=dc.CoSoLuuTruID
-             WHERE dc.TrangThai='CONFIRMED' ORDER BY dc.NgayTraPhong, dc.DatChoID LIMIT 2"
+             INNER JOIN ThanhToan tt ON tt.DatChoID=dc.DatChoID
+             WHERE dc.TrangThai='CONFIRMED' AND dc.ThoiDiemThanhToan='PAY_ONLINE'
+               AND tt.TrangThai='PAID' AND tt.DaHoan=0
+             ORDER BY dc.NgayTraPhong, dc.DatChoID LIMIT 2"
         );
         self::assertCount(2, $bookings);
         $states = array_map(fn (array $booking): array => $this->snapshotLifecycle((int) $booking['DatChoID']), $bookings);
@@ -184,8 +194,26 @@ final class LifecycleAndReviewServiceTest extends TestCase
         usort($cutoffs, static fn (DateTimeImmutable $left, DateTimeImmutable $right): int => $left <=> $right);
         $clock = new FrozenClock($cutoffs[1]->modify('+1 second'));
         try {
+            foreach ($bookings as $booking) {
+                $this->pdo->prepare(
+                    "UPDATE DatCho SET TrangThai='CHECKED_IN', NhanPhongLuc=?, NguoiNhanPhongID=? WHERE DatChoID=?"
+                )->execute([
+                    $booking['NgayNhanPhong'] . ' 00:00:00.000000',
+                    (int) $booking['actorId'],
+                    (int) $booking['DatChoID'],
+                ]);
+            }
+            $invoiceRepository = new InvoiceRepository($this->pdo);
             $service = new CompletionService(
-                new BookingLifecycleRepository($this->pdo), $this->inventory($clock),
+                new BookingLifecycleRepository($this->pdo), new PaymentRepository($this->pdo),
+                $this->inventory($clock), new IssueInvoiceService(
+                    $this->pdo,
+                    $invoiceRepository,
+                    new QueueInvoiceNotificationService(
+                        new NotificationRepository($this->pdo),
+                        AppConfig::fromEnv(),
+                    ),
+                ),
                 $this->transactions(), new DatabaseAuditTrail($this->pdo), $clock,
             );
             self::assertSame(1, $service->completeDue(1));
@@ -194,6 +222,7 @@ final class LifecycleAndReviewServiceTest extends TestCase
                 $bookingId = (int) $booking['DatChoID'];
                 self::assertSame('COMPLETED', $this->scalar('SELECT TrangThai FROM DatCho WHERE DatChoID=' . $bookingId));
                 self::assertSame('1', $this->scalar("SELECT COUNT(*) FROM NhatKyHeThong WHERE RequestID='completion:{$bookingId}'"));
+                self::assertSame('1', $this->scalar('SELECT COUNT(*) FROM HoaDon WHERE DatChoID=' . $bookingId));
             }
         } finally {
             foreach ($states as $state) {
@@ -320,6 +349,9 @@ final class LifecycleAndReviewServiceTest extends TestCase
             foreach ($requestIds as $id) {
                 $this->pdo->prepare('DELETE FROM NhatKyHeThong WHERE RequestID=?')->execute([$id]);
             }
+            $this->pdo->prepare('DELETE q FROM HangDoiThongBao q INNER JOIN HoaDon hd ON hd.HoaDonID=q.HoaDonID WHERE hd.DatChoID=?')->execute([$bookingId]);
+            $this->pdo->prepare('DELETE ct FROM ChiTietHoaDon ct INNER JOIN HoaDon hd ON hd.HoaDonID=ct.HoaDonID WHERE hd.DatChoID=?')->execute([$bookingId]);
+            $this->pdo->prepare('DELETE FROM HoaDon WHERE DatChoID=?')->execute([$bookingId]);
             $this->pdo->prepare('DELETE gt FROM GiuTonPhongDem gt INNER JOIN HangMucDatCho hm ON hm.HangMucDatChoID=gt.HangMucDatChoID WHERE hm.DatChoID=?')->execute([$bookingId]);
             foreach ($state['holds'] as $row) {
                 $this->insert('GiuTonPhongDem', $row);

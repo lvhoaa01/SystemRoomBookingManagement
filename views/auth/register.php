@@ -26,6 +26,19 @@ declare(strict_types=1);
             <p>Chỉ mất một phút để tạo tài khoản.</p>
         </div>
 
+        <?php if ($errors !== []): ?>
+            <div class="alert alert--error form-error-summary" role="alert" aria-labelledby="registration-error-title">
+                <strong id="registration-error-title">Không thể tạo tài khoản</strong>
+                <ul>
+                    <?php foreach ($errors as $messages): ?>
+                        <?php foreach ($messages as $message): ?>
+                            <li><?= $message ?></li>
+                        <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+
         <form method="post" action="<?= $baseUrl ?>/auth/register" class="form-stack">
             <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
@@ -41,6 +54,7 @@ declare(strict_types=1);
                     required
                     autofocus
                     aria-describedby="fullName-error"
+                    aria-invalid="<?= ($errors['fullName'] ?? []) !== [] ? 'true' : 'false' ?>"
                 >
                 <?php if (($errors['fullName'] ?? []) !== []): ?>
                     <small id="fullName-error" class="field-error"><?= implode(' ', $errors['fullName']) ?></small>
@@ -58,6 +72,7 @@ declare(strict_types=1);
                     maxlength="190"
                     required
                     aria-describedby="email-error"
+                    aria-invalid="<?= ($errors['email'] ?? []) !== [] ? 'true' : 'false' ?>"
                 >
                 <?php if (($errors['email'] ?? []) !== []): ?>
                     <small id="email-error" class="field-error"><?= implode(' ', $errors['email']) ?></small>
@@ -74,13 +89,14 @@ declare(strict_types=1);
                     autocomplete="tel"
                     maxlength="20"
                     aria-describedby="phone-error"
+                    aria-invalid="<?= ($errors['phone'] ?? []) !== [] ? 'true' : 'false' ?>"
                 >
                 <?php if (($errors['phone'] ?? []) !== []): ?>
                     <small id="phone-error" class="field-error"><?= implode(' ', $errors['phone']) ?></small>
                 <?php endif; ?>
             </div>
 
-            <div class="field-grid">
+            <div class="field-grid field-grid--passwords">
                 <div class="field">
                     <label for="password">Mật khẩu</label>
                     <input
@@ -92,6 +108,7 @@ declare(strict_types=1);
                         maxlength="72"
                         required
                         aria-describedby="password-hint password-error"
+                        aria-invalid="<?= ($errors['password'] ?? []) !== [] ? 'true' : 'false' ?>"
                     >
                     <small id="password-hint" class="field-hint">8–72 ký tự, gồm chữ và số.</small>
                     <?php if (($errors['password'] ?? []) !== []): ?>
@@ -108,10 +125,11 @@ declare(strict_types=1);
                         autocomplete="new-password"
                         maxlength="72"
                         required
-                        aria-describedby="confirmation-error"
+                        aria-describedby="passwordConfirmation-error"
+                        aria-invalid="<?= ($errors['passwordConfirmation'] ?? []) !== [] ? 'true' : 'false' ?>"
                     >
                     <?php if (($errors['passwordConfirmation'] ?? []) !== []): ?>
-                        <small id="confirmation-error" class="field-error"><?= implode(' ', $errors['passwordConfirmation']) ?></small>
+                        <small id="passwordConfirmation-error" class="field-error"><?= implode(' ', $errors['passwordConfirmation']) ?></small>
                     <?php endif; ?>
                 </div>
             </div>

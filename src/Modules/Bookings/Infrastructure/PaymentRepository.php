@@ -61,6 +61,32 @@ final readonly class PaymentRepository
         $statement->execute(['total' => $total->decimal(), 'paymentId' => $paymentId]);
     }
 
+    public function markPaidAtProperty(
+        int $paymentId,
+        Money $amount,
+        string $idempotencyKey,
+        ?string $reference,
+        DateTimeImmutable $at,
+    ): void {
+        $statement = $this->pdo->prepare(
+            "UPDATE ThanhToan SET TrangThai='PAID', DaThanhToan=:amount,
+                    IdempotencyKey=:idempotencyKey, ProviderReference=:reference,
+                    SoLanThu=1, XuLyLuc=:processedAt
+             WHERE ThanhToanID=:id AND ThoiDiemThanhToan='PAY_AT_PROPERTY'
+               AND TrangThai='NOT_TRACKED' AND DaThanhToan=0"
+        );
+        $statement->execute([
+            'amount' => $amount->decimal(),
+            'idempotencyKey' => $idempotencyKey,
+            'reference' => $reference,
+            'processedAt' => self::time($at),
+            'id' => $paymentId,
+        ]);
+        if ($statement->rowCount() !== 1) {
+            throw new RuntimeException('Không thể ghi nhận payment tại cơ sở.');
+        }
+    }
+
     public function markPaid(int $paymentId, Money $amount, string $reference, DateTimeImmutable $at): void
     {
         $statement = $this->pdo->prepare(
