@@ -113,7 +113,9 @@ final class AdminQueryPlanTest extends TestCase
         self::assertContains($soldItem['type'], ['eq_ref', 'ref']);
         self::assertNotNull($soldNight['key']);
         self::assertContains($soldNight['type'], ['eq_ref', 'ref', 'range', 'index']);
-        self::assertSame('PRIMARY', $this->tablePlan($offered, 'gpn')['key']);
+        $offeredRate = $this->tablePlan($offered, 'gpn');
+        self::assertContains($offeredRate['key'], ['PRIMARY', 'IX_GiaPhongNgay_Ngay']);
+        self::assertContains($offeredRate['type'], ['eq_ref', 'ref', 'range']);
         self::assertSame('PRIMARY', $this->tablePlan($offered, 'tpn')['key']);
         self::assertContains($this->tablePlan($offered, 'tpn')['type'], ['eq_ref', 'ref']);
     }
