@@ -24,6 +24,20 @@ bản ghi `SENDING` treo quá 15 phút có thể được worker khác nhận l�
   chạy lại không lặp side effect đã hoàn tất.
 - Mọi thay đổi trạng thái nghiệp vụ đều có audit. Dùng `Run ID` trong output và log để điều tra một lần chạy.
 
+## Vòng đời hoàn tất lưu trú
+
+Thứ tự vận hành chuẩn của booking trả tại cơ sở:
+
+1. Partner nhận khách trên `/partner/bookings/{code}`; booking chuyển `CONFIRMED → CHECKED_IN`.
+2. Partner ghi nhận đủ tiền bằng tiền mặt, chuyển khoản hoặc thẻ tại cơ sở.
+3. Partner xác nhận trả phòng; booking, inventory, invoice và outbox cùng được commit.
+4. Scheduler chạy `php bin/console.php notification:dispatch 100` để gửi email hóa đơn.
+5. Partner vào `/partner/settlements`, tạo bản nháp theo cơ sở/kỳ, kiểm tra rồi chốt.
+6. Tải CSV từ trang chi tiết kỳ để lưu chứng từ đối soát.
+
+Không sửa trực tiếp booking/payment/invoice/settlement bằng SQL trong vận hành. Kỳ `FINALIZED` là snapshot bất biến;
+nếu phát hiện sai nguồn, điều tra audit và xử lý nghiệp vụ nguồn thay vì sửa số đã chốt.
+
 ## Backup database và uploads
 
 Database và `storage/uploads` là một backup set không thể tách rời. Không khôi phục database từ một set rồi ghép

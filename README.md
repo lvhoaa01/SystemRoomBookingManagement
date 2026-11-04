@@ -13,7 +13,8 @@ Dữ liệu đi kèm là fixture tổng hợp dành cho phát triển, không ph
 - Properties/Commercial: cơ sở, loại phòng, tiện nghi, ảnh, sản phẩm, chính sách, giá ngày và khuyến mại.
 - Inventory/Search: tồn theo loại phòng-ngày, phân bổ nhiều phòng xác định, search/detail theo payment timing.
 - Bookings: preview 15 phút, booking trả tại cơ sở hoặc online mô phỏng, snapshot giá/chính sách.
-- Sau booking: sửa khách, hủy/refund, waiver, đổi ngày, no-show, completion và review verified.
+- Sau booking: sửa khách, hủy/refund, waiver, đổi ngày, no-show, nhận khách, thu tiền tại cơ sở,
+  trả phòng, hóa đơn, email outbox, đối soát doanh thu và review verified.
 - Admin: account/facility, duyệt cơ sở, audit đã che PII, payment issues và báo cáo.
 - Vận hành: CSRF/CSP/rate limit, console jobs, backup đồng bộ database–uploads và bộ validator nghiệm thu.
 
