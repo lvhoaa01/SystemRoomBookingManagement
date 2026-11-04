@@ -18,3 +18,16 @@ Module Payments sở hữu bằng chứng giao dịch tài chính phát sinh sau
 
 Payment online mô phỏng tiếp tục dùng provider adapter hiện tại. Không lưu số
 thẻ, CVV, token ngân hàng hoặc thông tin tài chính nhạy cảm.
+
+## Hóa đơn lưu trú
+
+- Checkout chỉ phát hành hóa đơn khi booking `COMPLETED`, payment `PAID`, không
+  có refund và số thu ròng bằng tổng booking.
+- `HoaDon` giữ header cùng snapshot người đặt/cơ sở/kỳ ở; `ChiTietHoaDon` giữ
+  từng item phòng. Tổng các dòng bắt buộc bằng tổng hóa đơn.
+- Unique booking và số hóa đơn bảo đảm phát hành đúng một lần. Số hóa đơn có
+  dạng `SB-YYYY-00000000` và được suy ra ổn định từ booking ID.
+- Customer và partner chỉ đọc hóa đơn qua owner/organization scope. Response
+  dùng `no-store`, `noindex` và có bản in để lưu PDF từ trình duyệt.
+- Đây là biên nhận/hóa đơn nghiệp vụ trong đồ án, không giả định là hóa đơn điện
+  tử có mã cơ quan thuế.

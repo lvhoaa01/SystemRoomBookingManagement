@@ -33,6 +33,7 @@ $assetUrl = static function (string $path) use ($baseUrl, $publicPath): string {
     <script src="<?= $assetUrl('/assets/js/app.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/properties.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/search.js') ?>" defer></script>
+    <script src="<?= $assetUrl('/assets/js/invoice.js') ?>" defer></script>
     <script src="<?= $assetUrl('/assets/js/booking.js') ?>" defer></script>
 </head>
 <body class="<?= $useAppShell ? 'has-app-shell' : 'has-public-shell' ?>">

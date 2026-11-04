@@ -97,10 +97,13 @@ booking, hủy/refund/waiver, đổi ngày lưu trú, no-show và completion.
 
 ## Completion
 
-- `php bin/console.php booking:complete [limit]` quét batch booking
-  `CONFIRMED` hoặc `CHECKED_IN` đã qua giờ trả phòng địa phương.
-- Mỗi booking được khóa và xử lý bằng transaction riêng: trả hold còn lại,
-  chuyển `COMPLETED` và ghi audit. Booking đã thành terminal không được chọn lại.
+- Partner dùng checkout thủ công sau khi booking `CHECKED_IN` và payment đã thu
+  đủ. Một transaction trả hold, chuyển `COMPLETED`, phát hành hóa đơn snapshot
+  và ghi audit idempotent.
+- `php bin/console.php booking:complete [limit]` là fallback cho booking
+  `CHECKED_IN + PAID` đã qua giờ trả phòng địa phương; job cũng phát hành hóa
+  đơn trong cùng transaction.
+- Booking chưa check-in hoặc chưa thanh toán đủ không được job tự hoàn tất.
 
 ## Ranh giới hiện tại
 

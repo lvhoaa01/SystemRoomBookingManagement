@@ -18,6 +18,7 @@ use App\Modules\Bookings\Application\CancellationQuote;
 use App\Modules\Bookings\Application\CancellationQuoteService;
 use App\Modules\Bookings\Application\CancellationService;
 use App\Modules\Bookings\Application\CheckInService;
+use App\Modules\Bookings\Application\CheckoutService;
 use App\Modules\Bookings\Application\DateChangeCommand;
 use App\Modules\Bookings\Application\DateChangeQuote;
 use App\Modules\Bookings\Application\DateChangeQuoteService;
@@ -49,6 +50,7 @@ final readonly class BookingPortalController
         private WaiverService $waivers,
         private NoShowService $noShows,
         private CheckInService $checkIns,
+        private CheckoutService $checkouts,
         private BookingViewPresenter $presenter,
         private IdentitySession $identity,
         private SessionBootstrap $session,
@@ -300,6 +302,28 @@ final readonly class BookingPortalController
         return Response::redirect($this->url('/partner/bookings/' . rawurlencode($code)), 303);
     }
 
+    public function partnerCheckout(Request $request): Response
+    {
+        $code = $this->code($request);
+        try {
+            $invoice = $this->checkouts->checkout(
+                $code,
+                $this->organization()->id,
+                $this->user()->id,
+                $this->bodyString($request, 'checkoutKey'),
+                $request->clientIp,
+            );
+            $this->flash->add('success', 'Đã trả phòng và phát hành hóa đơn ' . $invoice->number . '.');
+        } catch (BookingException|InvalidArgumentException $exception) {
+            if ($exception instanceof BookingException && $exception->errorCode === 'BOOKING_NOT_FOUND') {
+                throw new NotFoundHttpException();
+            }
+            $this->flash->add('info', $exception->getMessage());
+        }
+
+        return Response::redirect($this->url('/partner/bookings/' . rawurlencode($code)), 303);
+    }
+
     public function partnerWaivers(Request $request): Response
     {
         return $this->view('bookings/portal/waivers', [
@@ -416,6 +440,7 @@ final readonly class BookingPortalController
             ],
             'waivers' => $waivers,
             'paymentKey' => $listPath === '/partner/bookings' ? $this->uuid() : null,
+            'checkoutKey' => $listPath === '/partner/bookings' ? $this->uuid() : null,
             'activeNavigation' => 'bookings',
         ])->withHeader('Cache-Control', 'no-store, private');
     }

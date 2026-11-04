@@ -32,6 +32,7 @@ use App\Modules\Bookings\Application\CancellationQuoteService;
 use App\Modules\Bookings\Application\CancellationRefundService;
 use App\Modules\Bookings\Application\CancellationService;
 use App\Modules\Bookings\Application\CheckInService;
+use App\Modules\Bookings\Application\CheckoutService;
 use App\Modules\Bookings\Application\DateChangeQuoteService;
 use App\Modules\Bookings\Application\DateChangeService;
 use App\Modules\Bookings\Application\OnlinePaymentService;
@@ -91,7 +92,10 @@ use App\Modules\Inventory\Infrastructure\DatabaseAvailabilityReader;
 use App\Modules\Inventory\Infrastructure\InventoryRepository;
 use App\Modules\Inventory\Http\PartnerInventoryController;
 use App\Modules\Payments\Application\RecordAtPropertyPaymentService;
+use App\Modules\Payments\Application\IssueInvoiceService;
+use App\Modules\Payments\Http\InvoiceController;
 use App\Modules\Payments\Http\PartnerPaymentController;
+use App\Modules\Payments\Infrastructure\InvoiceRepository;
 use App\Modules\Payments\Infrastructure\PaymentTransactionRepository;
 use App\Modules\Properties\Application\CreatePropertyService;
 use App\Modules\Properties\Application\ManageRoomTypeService;
@@ -560,7 +564,8 @@ final class App
         $container->singleton(
             CompletionService::class,
             static fn (Container $container): CompletionService => new CompletionService(
-                $container->get(BookingLifecycleRepository::class), $container->get(InventoryReservationService::class),
+                $container->get(BookingLifecycleRepository::class), $container->get(PaymentRepository::class),
+                $container->get(InventoryReservationService::class), $container->get(IssueInvoiceService::class),
                 $container->get(TransactionManager::class), $container->get(AuditTrail::class),
                 $container->get(ClockInterface::class),
             ),
@@ -573,6 +578,17 @@ final class App
             PaymentTransactionRepository::class,
             static fn (Container $container): PaymentTransactionRepository => new PaymentTransactionRepository(
                 $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            InvoiceRepository::class,
+            static fn (Container $container): InvoiceRepository => new InvoiceRepository($container->get(PDO::class)),
+        );
+        $container->singleton(
+            IssueInvoiceService::class,
+            static fn (Container $container): IssueInvoiceService => new IssueInvoiceService(
+                $container->get(PDO::class),
+                $container->get(InvoiceRepository::class),
             ),
         );
         $container->singleton(
@@ -722,6 +738,7 @@ final class App
                 $container->get(WaiverService::class),
                 $container->get(NoShowService::class),
                 $container->get(CheckInService::class),
+                $container->get(CheckoutService::class),
                 $container->get(BookingViewPresenter::class),
                 $container->get(IdentitySession::class),
                 $container->get(SessionBootstrap::class),
@@ -731,11 +748,34 @@ final class App
             ),
         );
         $container->singleton(
+            CheckoutService::class,
+            static fn (Container $container): CheckoutService => new CheckoutService(
+                $container->get(BookingLifecycleRepository::class),
+                $container->get(PaymentRepository::class),
+                $container->get(InventoryReservationService::class),
+                $container->get(IssueInvoiceService::class),
+                $container->get(InvoiceRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
             PartnerPaymentController::class,
             static fn (Container $container): PartnerPaymentController => new PartnerPaymentController(
                 $container->get(RecordAtPropertyPaymentService::class),
                 $container->get(IdentitySession::class),
                 $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
+        );
+        $container->singleton(
+            InvoiceController::class,
+            static fn (Container $container): InvoiceController => new InvoiceController(
+                $container->get(InvoiceRepository::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
                 $container->get(AppConfig::class),
             ),
         );

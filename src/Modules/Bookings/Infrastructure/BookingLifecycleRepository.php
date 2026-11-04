@@ -48,7 +48,7 @@ final readonly class BookingLifecycleRepository
             "SELECT dc.DatChoID AS id, dc.NgayTraPhong AS checkOut,
                     cs.GioTraPhong AS checkOutTime, cs.MuiGio AS timezone
              FROM DatCho dc INNER JOIN CoSoLuuTru cs ON cs.CoSoLuuTruID=dc.CoSoLuuTruID
-             WHERE dc.TrangThai IN ('CONFIRMED','CHECKED_IN')
+             WHERE dc.TrangThai='CHECKED_IN'
              ORDER BY dc.NgayTraPhong, dc.DatChoID LIMIT " . $limit
         );
         return array_map(static fn (array $row): array => [
@@ -99,7 +99,7 @@ final readonly class BookingLifecycleRepository
     {
         $statement = $this->pdo->prepare(
             "UPDATE DatCho SET TrangThai='COMPLETED', HoanThanhLuc=:at
-             WHERE DatChoID=:bookingId AND TrangThai IN ('CONFIRMED','CHECKED_IN')"
+             WHERE DatChoID=:bookingId AND TrangThai='CHECKED_IN'"
         );
         $statement->execute(['at' => self::utc($at), 'bookingId' => $bookingId]);
         if ($statement->rowCount() !== 1) {

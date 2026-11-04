@@ -1,7 +1,7 @@
 USE hotel_booking;
 
 -- Mọi dòng kết quả phải có Violations = 0.
-SELECT 'schema_table_count_not_23' AS CheckName, ABS(COUNT(*) - 23) AS Violations
+SELECT 'schema_table_count_not_25' AS CheckName, ABS(COUNT(*) - 25) AS Violations
 FROM information_schema.tables
 WHERE table_schema = 'hotel_booking' AND table_type = 'BASE TABLE'
 UNION ALL
@@ -209,4 +209,22 @@ FROM GiaoDichThanhToan g
 JOIN ThanhToan p ON p.ThanhToanID=g.ThanhToanID
 JOIN DatCho b ON b.DatChoID=p.DatChoID
 WHERE p.ThoiDiemThanhToan<>'PAY_AT_PROPERTY'
-   OR b.TrangThai NOT IN ('CHECKED_IN','COMPLETED');
+   OR b.TrangThai NOT IN ('CHECKED_IN','COMPLETED')
+UNION ALL
+SELECT 'invoice_booking_state_invalid', COUNT(*)
+FROM HoaDon h JOIN DatCho b ON b.DatChoID=h.DatChoID
+WHERE b.TrangThai<>'COMPLETED'
+UNION ALL
+SELECT 'invoice_payment_total_mismatch', COUNT(*)
+FROM HoaDon h
+JOIN DatCho b ON b.DatChoID=h.DatChoID
+JOIN ThanhToan p ON p.DatChoID=b.DatChoID
+WHERE h.TongTien<>b.TongTien OR h.DaThanhToan<>h.TongTien
+   OR p.TrangThai<>'PAID' OR (p.DaThanhToan-p.DaHoan)<>h.TongTien
+UNION ALL
+SELECT 'invoice_line_total_mismatch', COUNT(*)
+FROM HoaDon h
+LEFT JOIN (
+  SELECT HoaDonID, SUM(ThanhTien) AS LineTotal FROM ChiTietHoaDon GROUP BY HoaDonID
+) l ON l.HoaDonID=h.HoaDonID
+WHERE COALESCE(l.LineTotal,0)<>h.TongTien;

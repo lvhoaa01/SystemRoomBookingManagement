@@ -25,6 +25,7 @@ use App\Modules\Bookings\Http\BookingPortalController;
 use App\Modules\Commercial\Http\PartnerCommercialController;
 use App\Modules\Inventory\Http\PartnerInventoryController;
 use App\Modules\Payments\Http\PartnerPaymentController;
+use App\Modules\Payments\Http\InvoiceController;
 use App\Modules\Properties\Http\AdminPropertyController;
 use App\Modules\Properties\Http\ImageSourceController;
 use App\Modules\Properties\Http\PartnerPropertyController;
@@ -139,6 +140,12 @@ return static function (Router $router, Container $container): void {
     $bookingPortal = $container->get(BookingPortalController::class);
     $router->get('/account/bookings', $bookingPortal->customerIndex(...), $customerRead, 'account.bookings.index');
     $router->get('/account/bookings/{code}', $bookingPortal->customerShow(...), $customerRead, 'account.bookings.show');
+    $router->get(
+        '/account/bookings/{code}/invoice',
+        $container->get(InvoiceController::class)->customerShow(...),
+        $customerRead,
+        'account.bookings.invoice',
+    );
     $router->post(
         '/account/bookings/{code}/guest-details',
         $bookingPortal->customerUpdate(...),
@@ -167,6 +174,13 @@ return static function (Router $router, Container $container): void {
         $container->get(PartnerPaymentController::class)->record(...),
         $partnerBookingWrite,
         'partner.bookings.payments.store',
+    );
+    $router->post('/partner/bookings/{code}/checkout', $bookingPortal->partnerCheckout(...), $partnerBookingWrite, 'partner.bookings.checkout');
+    $router->get(
+        '/partner/bookings/{code}/invoice',
+        $container->get(InvoiceController::class)->partnerShow(...),
+        $partnerBookingRead,
+        'partner.bookings.invoice',
     );
     $router->post('/partner/bookings/{code}/no-show', $bookingPortal->partnerNoShow(...), $partnerBookingWrite, 'partner.bookings.no-show');
     $adminOperations = $container->get(AdminOperationsController::class);

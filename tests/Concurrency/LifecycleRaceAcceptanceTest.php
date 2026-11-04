@@ -86,7 +86,11 @@ final class LifecycleRaceAcceptanceTest extends TestCase
                 ],
             ]);
 
-            self::assertSame(1, count(array_filter($results, static fn (array $result): bool => $result['success'])));
+            self::assertSame(
+                1,
+                count(array_filter($results, static fn (array $result): bool => $result['success'])),
+                json_encode($results, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            );
             self::assertContains($this->bookingStatus((int) $booking['DatChoID']), ['CANCELLED', 'NO_SHOW']);
             self::assertSame('0', $this->activeHoldCount((int) $booking['DatChoID']));
             $this->assertInventoryMatchesLedger($state['inventory']);
@@ -142,17 +146,22 @@ final class LifecycleRaceAcceptanceTest extends TestCase
         }
     }
 
-    public function test_completion_and_no_show_allow_only_one_terminal_state(): void
+    public function test_check_in_and_no_show_allow_only_one_state_transition(): void
     {
         $booking = $this->confirmedPayAtProperty();
         $state = $this->snapshot((int) $booking['DatChoID']);
-        $clock = new DateTimeImmutable('2000-01-02 ' . $booking['checkOutTime'], new DateTimeZone($booking['timezone']));
-        $clock = $clock->modify('+1 second');
+        $clock = new DateTimeImmutable('now', new DateTimeZone($booking['timezone']));
+        $checkInDate = $clock->modify('-1 day')->format('Y-m-d');
+        $checkOutDate = $clock->modify('+1 day')->format('Y-m-d');
         try {
-            $this->pdo->prepare("UPDATE DatCho SET NgayNhanPhong='2000-01-01', NgayTraPhong='2000-01-02' WHERE DatChoID=?")
-                ->execute([(int) $booking['DatChoID']]);
+            $this->pdo->prepare('UPDATE DatCho SET NgayNhanPhong=?, NgayTraPhong=? WHERE DatChoID=?')
+                ->execute([$checkInDate, $checkOutDate, (int) $booking['DatChoID']]);
             $results = $this->runWorkers([
-                ['action' => 'complete', 'clock' => $clock->format(DATE_ATOM)],
+                [
+                    'action' => 'check_in', 'code' => $booking['MaDatCho'],
+                    'organizationId' => (int) $booking['organizationId'], 'actorId' => $this->partnerActor((int) $booking['organizationId']),
+                    'requestId' => 'acceptance-check-in-no-show', 'clock' => $clock->format(DATE_ATOM),
+                ],
                 [
                     'action' => 'no_show', 'code' => $booking['MaDatCho'],
                     'organizationId' => (int) $booking['organizationId'], 'actorId' => $this->partnerActor((int) $booking['organizationId']),
@@ -160,9 +169,17 @@ final class LifecycleRaceAcceptanceTest extends TestCase
                 ],
             ]);
 
-            self::assertSame(1, count(array_filter($results, static fn (array $result): bool => $result['success'])));
-            self::assertContains($this->bookingStatus((int) $booking['DatChoID']), ['COMPLETED', 'NO_SHOW']);
-            self::assertSame('0', $this->activeHoldCount((int) $booking['DatChoID']));
+            self::assertSame(
+                1,
+                count(array_filter($results, static fn (array $result): bool => $result['success'])),
+                json_encode($results, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            );
+            $status = $this->bookingStatus((int) $booking['DatChoID']);
+            self::assertContains($status, ['CHECKED_IN', 'NO_SHOW']);
+            self::assertSame((string) ($status === 'NO_SHOW' ? 0 : count(array_filter(
+                $state['holds'],
+                static fn (array $hold): bool => $hold['TrangThai'] === 'ACTIVE',
+            ))), $this->activeHoldCount((int) $booking['DatChoID']));
             $this->assertInventoryMatchesLedger($state['inventory']);
         } finally {
             $this->restore($state);

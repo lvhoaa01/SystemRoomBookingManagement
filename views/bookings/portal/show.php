@@ -186,9 +186,21 @@ foreach ($waivers as $waiver) {
         </section>
         <?php elseif ($booking['paymentStatus'] === 'PAID'): ?>
         <section class="booking-card">
-            <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-check-circle"/></svg></span><div><h2>Đã thanh toán</h2><p>Hệ thống đã ghi nhận <?= $money($booking['paidAmount']) ?>. Booking sẵn sàng cho bước trả phòng.</p></div></div>
+            <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-check-circle"/></svg></span><div><h2>Trả phòng và phát hành hóa đơn</h2><p>Hệ thống đã ghi nhận <?= $money($booking['paidAmount']) ?>. Xác nhận sau khi khách hoàn tất lưu trú.</p></div></div>
+            <form method="post" action="<?= $baseUrl ?>/partner/bookings/<?= rawurlencode((string) $booking['code']) ?>/checkout">
+                <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                <input type="hidden" name="checkoutKey" value="<?= $escape($checkoutKey) ?>">
+                <button class="button button--primary" type="submit">Xác nhận trả phòng</button>
+            </form>
         </section>
         <?php endif; ?>
+        <?php endif; ?>
+
+        <?php if ($booking['status'] === 'COMPLETED' && in_array($listPath, ['/account/bookings', '/partner/bookings'], true)): ?>
+        <section class="booking-card">
+            <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-file"/></svg></span><div><h2>Hóa đơn lưu trú</h2><p>Xem chứng từ được chụp tại thời điểm hoàn tất booking và lưu thành PDF bằng trình duyệt.</p></div></div>
+            <a class="button button--primary" href="<?= $baseUrl . $listPath ?>/<?= rawurlencode((string) $booking['code']) ?>/invoice">Xem hóa đơn</a>
+        </section>
         <?php endif; ?>
     </main>
 
