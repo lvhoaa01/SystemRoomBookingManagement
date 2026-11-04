@@ -131,6 +131,9 @@ use App\Modules\Search\Infrastructure\SearchCatalogRepository;
 use App\Modules\Reviews\Application\ReviewService;
 use App\Modules\Reviews\Http\ReviewController;
 use App\Modules\Reviews\Infrastructure\ReviewRepository;
+use App\Modules\Reports\Application\RevenueSettlementService;
+use App\Modules\Reports\Http\PartnerRevenueSettlementController;
+use App\Modules\Reports\Infrastructure\RevenueSettlementRepository;
 use App\Shared\Audit\AuditTrail;
 use App\Shared\Audit\DatabaseAuditTrail;
 use App\Shared\Clock\ClockInterface;
@@ -862,6 +865,32 @@ final class App
         $container->singleton(
             ReportService::class,
             static fn (Container $container): ReportService => new ReportService($container->get(ReportRepository::class)),
+        );
+        $container->singleton(
+            RevenueSettlementRepository::class,
+            static fn (Container $container): RevenueSettlementRepository => new RevenueSettlementRepository(
+                $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            RevenueSettlementService::class,
+            static fn (Container $container): RevenueSettlementService => new RevenueSettlementService(
+                $container->get(RevenueSettlementRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
+            PartnerRevenueSettlementController::class,
+            static fn (Container $container): PartnerRevenueSettlementController => new PartnerRevenueSettlementController(
+                $container->get(RevenueSettlementService::class),
+                $container->get(IdentitySession::class),
+                $container->get(SessionBootstrap::class),
+                $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
         );
         $container->singleton(
             AdminCatalogController::class,

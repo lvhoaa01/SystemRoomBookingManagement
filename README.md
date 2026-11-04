@@ -45,6 +45,7 @@ mysql -u root -P 3307 hotel_booking -e "source database/migrations/002_add_stay_
 mysql -u root -P 3307 hotel_booking -e "source database/migrations/003_add_property_payment_transactions.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/migrations/004_add_invoices.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/migrations/005_add_notification_outbox.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/migrations/006_add_revenue_settlements.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/seeds/001_reference.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/seeds/002_accounts_partners.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/seeds/003_properties.sql"
@@ -91,7 +92,7 @@ composer run verify
 ```
 
 `composer test` chạy unit, integration và concurrency suite. `composer run verify` kiểm checksum/số lượng fixture,
-constraint từ chối dữ liệu sai, đúng 26 bảng và 42 invariant SQL. Database phải được import từ seed chuẩn trước khi
+constraint từ chối dữ liệu sai, đúng 28 bảng và 46 invariant SQL. Database phải được import từ seed chuẩn trước khi
 chạy toàn bộ nghiệm thu.
 
 ## Tác vụ vận hành

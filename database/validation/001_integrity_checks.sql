@@ -1,7 +1,7 @@
 USE hotel_booking;
 
 -- Mọi dòng kết quả phải có Violations = 0.
-SELECT 'schema_table_count_not_26' AS CheckName, ABS(COUNT(*) - 26) AS Violations
+SELECT 'schema_table_count_not_28' AS CheckName, ABS(COUNT(*) - 28) AS Violations
 FROM information_schema.tables
 WHERE table_schema = 'hotel_booking' AND table_type = 'BASE TABLE'
 UNION ALL
@@ -243,4 +243,37 @@ JOIN HoaDon h ON h.HoaDonID=q.HoaDonID
 JOIN DatCho b ON b.DatChoID=h.DatChoID
 WHERE q.EmailNguoiNhan<>JSON_UNQUOTE(JSON_EXTRACT(h.SnapshotJSON, '$.booker.email'))
    OR JSON_UNQUOTE(JSON_EXTRACT(q.PayloadJSON, '$.invoiceNumber'))<>h.SoHoaDon
-   OR JSON_UNQUOTE(JSON_EXTRACT(q.PayloadJSON, '$.bookingCode'))<>b.MaDatCho;
+   OR JSON_UNQUOTE(JSON_EXTRACT(q.PayloadJSON, '$.bookingCode'))<>b.MaDatCho
+UNION ALL
+SELECT 'settlement_property_scope_mismatch', COUNT(*)
+FROM KyDoiSoat k JOIN CoSoLuuTru c ON c.CoSoLuuTruID=k.CoSoLuuTruID
+WHERE k.ToChucDoiTacID<>c.ToChucDoiTacID
+UNION ALL
+SELECT 'settlement_header_detail_mismatch', COUNT(*)
+FROM KyDoiSoat k
+LEFT JOIN (
+  SELECT KyDoiSoatID, COUNT(*) AS BookingCount,
+         SUM(TongTien) AS Gross, SUM(DaHoan) AS Refunded, SUM(DoanhThuThuan) AS Net,
+         SUM(CASE WHEN ThoiDiemThanhToan='PAY_ONLINE' THEN TongTien ELSE 0 END) AS OnlineTotal,
+         SUM(CASE WHEN ThoiDiemThanhToan='PAY_AT_PROPERTY' THEN TongTien ELSE 0 END) AS AtPropertyTotal
+  FROM ChiTietDoiSoat GROUP BY KyDoiSoatID
+) d ON d.KyDoiSoatID=k.KyDoiSoatID
+WHERE k.SoDatCho<>COALESCE(d.BookingCount,0)
+   OR k.DoanhThuGop<>COALESCE(d.Gross,0) OR k.DaHoan<>COALESCE(d.Refunded,0)
+   OR k.DoanhThuThuan<>COALESCE(d.Net,0) OR k.ThuTrucTuyen<>COALESCE(d.OnlineTotal,0)
+   OR k.ThuTaiCoSo<>COALESCE(d.AtPropertyTotal,0)
+UNION ALL
+SELECT 'settlement_line_source_mismatch', COUNT(*)
+FROM ChiTietDoiSoat d
+JOIN KyDoiSoat k ON k.KyDoiSoatID=d.KyDoiSoatID
+JOIN HoaDon h ON h.HoaDonID=d.HoaDonID
+JOIN DatCho b ON b.DatChoID=h.DatChoID
+WHERE h.CoSoLuuTruID<>k.CoSoLuuTruID OR DATE(h.PhatHanhLuc) NOT BETWEEN k.TuNgay AND k.DenNgay
+   OR d.SoHoaDon<>h.SoHoaDon OR d.MaDatCho<>b.MaDatCho OR d.TongTien<>h.TongTien
+   OR d.ThoiDiemThanhToan<>b.ThoiDiemThanhToan
+UNION ALL
+SELECT 'finalized_settlement_period_overlap', COUNT(*)
+FROM KyDoiSoat a JOIN KyDoiSoat b
+  ON b.CoSoLuuTruID=a.CoSoLuuTruID AND b.KyDoiSoatID>a.KyDoiSoatID
+ AND b.TrangThai='FINALIZED' AND a.TrangThai='FINALIZED'
+ AND a.TuNgay<=b.DenNgay AND a.DenNgay>=b.TuNgay;

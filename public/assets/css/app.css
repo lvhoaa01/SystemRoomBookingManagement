@@ -1505,6 +1505,13 @@ button:disabled, input[type="submit"]:disabled { cursor: not-allowed; opacity: .
 .source-entry small { margin-top: 4px; color: var(--ink-500); }
 .source-entry > span { color: var(--blue-900); font-size: .72rem; font-weight: 800; }
 .source-entry nav { display: flex; gap: 12px; }
+
+.resource-header__actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.resource-header__actions form { margin: 0; }
+.settlement-create { margin-bottom: 18px; }
+.settlement-metrics { margin-bottom: 18px; }
+.resource-table td small { display: block; margin-top: 3px; color: #6b7785; }
+.empty-cell { padding: 30px !important; color: #6b7785; text-align: center; }
 .source-entry a { color: var(--blue-700); font-size: .72rem; font-weight: 750; }
 .error-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(145deg,#eff6ff,#fff); }
 .error-state { width: min(620px,100%); padding: 40px; border: 1px solid #c9dbed; border-radius: 18px; background: #fff; text-align: center; box-shadow: var(--shadow); }

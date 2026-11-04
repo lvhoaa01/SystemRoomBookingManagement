@@ -72,7 +72,7 @@ foreach ($optionalSources as $relativePath => $expectedHash) {
 $tableCount = (int) $pdo->query(
     "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'",
 )->fetchColumn();
-$check($tableCount === 26, 'Database có đúng 26 bảng sau mở rộng hóa đơn và notification outbox', (string) $tableCount);
+$check($tableCount === 28, 'Database có đúng 28 bảng sau mở rộng notification và đối soát', (string) $tableCount);
 
 $countMap = [
     'facilities' => 'TienNghi',
