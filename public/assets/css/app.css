@@ -1697,7 +1697,7 @@ button:disabled, input[type="submit"]:disabled { cursor: not-allowed; opacity: .
 .booking-code a:hover { color: var(--blue-700); }
 .booking-status { width: fit-content; display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border-radius: 999px; background: #edf3f9; color: #526273; font-size: .69rem; font-weight: 800; white-space: nowrap; }
 .booking-status i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.booking-status--confirmed, .booking-status--completed { background: #e8f7ef; color: #177245; }
+.booking-status--confirmed, .booking-status--checked_in, .booking-status--completed { background: #e8f7ef; color: #177245; }
 .booking-status--pending_payment { background: #fff4d6; color: #8a5b00; }
 .booking-status--payment_failed, .booking-status--cancelled, .booking-status--no_show { background: #fcebed; color: #a23543; }
 .booking-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

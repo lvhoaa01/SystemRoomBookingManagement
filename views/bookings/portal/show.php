@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /** @var array<string, mixed> $booking */
-$statusLabels = ['PENDING_PAYMENT' => 'Chờ thanh toán', 'CONFIRMED' => 'Đã xác nhận', 'PAYMENT_FAILED' => 'Thanh toán thất bại', 'CANCELLED' => 'Đã hủy', 'NO_SHOW' => 'Không đến', 'COMPLETED' => 'Hoàn tất'];
+$statusLabels = ['PENDING_PAYMENT' => 'Chờ thanh toán', 'CONFIRMED' => 'Đã xác nhận', 'CHECKED_IN' => 'Đã nhận khách', 'PAYMENT_FAILED' => 'Thanh toán thất bại', 'CANCELLED' => 'Đã hủy', 'NO_SHOW' => 'Không đến', 'COMPLETED' => 'Hoàn tất'];
 $mealLabels = ['ROOM_ONLY' => 'Không gồm bữa sáng', 'BREAKFAST_INCLUDED' => 'Gồm bữa sáng'];
 $guestType = ['ADULT' => 'Người lớn', 'CHILD' => 'Trẻ em', 'GUEST' => 'Khách'];
 $money = static fn (mixed $amount): string => number_format((float) $amount, 0, ',', '.') . ' ₫';
@@ -160,8 +160,18 @@ foreach ($waivers as $waiver) {
 
         <?php if ($listPath === '/partner/bookings' && $booking['status'] === 'CONFIRMED'): ?>
         <section class="booking-card">
+            <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-check-circle"/></svg></span><div><h2>Nhận khách</h2><p>Xác nhận khi khách đã đến cơ sở. Sau bước này booking không còn được hủy hoặc đánh dấu no-show.</p></div></div>
+            <form method="post" action="<?= $baseUrl ?>/partner/bookings/<?= rawurlencode((string) $booking['code']) ?>/check-in"><input type="hidden" name="_token" value="<?= $csrfToken ?>"><button class="button button--primary" type="submit">Xác nhận khách đã nhận phòng</button></form>
+        </section>
+        <section class="booking-card">
             <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-clock"/></svg></span><div><h2>Khách không đến</h2><p>Chỉ dùng từ giờ nhận phòng đến hết ngày kế tiếp. Toàn bộ tồn sẽ được trả.</p></div></div>
             <form method="post" action="<?= $baseUrl ?>/partner/bookings/<?= rawurlencode((string) $booking['code']) ?>/no-show"><input type="hidden" name="_token" value="<?= $csrfToken ?>"><button class="button button--danger" type="submit">Xác nhận no-show</button></form>
+        </section>
+        <?php endif; ?>
+
+        <?php if ($listPath === '/partner/bookings' && $booking['status'] === 'CHECKED_IN'): ?>
+        <section class="booking-card">
+            <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-check-circle"/></svg></span><div><h2>Khách đang lưu trú</h2><p>Đã nhận khách lúc <?= $booking['checkedInAt'] === null ? '—' : date('d/m/Y H:i', strtotime((string) $booking['checkedInAt'])) ?>. Bước tiếp theo là ghi nhận thanh toán và trả phòng.</p></div></div>
         </section>
         <?php endif; ?>
     </main>

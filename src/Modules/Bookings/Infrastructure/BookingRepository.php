@@ -382,7 +382,8 @@ final readonly class BookingRepository
                        dc.TenNguoiDat AS bookerName, dc.EmailNguoiDat AS bookerEmail,
                        dc.DienThoaiNguoiDat AS bookerPhone, dc.YeuCauDacBiet AS specialRequest,
                        dc.ThoiDiemThanhToan AS paymentTiming, dc.TongTien AS grandTotal,
-                       dc.TrangThai AS status, dc.XacNhanLuc AS confirmedAt, dc.TaoLuc AS createdAt
+                        dc.TrangThai AS status, dc.XacNhanLuc AS confirmedAt,
+                        dc.NhanPhongLuc AS checkedInAt, dc.TaoLuc AS createdAt
                 FROM DatCho dc
                 INNER JOIN CoSoLuuTru cs ON cs.CoSoLuuTruID = dc.CoSoLuuTruID';
     }
@@ -409,6 +410,7 @@ final readonly class BookingRepository
             Money::vnd((string) $row['grandTotal']),
             (string) $row['status'],
             $row['confirmedAt'] === null ? null : $this->dateTime((string) $row['confirmedAt']),
+            $row['checkedInAt'] === null ? null : $this->dateTime((string) $row['checkedInAt']),
             $this->dateTime((string) $row['createdAt']),
             $this->items((int) $row['id']),
         );

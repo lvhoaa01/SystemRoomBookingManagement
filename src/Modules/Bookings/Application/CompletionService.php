@@ -40,7 +40,7 @@ final readonly class CompletionService
             }
             $changed = $this->transactions->run(function () use ($candidate): bool {
                 $context = $this->lifecycle->lockById($candidate['id']);
-                if ($context === null || $context['status'] !== 'CONFIRMED') {
+                if ($context === null || !in_array($context['status'], ['CONFIRMED', 'CHECKED_IN'], true)) {
                     return false;
                 }
                 $cutoff = new DateTimeImmutable(
@@ -55,7 +55,7 @@ final readonly class CompletionService
                 $requestId = 'completion:' . $context['id'];
                 if ($this->audit->findByRequestId($requestId) === null) {
                     $this->audit->record(null, 'BOOKING_COMPLETED', 'DatCho', (string) $context['id'], $requestId,
-                        ['status' => 'CONFIRMED', 'activeLedgerCount' => $released],
+                        ['status' => $context['status'], 'activeLedgerCount' => $released],
                         ['status' => 'COMPLETED', 'completedAt' => $this->clock->now()->format(DATE_ATOM)], null);
                 }
                 return true;

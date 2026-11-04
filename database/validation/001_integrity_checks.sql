@@ -24,7 +24,7 @@ SELECT 'active_ledger_bad_booking_state', COUNT(*)
 FROM GiuTonPhongDem l
 JOIN HangMucDatCho i ON i.HangMucDatChoID=l.HangMucDatChoID
 JOIN DatCho b ON b.DatChoID=i.DatChoID
-WHERE l.TrangThai='ACTIVE' AND b.TrangThai NOT IN ('PENDING_PAYMENT','CONFIRMED')
+WHERE l.TrangThai='ACTIVE' AND b.TrangThai NOT IN ('PENDING_PAYMENT','CONFIRMED','CHECKED_IN')
 UNION ALL
 SELECT 'terminal_booking_has_active_ledger', COUNT(*)
 FROM GiuTonPhongDem l
@@ -122,7 +122,7 @@ WHERE p.ThanhToanID IS NULL OR p.TongPhaiTra<>b.TongTien OR p.ThoiDiemThanhToan<
    OR (b.ThoiDiemThanhToan='PAY_AT_PROPERTY' AND (p.TrangThai<>'NOT_TRACKED' OR p.DaThanhToan<>0 OR p.DaHoan<>0))
    OR (b.TrangThai='PENDING_PAYMENT' AND p.TrangThai<>'PROCESSING')
    OR (b.TrangThai='PAYMENT_FAILED' AND p.TrangThai<>'FAILED')
-   OR (b.ThoiDiemThanhToan='PAY_ONLINE' AND b.TrangThai IN ('CONFIRMED','COMPLETED','NO_SHOW','CANCELLED') AND p.TrangThai<>'PAID')
+   OR (b.ThoiDiemThanhToan='PAY_ONLINE' AND b.TrangThai IN ('CONFIRMED','CHECKED_IN','COMPLETED','NO_SHOW','CANCELLED') AND p.TrangThai<>'PAID')
 UNION ALL
 SELECT 'cancellation_metadata_or_refund_mismatch', COUNT(*)
 FROM DatCho b
@@ -179,4 +179,12 @@ WHERE (GoogleMatchStatus='NOT_CHECKED' AND (GooglePlaceID IS NOT NULL OR GoogleV
 UNION ALL
 SELECT 'daily_rate_invalid_restriction', COUNT(*)
 FROM GiaPhongNgay
-WHERE SoDemToiThieu<1 OR SoDemToiThieu>30 OR (SoDemToiDa IS NOT NULL AND (SoDemToiDa<SoDemToiThieu OR SoDemToiDa>30));
+WHERE SoDemToiThieu<1 OR SoDemToiThieu>30 OR (SoDemToiDa IS NOT NULL AND (SoDemToiDa<SoDemToiThieu OR SoDemToiDa>30))
+UNION ALL
+SELECT 'checked_in_missing_metadata', COUNT(*)
+FROM DatCho
+WHERE TrangThai='CHECKED_IN' AND (NhanPhongLuc IS NULL OR NguoiNhanPhongID IS NULL)
+UNION ALL
+SELECT 'check_in_metadata_pair_mismatch', COUNT(*)
+FROM DatCho
+WHERE (NhanPhongLuc IS NULL) <> (NguoiNhanPhongID IS NULL);

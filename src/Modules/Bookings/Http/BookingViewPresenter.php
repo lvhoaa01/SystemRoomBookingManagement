@@ -28,6 +28,7 @@ final class BookingViewPresenter
             'grandTotal' => $booking->grandTotal->decimal(),
             'status' => $booking->status,
             'confirmedAt' => $booking->confirmedAt?->format(DATE_ATOM),
+            'checkedInAt' => $booking->checkedInAt?->format(DATE_ATOM),
             'items' => array_map(fn (array $item): array => [
                 ...$item,
                 'party' => $this->partySummary($item['party']),
@@ -67,6 +68,7 @@ final class BookingViewPresenter
             'grandTotal' => $booking->grandTotal->decimal(),
             'status' => $booking->status,
             'confirmedAt' => $booking->confirmedAt?->format(DATE_ATOM),
+            'checkedInAt' => $booking->checkedInAt?->format(DATE_ATOM),
             'createdAt' => $booking->createdAt->format(DATE_ATOM),
             'items' => array_map(fn (array $item): array => [
                 ...$item,

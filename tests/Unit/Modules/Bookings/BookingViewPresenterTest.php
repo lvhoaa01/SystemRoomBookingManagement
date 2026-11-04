@@ -33,6 +33,7 @@ final class BookingViewPresenterTest extends TestCase
             Money::vnd('1000000'),
             'CONFIRMED',
             new DateTimeImmutable('2026-11-03T12:00:00+00:00'),
+            null,
             new DateTimeImmutable('2026-11-03T11:59:00+00:00'),
             [
                 ['party' => ['adults' => 2, 'childAges' => [7]]],

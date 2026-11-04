@@ -48,7 +48,7 @@ final readonly class BookingLifecycleRepository
             "SELECT dc.DatChoID AS id, dc.NgayTraPhong AS checkOut,
                     cs.GioTraPhong AS checkOutTime, cs.MuiGio AS timezone
              FROM DatCho dc INNER JOIN CoSoLuuTru cs ON cs.CoSoLuuTruID=dc.CoSoLuuTruID
-             WHERE dc.TrangThai='CONFIRMED'
+             WHERE dc.TrangThai IN ('CONFIRMED','CHECKED_IN')
              ORDER BY dc.NgayTraPhong, dc.DatChoID LIMIT " . $limit
         );
         return array_map(static fn (array $row): array => [
@@ -79,11 +79,27 @@ final readonly class BookingLifecycleRepository
         }
     }
 
+    public function markCheckedIn(int $bookingId, int $actorId, DateTimeImmutable $at): void
+    {
+        $statement = $this->pdo->prepare(
+            "UPDATE DatCho SET TrangThai='CHECKED_IN', NhanPhongLuc=:at, NguoiNhanPhongID=:actorId
+             WHERE DatChoID=:bookingId AND TrangThai='CONFIRMED'"
+        );
+        $statement->execute([
+            'at' => self::utc($at),
+            'actorId' => $actorId,
+            'bookingId' => $bookingId,
+        ]);
+        if ($statement->rowCount() !== 1) {
+            throw new RuntimeException('Không thể chuyển booking sang CHECKED_IN.');
+        }
+    }
+
     public function markCompleted(int $bookingId, DateTimeImmutable $at): void
     {
         $statement = $this->pdo->prepare(
             "UPDATE DatCho SET TrangThai='COMPLETED', HoanThanhLuc=:at
-             WHERE DatChoID=:bookingId AND TrangThai='CONFIRMED'"
+             WHERE DatChoID=:bookingId AND TrangThai IN ('CONFIRMED','CHECKED_IN')"
         );
         $statement->execute(['at' => self::utc($at), 'bookingId' => $bookingId]);
         if ($statement->rowCount() !== 1) {
@@ -101,6 +117,7 @@ final readonly class BookingLifecycleRepository
                     dc.TongTien AS grandTotal, dc.NgayNhanPhong AS checkIn,
                     dc.NgayTraPhong AS checkOut, cs.GioNhanPhong AS checkInTime,
                     cs.GioTraPhong AS checkOutTime, cs.MuiGio AS timezone,
+                    dc.NhanPhongLuc AS checkedInAt, dc.NguoiNhanPhongID AS checkedInBy,
                     dc.PhiNoShow AS noShowFee, dc.NoShowSnapshotJSON AS noShowJson
              FROM DatCho dc INNER JOIN CoSoLuuTru cs ON cs.CoSoLuuTruID=dc.CoSoLuuTruID
              WHERE dc.DatChoID=?'
@@ -113,6 +130,7 @@ final readonly class BookingLifecycleRepository
         foreach (['id', 'customerId', 'propertyId', 'organizationId'] as $key) {
             $row[$key] = (int) $row[$key];
         }
+        $row['checkedInBy'] = $row['checkedInBy'] === null ? null : (int) $row['checkedInBy'];
         $row['noShowSnapshot'] = $row['noShowJson'] === null ? null : $this->decode((string) $row['noShowJson']);
         unset($row['noShowJson']);
         $row['items'] = $this->items($bookingId);

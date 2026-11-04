@@ -31,6 +31,7 @@ use App\Modules\Bookings\Application\CancellationFinalizer;
 use App\Modules\Bookings\Application\CancellationQuoteService;
 use App\Modules\Bookings\Application\CancellationRefundService;
 use App\Modules\Bookings\Application\CancellationService;
+use App\Modules\Bookings\Application\CheckInService;
 use App\Modules\Bookings\Application\DateChangeQuoteService;
 use App\Modules\Bookings\Application\DateChangeService;
 use App\Modules\Bookings\Application\OnlinePaymentService;
@@ -544,6 +545,16 @@ final class App
             ),
         );
         $container->singleton(
+            CheckInService::class,
+            static fn (Container $container): CheckInService => new CheckInService(
+                $container->get(BookingLifecycleRepository::class),
+                $container->get(PaymentRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
             CompletionService::class,
             static fn (Container $container): CompletionService => new CompletionService(
                 $container->get(BookingLifecycleRepository::class), $container->get(InventoryReservationService::class),
@@ -690,6 +701,7 @@ final class App
                 $container->get(CancellationService::class),
                 $container->get(WaiverService::class),
                 $container->get(NoShowService::class),
+                $container->get(CheckInService::class),
                 $container->get(BookingViewPresenter::class),
                 $container->get(IdentitySession::class),
                 $container->get(SessionBootstrap::class),

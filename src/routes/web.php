@@ -160,6 +160,7 @@ return static function (Router $router, Container $container): void {
     $partnerBookingWrite = [$requestId, $csrf, $auth, $partnerRole];
     $router->get('/partner/bookings', $bookingPortal->partnerIndex(...), $partnerBookingRead, 'partner.bookings.index');
     $router->get('/partner/bookings/{code}', $bookingPortal->partnerShow(...), $partnerBookingRead, 'partner.bookings.show');
+    $router->post('/partner/bookings/{code}/check-in', $bookingPortal->partnerCheckIn(...), $partnerBookingWrite, 'partner.bookings.check-in');
     $router->post('/partner/bookings/{code}/no-show', $bookingPortal->partnerNoShow(...), $partnerBookingWrite, 'partner.bookings.no-show');
     $adminOperations = $container->get(AdminOperationsController::class);
     $router->get('/partner/reports', $adminOperations->partnerReports(...), $partnerBookingRead, 'partner.reports.index');

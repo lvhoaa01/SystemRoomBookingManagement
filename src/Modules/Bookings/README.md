@@ -83,10 +83,22 @@ booking, hủy/refund/waiver, đổi ngày lưu trú, no-show và completion.
   idempotency key ổn định; retry refund lỗi không release hoặc tính phí lần hai.
 - `DatCho.SoTienHoan` luôn bằng 0 cho no-show; số hoàn nằm ở `ThanhToan.DaHoan`.
 
+## Nhận khách
+
+- Partner dùng `POST /partner/bookings/{code}/check-in`; tenant scope được kiểm
+  tra bằng tổ chức hiện tại trước khi khóa booking.
+- Chỉ booking `CONFIRMED` được nhận khách, từ đầu ngày nhận phòng đến trước giờ
+  trả phòng theo múi giờ cơ sở. Online phải `PAID`; trả tại cơ sở vẫn
+  `NOT_TRACKED` cho đến giai đoạn ghi nhận tiền.
+- Transaction chuyển trạng thái sang `CHECKED_IN`, lưu thời điểm/người thao tác
+  và ghi audit `BOOKING_CHECKED_IN`. Retry cùng `RequestID` trả kết quả cũ.
+- Check-in không release inventory. Sau check-in, luồng hủy, đổi ngày và
+  no-show đều không còn hợp lệ.
+
 ## Completion
 
-- `php bin/console.php booking:complete [limit]` quét batch booking confirmed đã
-  qua giờ trả phòng địa phương.
+- `php bin/console.php booking:complete [limit]` quét batch booking
+  `CONFIRMED` hoặc `CHECKED_IN` đã qua giờ trả phòng địa phương.
 - Mỗi booking được khóa và xử lý bằng transaction riêng: trả hold còn lại,
   chuyển `COMPLETED` và ghi audit. Booking đã thành terminal không được chọn lại.
 

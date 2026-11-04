@@ -13,7 +13,7 @@ use InvalidArgumentException;
 final readonly class BookingAccessService
 {
     private const STATUSES = [
-        'PENDING_PAYMENT', 'CONFIRMED', 'PAYMENT_FAILED', 'CANCELLED', 'NO_SHOW', 'COMPLETED',
+        'PENDING_PAYMENT', 'CONFIRMED', 'CHECKED_IN', 'PAYMENT_FAILED', 'CANCELLED', 'NO_SHOW', 'COMPLETED',
     ];
 
     public function __construct(

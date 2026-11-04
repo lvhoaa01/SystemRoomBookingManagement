@@ -17,6 +17,7 @@ use App\Modules\Bookings\Application\CancellationCommand;
 use App\Modules\Bookings\Application\CancellationQuote;
 use App\Modules\Bookings\Application\CancellationQuoteService;
 use App\Modules\Bookings\Application\CancellationService;
+use App\Modules\Bookings\Application\CheckInService;
 use App\Modules\Bookings\Application\DateChangeCommand;
 use App\Modules\Bookings\Application\DateChangeQuote;
 use App\Modules\Bookings\Application\DateChangeQuoteService;
@@ -47,6 +48,7 @@ final readonly class BookingPortalController
         private CancellationService $cancellations,
         private WaiverService $waivers,
         private NoShowService $noShows,
+        private CheckInService $checkIns,
         private BookingViewPresenter $presenter,
         private IdentitySession $identity,
         private SessionBootstrap $session,
@@ -270,6 +272,31 @@ final readonly class BookingPortalController
             }
             $this->flash->add('info', $exception->getMessage());
         }
+        return Response::redirect($this->url('/partner/bookings/' . rawurlencode($code)), 303);
+    }
+
+    public function partnerCheckIn(Request $request): Response
+    {
+        $code = $this->code($request);
+        try {
+            $checkedInAt = $this->checkIns->checkIn(
+                $code,
+                $this->organization()->id,
+                $this->user()->id,
+                $request->requestId,
+                $request->clientIp,
+            );
+            $this->flash->add(
+                'success',
+                'Đã xác nhận nhận khách lúc ' . $checkedInAt->format('d/m/Y H:i') . '.',
+            );
+        } catch (BookingException $exception) {
+            if ($exception->errorCode === 'BOOKING_NOT_FOUND') {
+                throw new NotFoundHttpException();
+            }
+            $this->flash->add('info', $exception->getMessage());
+        }
+
         return Response::redirect($this->url('/partner/bookings/' . rawurlencode($code)), 303);
     }
 
