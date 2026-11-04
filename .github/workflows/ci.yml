@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: PHP 8.2 và MariaDB 10.11
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
+          MARIADB_DATABASE: hotel_booking
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 -uroot --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      APP_ENV: test
+      APP_DEBUG: "true"
+      APP_URL: http://localhost
+      APP_TIMEZONE: Asia/Ho_Chi_Minh
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3307"
+      DB_DATABASE: hotel_booking
+      DB_USERNAME: root
+      DB_PASSWORD: ""
+      MAIL_TRANSPORT: file
+      MAIL_FROM_ADDRESS: no-reply@staybooking.local
+      MAIL_FROM_NAME: StayBooking
+
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v7
+
+      - name: Cài đặt PHP và Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, pdo_mysql
+          coverage: none
+          tools: composer:v2
+
+      - name: Kiểm tra composer.json và composer.lock
+        run: composer validate --strict --no-check-publish
+
+      - name: Cài đặt dependency
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Khởi tạo database test
+        shell: bash
+        run: |
+          for sql_file in database/migrations/*.sql database/seeds/*.sql; do
+            echo "Applying ${sql_file}"
+            mysql --protocol=TCP --host=127.0.0.1 --port=3307 --user=root < "${sql_file}"
+          done
+
+      - name: Chạy PHPUnit
+        run: composer test
+
+      - name: Kiểm tra fixture và toàn vẹn dữ liệu
+        run: composer run verify

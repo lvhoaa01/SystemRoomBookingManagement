@@ -1,5 +1,7 @@
 # StayBooking — hệ thống tìm kiếm và đặt chỗ lưu trú
 
+[![CI](https://github.com/lvhoaa01/SystemRoomBookingManagement/actions/workflows/ci.yml/badge.svg)](https://github.com/lvhoaa01/SystemRoomBookingManagement/actions/workflows/ci.yml)
+
 StayBooking là một **Mini OTA** (*online travel agency*) dành cho thị trường lưu trú
 tại Thành phố Hồ Chí Minh. Khách hàng có thể tìm chỗ nghỉ, so sánh sản phẩm phòng,
 đặt nhiều phòng và theo dõi booking. Đối tác khách sạn quản lý cơ sở, giá, tồn phòng
@@ -364,6 +366,10 @@ Partner từ `partner01` đến `partner10` thuộc các tổ chức khác nhau.
 scope, dùng hai partner khác số và thử truy cập cùng một entity.
 
 ## 12. Kiểm thử
+
+GitHub Actions tự động dựng MariaDB sạch, nạp migration/seed, chạy PHPUnit và hai
+validator mỗi khi có pull request vào `main` hoặc push lên `main`. Có thể xem trạng
+thái qua badge đầu README hoặc chạy thủ công workflow **CI** trong tab **Actions**.
 
 Chạy toàn bộ unit, integration, concurrency và acceptance test:
 
