@@ -10,7 +10,12 @@ php bin/console.php payment:expire 100
 php bin/console.php booking:complete 100
 php bin/console.php preview:invalidate-expired 100
 php bin/console.php inventory:reconcile 2026-11-03 2026-12-03 1 100
+php bin/console.php notification:dispatch 100
 ```
+
+`notification:dispatch` xử lý transactional outbox theo batch. Transport `file` ghi `.eml` vào
+`storage/mail`; transport `native` dùng cấu hình mail của PHP. Bản ghi lỗi được thử lại với backoff và
+bản ghi `SENDING` treo quá 15 phút có thể được worker khác nhận lại.
 
 - Tham số cuối của ba lệnh mutation là batch size, nhận từ 1 đến 1.000.
 - `inventory:reconcile` nhận lần lượt ngày đầu, ngày cuối, ID loại phòng và giới hạn dòng hiển thị. Bỏ ID loại phòng

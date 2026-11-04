@@ -7,6 +7,7 @@ namespace App\Modules\Payments\Application;
 use App\Modules\Bookings\Application\BookingException;
 use App\Modules\Payments\Domain\Invoice;
 use App\Modules\Payments\Infrastructure\InvoiceRepository;
+use App\Modules\Notifications\Application\QueueInvoiceNotificationService;
 use App\Shared\Money\Money;
 use DateTimeImmutable;
 use PDO;
@@ -17,6 +18,7 @@ final readonly class IssueInvoiceService
     public function __construct(
         private PDO $pdo,
         private InvoiceRepository $invoices,
+        private QueueInvoiceNotificationService $notifications,
     ) {
     }
 
@@ -27,6 +29,7 @@ final readonly class IssueInvoiceService
         }
         $existing = $this->invoices->findByBookingId($bookingId);
         if ($existing instanceof Invoice) {
+            $this->notifications->queue($existing, $at);
             return $existing;
         }
         $source = $this->invoices->source($bookingId);
@@ -47,6 +50,8 @@ final readonly class IssueInvoiceService
         if (!$lineTotal->equals($total)) {
             throw new BookingException('INVOICE_TOTAL_MISMATCH', 'Tổng chi tiết hóa đơn không khớp booking.');
         }
-        return $this->invoices->create($source, $actorId, $at);
+        $invoice = $this->invoices->create($source, $actorId, $at);
+        $this->notifications->queue($invoice, $at);
+        return $invoice;
     }
 }

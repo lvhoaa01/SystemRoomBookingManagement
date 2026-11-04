@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Bookings;
 
 use App\Bootstrap\App;
+use App\Config\AppConfig;
 use App\Modules\Bookings\Application\BookingException;
 use App\Modules\Bookings\Application\CancellationCommand;
 use App\Modules\Bookings\Application\CancellationService;
@@ -19,6 +20,8 @@ use App\Modules\Bookings\Infrastructure\PaymentRepository;
 use App\Modules\Commercial\Application\NoShowFeeCalculator;
 use App\Modules\Inventory\Application\TransactionalInventoryReservationService;
 use App\Modules\Inventory\Infrastructure\InventoryRepository;
+use App\Modules\Notifications\Application\QueueInvoiceNotificationService;
+use App\Modules\Notifications\Infrastructure\NotificationRepository;
 use App\Modules\Payments\Application\IssueInvoiceService;
 use App\Modules\Payments\Infrastructure\InvoiceRepository;
 use App\Modules\Reviews\Application\ReviewRequest;
@@ -203,7 +206,14 @@ final class LifecycleAndReviewServiceTest extends TestCase
             $invoiceRepository = new InvoiceRepository($this->pdo);
             $service = new CompletionService(
                 new BookingLifecycleRepository($this->pdo), new PaymentRepository($this->pdo),
-                $this->inventory($clock), new IssueInvoiceService($this->pdo, $invoiceRepository),
+                $this->inventory($clock), new IssueInvoiceService(
+                    $this->pdo,
+                    $invoiceRepository,
+                    new QueueInvoiceNotificationService(
+                        new NotificationRepository($this->pdo),
+                        AppConfig::fromEnv(),
+                    ),
+                ),
                 $this->transactions(), new DatabaseAuditTrail($this->pdo), $clock,
             );
             self::assertSame(1, $service->completeDue(1));
@@ -339,6 +349,7 @@ final class LifecycleAndReviewServiceTest extends TestCase
             foreach ($requestIds as $id) {
                 $this->pdo->prepare('DELETE FROM NhatKyHeThong WHERE RequestID=?')->execute([$id]);
             }
+            $this->pdo->prepare('DELETE q FROM HangDoiThongBao q INNER JOIN HoaDon hd ON hd.HoaDonID=q.HoaDonID WHERE hd.DatChoID=?')->execute([$bookingId]);
             $this->pdo->prepare('DELETE ct FROM ChiTietHoaDon ct INNER JOIN HoaDon hd ON hd.HoaDonID=ct.HoaDonID WHERE hd.DatChoID=?')->execute([$bookingId]);
             $this->pdo->prepare('DELETE FROM HoaDon WHERE DatChoID=?')->execute([$bookingId]);
             $this->pdo->prepare('DELETE gt FROM GiuTonPhongDem gt INNER JOIN HangMucDatCho hm ON hm.HangMucDatChoID=gt.HangMucDatChoID WHERE hm.DatChoID=?')->execute([$bookingId]);

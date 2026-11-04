@@ -5,12 +5,20 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Payments;
 
 use App\Bootstrap\App;
+use App\Config\AppConfig;
 use App\Modules\Bookings\Application\CheckInService;
 use App\Modules\Bookings\Application\CheckoutService;
 use App\Modules\Bookings\Infrastructure\BookingLifecycleRepository;
 use App\Modules\Bookings\Infrastructure\PaymentRepository;
 use App\Modules\Inventory\Application\TransactionalInventoryReservationService;
 use App\Modules\Inventory\Infrastructure\InventoryRepository;
+use App\Modules\Notifications\Application\DispatchNotificationsService;
+use App\Modules\Notifications\Application\Mailer;
+use App\Modules\Notifications\Application\QueueInvoiceNotificationService;
+use App\Modules\Notifications\Domain\MailMessage;
+use App\Modules\Notifications\Infrastructure\FileMailer;
+use App\Modules\Notifications\Infrastructure\NotificationRepository;
+use App\Config\MailConfig;
 use App\Modules\Payments\Application\IssueInvoiceService;
 use App\Modules\Payments\Infrastructure\InvoiceRepository;
 use App\Shared\Audit\DatabaseAuditTrail;
@@ -76,7 +84,14 @@ final class CheckoutInvoiceServiceTest extends TestCase
                 $lifecycle,
                 $payments,
                 $inventory,
-                new IssueInvoiceService($this->pdo, $invoices),
+                new IssueInvoiceService(
+                    $this->pdo,
+                    $invoices,
+                    new QueueInvoiceNotificationService(
+                        new NotificationRepository($this->pdo),
+                        AppConfig::fromEnv(),
+                    ),
+                ),
                 $invoices,
                 $transactions,
                 $audit,
@@ -119,6 +134,52 @@ final class CheckoutInvoiceServiceTest extends TestCase
             self::assertSame('1', (string) $this->pdo->query(
                 'SELECT COUNT(*) FROM HoaDon WHERE DatChoID=' . (int) $booking['DatChoID']
             )->fetchColumn());
+            $notificationRepository = new NotificationRepository($this->pdo);
+            $notification = $notificationRepository->findByInvoiceId($first->id);
+            self::assertNotNull($notification);
+            self::assertSame('PENDING', $notification->status);
+
+            $failingMailer = new class implements Mailer {
+                public function send(MailMessage $message): void
+                {
+                    throw new \RuntimeException('SMTP tạm thời không khả dụng.');
+                }
+            };
+            $dispatcher = new DispatchNotificationsService(
+                $notificationRepository,
+                $failingMailer,
+                $transactions,
+                $clock,
+            );
+            self::assertSame(['sent' => 0, 'failed' => 1], $dispatcher->dispatch(1));
+            $failed = $notificationRepository->findByInvoiceId($first->id);
+            self::assertNotNull($failed);
+            self::assertSame('FAILED', $failed->status);
+            self::assertSame(1, $failed->attempts);
+
+            $mailDirectory = dirname(__DIR__, 4) . '/storage/tmp/staybooking-mail-' . bin2hex(random_bytes(4));
+            $clock->advance(new \DateInterval('PT1M'));
+            $dispatcher = new DispatchNotificationsService(
+                $notificationRepository,
+                new FileMailer(new MailConfig('file', 'no-reply@staybooking.local', 'StayBooking'), $mailDirectory),
+                $transactions,
+                $clock,
+            );
+            $secondDispatch = $dispatcher->dispatch(1);
+            $lastError = (string) $this->pdo->query(
+                'SELECT COALESCE(LoiCuoi, \'\') FROM HangDoiThongBao WHERE HoaDonID=' . $first->id
+            )->fetchColumn();
+            self::assertSame(['sent' => 1, 'failed' => 0], $secondDispatch, $lastError);
+            self::assertSame(['sent' => 0, 'failed' => 0], $dispatcher->dispatch(1));
+            $sent = $notificationRepository->findByInvoiceId($first->id);
+            self::assertNotNull($sent);
+            self::assertSame('SENT', $sent->status);
+            self::assertSame(2, $sent->attempts);
+            $mailFiles = glob($mailDirectory . '/*.eml') ?: [];
+            self::assertCount(1, $mailFiles);
+            self::assertStringContainsString($first->number, (string) file_get_contents($mailFiles[0]));
+            unlink($mailFiles[0]);
+            rmdir($mailDirectory);
         } finally {
             $this->restore($state, [$checkInKey, $checkoutKey]);
         }
@@ -153,6 +214,7 @@ final class CheckoutInvoiceServiceTest extends TestCase
             foreach ($auditKeys as $key) {
                 $this->pdo->prepare('DELETE FROM NhatKyHeThong WHERE RequestID=?')->execute([$key]);
             }
+            $this->pdo->prepare('DELETE q FROM HangDoiThongBao q INNER JOIN HoaDon hd ON hd.HoaDonID=q.HoaDonID WHERE hd.DatChoID=?')->execute([$bookingId]);
             $this->pdo->prepare('DELETE ct FROM ChiTietHoaDon ct INNER JOIN HoaDon hd ON hd.HoaDonID=ct.HoaDonID WHERE hd.DatChoID=?')->execute([$bookingId]);
             $this->pdo->prepare('DELETE FROM HoaDon WHERE DatChoID=?')->execute([$bookingId]);
             $this->pdo->prepare('DELETE gt FROM GiuTonPhongDem gt INNER JOIN HangMucDatCho hm ON hm.HangMucDatChoID=gt.HangMucDatChoID WHERE hm.DatChoID=?')->execute([$bookingId]);

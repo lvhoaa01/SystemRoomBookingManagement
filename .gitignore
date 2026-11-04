@@ -8,6 +8,8 @@
 !/storage/uploads/.gitkeep
 /storage/tmp/*
 !/storage/tmp/.gitkeep
+/storage/mail/*
+!/storage/mail/.gitkeep
 /.phpunit.cache/
 *.log
 

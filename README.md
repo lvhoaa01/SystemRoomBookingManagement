@@ -44,6 +44,7 @@ mysql -u root -P 3307 hotel_booking -e "source database/migrations/001_create_sc
 mysql -u root -P 3307 hotel_booking -e "source database/migrations/002_add_stay_check_in.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/migrations/003_add_property_payment_transactions.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/migrations/004_add_invoices.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/migrations/005_add_notification_outbox.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/seeds/001_reference.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/seeds/002_accounts_partners.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/seeds/003_properties.sql"
@@ -90,7 +91,7 @@ composer run verify
 ```
 
 `composer test` chạy unit, integration và concurrency suite. `composer run verify` kiểm checksum/số lượng fixture,
-constraint từ chối dữ liệu sai, đúng 25 bảng và 40 invariant SQL. Database phải được import từ seed chuẩn trước khi
+constraint từ chối dữ liệu sai, đúng 26 bảng và 42 invariant SQL. Database phải được import từ seed chuẩn trước khi
 chạy toàn bộ nghiệm thu.
 
 ## Tác vụ vận hành
@@ -100,7 +101,11 @@ php bin/console.php payment:expire 100
 php bin/console.php booking:complete 100
 php bin/console.php preview:invalidate-expired 100
 php bin/console.php inventory:reconcile 2026-11-03 2026-12-03 1 100
+php bin/console.php notification:dispatch 100
 ```
+
+Ở môi trường local, `MAIL_TRANSPORT=file` ghi email vào `storage/mail` để kiểm thử không phụ thuộc SMTP.
+Trên server đã cấu hình dịch vụ gửi mail, có thể chọn `MAIL_TRANSPORT=native`.
 
 Chi tiết batch, run ID, audit, backup và restore nằm tại [docs/OPERATIONS.md](docs/OPERATIONS.md).
 

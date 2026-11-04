@@ -1,7 +1,7 @@
 USE hotel_booking;
 
 -- Mọi dòng kết quả phải có Violations = 0.
-SELECT 'schema_table_count_not_25' AS CheckName, ABS(COUNT(*) - 25) AS Violations
+SELECT 'schema_table_count_not_26' AS CheckName, ABS(COUNT(*) - 26) AS Violations
 FROM information_schema.tables
 WHERE table_schema = 'hotel_booking' AND table_type = 'BASE TABLE'
 UNION ALL
@@ -227,4 +227,20 @@ FROM HoaDon h
 LEFT JOIN (
   SELECT HoaDonID, SUM(ThanhTien) AS LineTotal FROM ChiTietHoaDon GROUP BY HoaDonID
 ) l ON l.HoaDonID=h.HoaDonID
-WHERE COALESCE(l.LineTotal,0)<>h.TongTien;
+WHERE COALESCE(l.LineTotal,0)<>h.TongTien
+UNION ALL
+SELECT 'invoice_notification_missing_or_duplicate', COUNT(*)
+FROM HoaDon h
+LEFT JOIN (
+  SELECT HoaDonID, COUNT(*) AS NotificationCount
+  FROM HangDoiThongBao WHERE LoaiThongBao='INVOICE_ISSUED' GROUP BY HoaDonID
+) q ON q.HoaDonID=h.HoaDonID
+WHERE COALESCE(q.NotificationCount,0)<>1
+UNION ALL
+SELECT 'invoice_notification_snapshot_mismatch', COUNT(*)
+FROM HangDoiThongBao q
+JOIN HoaDon h ON h.HoaDonID=q.HoaDonID
+JOIN DatCho b ON b.DatChoID=h.DatChoID
+WHERE q.EmailNguoiNhan<>JSON_UNQUOTE(JSON_EXTRACT(h.SnapshotJSON, '$.booker.email'))
+   OR JSON_UNQUOTE(JSON_EXTRACT(q.PayloadJSON, '$.invoiceNumber'))<>h.SoHoaDon
+   OR JSON_UNQUOTE(JSON_EXTRACT(q.PayloadJSON, '$.bookingCode'))<>b.MaDatCho;

@@ -7,6 +7,7 @@ use App\Modules\Bookings\Application\CompletionService;
 use App\Modules\Bookings\Application\PaymentExpiryService;
 use App\Modules\Bookings\Application\PreviewExpiryService;
 use App\Modules\Inventory\Application\InventoryReconciliationService;
+use App\Modules\Notifications\Application\DispatchNotificationsService;
 use App\Shared\Console\ConsoleJobRunner;
 
 return static function (Container $container): array {
@@ -43,6 +44,15 @@ return static function (Container $container): array {
             fwrite(STDOUT, "Run ID: {$run['runId']}" . PHP_EOL);
             fwrite(STDOUT, "Invalidated previews: {$run['result']}" . PHP_EOL);
             return 0;
+        },
+        'notification:dispatch' => static function (array $arguments) use ($container, $runner, $batchSize): int {
+            $limit = $batchSize($arguments);
+            $run = $runner->run('notification:dispatch', static fn (string $_): array =>
+                $container->get(DispatchNotificationsService::class)->dispatch($limit));
+            fwrite(STDOUT, "Run ID: {$run['runId']}" . PHP_EOL);
+            fwrite(STDOUT, "Sent notifications: {$run['result']['sent']}" . PHP_EOL);
+            fwrite(STDOUT, "Failed notifications: {$run['result']['failed']}" . PHP_EOL);
+            return $run['result']['failed'] > 0 ? 1 : 0;
         },
         'inventory:reconcile' => static function (array $arguments) use ($container, $runner, $batchSize): int {
             $fromDate = $arguments[0] ?? gmdate('Y-m-d');
