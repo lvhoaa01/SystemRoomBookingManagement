@@ -1,7 +1,7 @@
 USE hotel_booking;
 
 -- Mọi dòng kết quả phải có Violations = 0.
-SELECT 'schema_table_count_not_22' AS CheckName, ABS(COUNT(*) - 22) AS Violations
+SELECT 'schema_table_count_not_23' AS CheckName, ABS(COUNT(*) - 23) AS Violations
 FROM information_schema.tables
 WHERE table_schema = 'hotel_booking' AND table_type = 'BASE TABLE'
 UNION ALL
@@ -119,7 +119,10 @@ SELECT 'payment_booking_mismatch', COUNT(*)
 FROM DatCho b
 LEFT JOIN ThanhToan p ON p.DatChoID=b.DatChoID
 WHERE p.ThanhToanID IS NULL OR p.TongPhaiTra<>b.TongTien OR p.ThoiDiemThanhToan<>b.ThoiDiemThanhToan
-   OR (b.ThoiDiemThanhToan='PAY_AT_PROPERTY' AND (p.TrangThai<>'NOT_TRACKED' OR p.DaThanhToan<>0 OR p.DaHoan<>0))
+   OR (b.ThoiDiemThanhToan='PAY_AT_PROPERTY' AND NOT (
+       (p.TrangThai='NOT_TRACKED' AND p.DaThanhToan=0 AND p.DaHoan=0) OR
+       (p.TrangThai='PAID' AND p.DaThanhToan=p.TongPhaiTra AND p.DaHoan=0)
+   ))
    OR (b.TrangThai='PENDING_PAYMENT' AND p.TrangThai<>'PROCESSING')
    OR (b.TrangThai='PAYMENT_FAILED' AND p.TrangThai<>'FAILED')
    OR (b.ThoiDiemThanhToan='PAY_ONLINE' AND b.TrangThai IN ('CONFIRMED','CHECKED_IN','COMPLETED','NO_SHOW','CANCELLED') AND p.TrangThai<>'PAID')
@@ -187,4 +190,23 @@ WHERE TrangThai='CHECKED_IN' AND (NhanPhongLuc IS NULL OR NguoiNhanPhongID IS NU
 UNION ALL
 SELECT 'check_in_metadata_pair_mismatch', COUNT(*)
 FROM DatCho
-WHERE (NhanPhongLuc IS NULL) <> (NguoiNhanPhongID IS NULL);
+WHERE (NhanPhongLuc IS NULL) <> (NguoiNhanPhongID IS NULL)
+UNION ALL
+SELECT 'property_payment_collection_mismatch', COUNT(*)
+FROM ThanhToan p
+LEFT JOIN (
+  SELECT ThanhToanID, COUNT(*) AS TransactionCount, SUM(SoTien) AS Collected
+  FROM GiaoDichThanhToan
+  WHERE LoaiGiaoDich='COLLECTION' AND TrangThai='SUCCEEDED'
+  GROUP BY ThanhToanID
+) t ON t.ThanhToanID=p.ThanhToanID
+WHERE p.ThoiDiemThanhToan='PAY_AT_PROPERTY'
+  AND ((p.TrangThai='NOT_TRACKED' AND COALESCE(t.TransactionCount,0)<>0)
+       OR (p.TrangThai='PAID' AND (COALESCE(t.TransactionCount,0)<>1 OR t.Collected<>p.DaThanhToan)))
+UNION ALL
+SELECT 'property_collection_wrong_booking_state', COUNT(*)
+FROM GiaoDichThanhToan g
+JOIN ThanhToan p ON p.ThanhToanID=g.ThanhToanID
+JOIN DatCho b ON b.DatChoID=p.DatChoID
+WHERE p.ThoiDiemThanhToan<>'PAY_AT_PROPERTY'
+   OR b.TrangThai NOT IN ('CHECKED_IN','COMPLETED');

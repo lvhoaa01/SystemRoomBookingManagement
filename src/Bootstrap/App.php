@@ -90,6 +90,9 @@ use App\Modules\Inventory\Application\TransactionalInventoryReservationService;
 use App\Modules\Inventory\Infrastructure\DatabaseAvailabilityReader;
 use App\Modules\Inventory\Infrastructure\InventoryRepository;
 use App\Modules\Inventory\Http\PartnerInventoryController;
+use App\Modules\Payments\Application\RecordAtPropertyPaymentService;
+use App\Modules\Payments\Http\PartnerPaymentController;
+use App\Modules\Payments\Infrastructure\PaymentTransactionRepository;
 use App\Modules\Properties\Application\CreatePropertyService;
 use App\Modules\Properties\Application\ManageRoomTypeService;
 use App\Modules\Properties\Application\PropertyImageStorage;
@@ -567,6 +570,23 @@ final class App
             static fn (Container $container): PaymentRepository => new PaymentRepository($container->get(PDO::class)),
         );
         $container->singleton(
+            PaymentTransactionRepository::class,
+            static fn (Container $container): PaymentTransactionRepository => new PaymentTransactionRepository(
+                $container->get(PDO::class),
+            ),
+        );
+        $container->singleton(
+            RecordAtPropertyPaymentService::class,
+            static fn (Container $container): RecordAtPropertyPaymentService => new RecordAtPropertyPaymentService(
+                $container->get(BookingLifecycleRepository::class),
+                $container->get(PaymentRepository::class),
+                $container->get(PaymentTransactionRepository::class),
+                $container->get(TransactionManager::class),
+                $container->get(AuditTrail::class),
+                $container->get(ClockInterface::class),
+            ),
+        );
+        $container->singleton(
             PaymentGateway::class,
             static fn (Container $_): PaymentGateway => new MockPaymentGateway(),
         );
@@ -706,6 +726,15 @@ final class App
                 $container->get(IdentitySession::class),
                 $container->get(SessionBootstrap::class),
                 $container->get(ViewRenderer::class),
+                $container->get(FlashBag::class),
+                $container->get(AppConfig::class),
+            ),
+        );
+        $container->singleton(
+            PartnerPaymentController::class,
+            static fn (Container $container): PartnerPaymentController => new PartnerPaymentController(
+                $container->get(RecordAtPropertyPaymentService::class),
+                $container->get(IdentitySession::class),
                 $container->get(FlashBag::class),
                 $container->get(AppConfig::class),
             ),

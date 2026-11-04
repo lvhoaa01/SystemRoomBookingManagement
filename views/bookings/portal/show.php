@@ -173,13 +173,29 @@ foreach ($waivers as $waiver) {
         <section class="booking-card">
             <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-check-circle"/></svg></span><div><h2>Khách đang lưu trú</h2><p>Đã nhận khách lúc <?= $booking['checkedInAt'] === null ? '—' : date('d/m/Y H:i', strtotime((string) $booking['checkedInAt'])) ?>. Bước tiếp theo là ghi nhận thanh toán và trả phòng.</p></div></div>
         </section>
+        <?php if ($booking['paymentTiming'] === 'PAY_AT_PROPERTY' && $booking['paymentStatus'] === 'NOT_TRACKED'): ?>
+        <section class="booking-card">
+            <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-file"/></svg></span><div><h2>Ghi nhận thanh toán tại cơ sở</h2><p>Thu toàn bộ <?= $money($booking['grandTotal']) ?>. Hệ thống chưa hỗ trợ chia nhỏ khoản thanh toán.</p></div></div>
+            <form class="booking-edit-form" method="post" action="<?= $baseUrl ?>/partner/bookings/<?= rawurlencode((string) $booking['code']) ?>/payments">
+                <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                <input type="hidden" name="paymentKey" value="<?= $escape($paymentKey) ?>">
+                <label class="field"><span>Phương thức</span><select name="method" required><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option><option value="CARD_AT_PROPERTY">Thẻ tại quầy</option></select></label>
+                <label class="field"><span>Mã tham chiếu</span><input name="reference" maxlength="100" placeholder="Bắt buộc với chuyển khoản hoặc thẻ"></label>
+                <button class="button button--primary" type="submit">Xác nhận đã thu <?= $money($booking['grandTotal']) ?></button>
+            </form>
+        </section>
+        <?php elseif ($booking['paymentStatus'] === 'PAID'): ?>
+        <section class="booking-card">
+            <div class="booking-card__heading"><span class="booking-card__icon"><svg class="app-icon"><use href="#icon-check-circle"/></svg></span><div><h2>Đã thanh toán</h2><p>Hệ thống đã ghi nhận <?= $money($booking['paidAmount']) ?>. Booking sẵn sàng cho bước trả phòng.</p></div></div>
+        </section>
+        <?php endif; ?>
         <?php endif; ?>
     </main>
 
     <aside class="booking-summary-card">
         <span>Tổng giá booking</span><strong><?= $money($booking['grandTotal']) ?></strong><p><?= count($booking['items']) ?> phòng · <?= $date($booking['checkIn']) ?> → <?= $date($booking['checkOut']) ?></p>
         <hr>
-        <dl><div><dt>Người đặt</dt><dd><?= $booking['booker']['name'] ?></dd></div><div><dt>Email</dt><dd><?= $booking['booker']['email'] ?></dd></div><div><dt>Điện thoại</dt><dd><?= $booking['booker']['phone'] ?></dd></div><?php if ($booking['booker']['specialRequest'] !== null): ?><div><dt>Yêu cầu đặc biệt</dt><dd><?= $booking['booker']['specialRequest'] ?></dd></div><?php endif; ?></dl>
+        <dl><div><dt>Đã thanh toán</dt><dd><?= $money($booking['paidAmount']) ?></dd></div><div><dt>Trạng thái payment</dt><dd><?= $escape($booking['paymentStatus']) ?></dd></div><div><dt>Người đặt</dt><dd><?= $booking['booker']['name'] ?></dd></div><div><dt>Email</dt><dd><?= $booking['booker']['email'] ?></dd></div><div><dt>Điện thoại</dt><dd><?= $booking['booker']['phone'] ?></dd></div><?php if ($booking['booker']['specialRequest'] !== null): ?><div><dt>Yêu cầu đặc biệt</dt><dd><?= $booking['booker']['specialRequest'] ?></dd></div><?php endif; ?></dl>
         <a class="button button--secondary" href="<?= $baseUrl . $listPath ?>">Quay lại danh sách</a>
     </aside>
 </div>

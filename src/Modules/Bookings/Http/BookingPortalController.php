@@ -415,6 +415,7 @@ final readonly class BookingPortalController
                 'validUntil' => $dateChangeQuote->validUntil->format(DATE_ATOM),
             ],
             'waivers' => $waivers,
+            'paymentKey' => $listPath === '/partner/bookings' ? $this->uuid() : null,
             'activeNavigation' => 'bookings',
         ])->withHeader('Cache-Control', 'no-store, private');
     }

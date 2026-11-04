@@ -41,6 +41,8 @@ Tạo database UTF-8 rồi import đúng thứ tự:
 ```powershell
 mysql -u root -P 3307 -e "CREATE DATABASE hotel_booking CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
 mysql -u root -P 3307 hotel_booking -e "source database/migrations/001_create_schema.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/migrations/002_add_stay_check_in.sql"
+mysql -u root -P 3307 hotel_booking -e "source database/migrations/003_add_property_payment_transactions.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/seeds/001_reference.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/seeds/002_accounts_partners.sql"
 mysql -u root -P 3307 hotel_booking -e "source database/seeds/003_properties.sql"
@@ -87,7 +89,7 @@ composer run verify
 ```
 
 `composer test` chạy unit, integration và concurrency suite. `composer run verify` kiểm checksum/số lượng fixture,
-constraint từ chối dữ liệu sai, đúng 22 bảng và 33 invariant SQL. Database phải được import từ seed chuẩn trước khi
+constraint từ chối dữ liệu sai, đúng 23 bảng và 37 invariant SQL. Database phải được import từ seed chuẩn trước khi
 chạy toàn bộ nghiệm thu.
 
 ## Tác vụ vận hành

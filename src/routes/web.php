@@ -24,6 +24,7 @@ use App\Modules\Bookings\Http\BookingController;
 use App\Modules\Bookings\Http\BookingPortalController;
 use App\Modules\Commercial\Http\PartnerCommercialController;
 use App\Modules\Inventory\Http\PartnerInventoryController;
+use App\Modules\Payments\Http\PartnerPaymentController;
 use App\Modules\Properties\Http\AdminPropertyController;
 use App\Modules\Properties\Http\ImageSourceController;
 use App\Modules\Properties\Http\PartnerPropertyController;
@@ -161,6 +162,12 @@ return static function (Router $router, Container $container): void {
     $router->get('/partner/bookings', $bookingPortal->partnerIndex(...), $partnerBookingRead, 'partner.bookings.index');
     $router->get('/partner/bookings/{code}', $bookingPortal->partnerShow(...), $partnerBookingRead, 'partner.bookings.show');
     $router->post('/partner/bookings/{code}/check-in', $bookingPortal->partnerCheckIn(...), $partnerBookingWrite, 'partner.bookings.check-in');
+    $router->post(
+        '/partner/bookings/{code}/payments',
+        $container->get(PartnerPaymentController::class)->record(...),
+        $partnerBookingWrite,
+        'partner.bookings.payments.store',
+    );
     $router->post('/partner/bookings/{code}/no-show', $bookingPortal->partnerNoShow(...), $partnerBookingWrite, 'partner.bookings.no-show');
     $adminOperations = $container->get(AdminOperationsController::class);
     $router->get('/partner/reports', $adminOperations->partnerReports(...), $partnerBookingRead, 'partner.reports.index');
