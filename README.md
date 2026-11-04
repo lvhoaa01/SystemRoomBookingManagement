@@ -10,9 +10,6 @@ Dự án dùng PHP 8.2+, MariaDB/MySQL và kiến trúc **Modular Monolith**. Ba
 frontend không phụ thuộc framework; routing, middleware, dependency container,
 transaction và view rendering được xây dựng trực tiếp trong mã nguồn.
 
-README đi theo thứ tự mà một người mới cần để hiểu dự án: hệ thống giải quyết bài
-toán gì, có những vai trò và chức năng nào, một booking đi qua hệ thống ra sao, mã
-nguồn được chia thế nào, sau đó mới đến cách cài đặt, chạy và kiểm thử.
 
 ## 1. Hệ thống giải quyết bài toán gì?
 
