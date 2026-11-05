@@ -12,6 +12,12 @@ Dự án dùng PHP 8.2+, MariaDB/MySQL và kiến trúc **Modular Monolith**. Ba
 frontend không phụ thuộc framework; routing, middleware, dependency container,
 transaction và view rendering được xây dựng trực tiếp trong mã nguồn.
 
+
+## Video demo
+
+🎬 [Xem video demo hệ thống StayBooking trên Google Drive](https://drive.google.com/drive/folders/1_FkyYUEWnbo0mLNxdWLyfUibVUzLGuWM?usp=drive_link)
+
+
 ## Thành viên nhóm
 
 | STT | Họ và tên | Mã số sinh viên |
