@@ -26,6 +26,13 @@ final class RevenueSettlementServiceTest extends TestCase
 
     public function test_partner_generates_finalizes_and_cannot_overlap_settlement(): void
     {
+        $bookingCodeLength = $this->pdo->query(
+            "SELECT CHARACTER_MAXIMUM_LENGTH
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='ChiTietDoiSoat' AND COLUMN_NAME='MaDatCho'"
+        )->fetchColumn();
+        self::assertSame('24', (string) $bookingCodeLength);
+
         $booking = $this->row(
             "SELECT b.*, c.ToChucDoiTacID organizationId,
                     (SELECT MIN(m.NguoiDungID) FROM ThanhVienDoiTac m
@@ -93,6 +100,7 @@ final class RevenueSettlementServiceTest extends TestCase
             self::assertSame('DRAFT', $draft->status);
             self::assertSame(1, $draft->bookingCount);
             self::assertSame($invoiceId, (int) $draft->lines[0]['invoiceId']);
+            self::assertSame((string) $booking['MaDatCho'], (string) $draft->lines[0]['bookingCode']);
             self::assertTrue($draft->grossRevenue->equals($draft->netRevenue));
             self::assertTrue(
                 $draft->grossRevenue->equals($draft->onlineCollected->add($draft->atPropertyCollected)),

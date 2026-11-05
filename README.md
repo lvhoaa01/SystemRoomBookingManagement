@@ -307,6 +307,8 @@ Bật Apache và MySQL trong XAMPP, sau đó chạy từ thư mục gốc dự �
   -e "source database/migrations/005_add_notification_outbox.sql"
 & "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
   -e "source database/migrations/006_add_revenue_settlements.sql"
+& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+  -e "source database/migrations/007_widen_settlement_booking_code.sql"
 
 & "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
   -e "source database/seeds/001_reference.sql"
