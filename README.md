@@ -12,6 +12,15 @@ Dự án dùng PHP 8.2+, MariaDB/MySQL và kiến trúc **Modular Monolith**. Ba
 frontend không phụ thuộc framework; routing, middleware, dependency container,
 transaction và view rendering được xây dựng trực tiếp trong mã nguồn.
 
+## Thành viên nhóm
+
+| STT | Họ và tên | Mã số sinh viên |
+|---:|---|---|
+| 1 | Lê Văn Hòa | 65131052 |
+| 2 | Trần Nhật An | 65130039 |
+| 3 | Nguyễn Trường Sơn | 65133051 |
+| 4 | Lê Hoàng Quân | 65132839 |
+| 5 | Giã Tấn Thịnh | 64132288 |
 
 ## 1. Hệ thống giải quyết bài toán gì?
 
