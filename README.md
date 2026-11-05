@@ -248,15 +248,15 @@ views/                  Layout và PHP templates
 - MariaDB 10.4+ hoặc MySQL 8.x.
 - Composer 2.
 - Apache có `mod_rewrite` và cho phép `.htaccess`.
-- Repository đặt trong `htdocs`; hướng dẫn dưới đây dùng
-  `C:\DDrive\xampp\htdocs\DuAnNhom`.
+- Repository được clone vào thư mục `htdocs` của XAMPP. Đường dẫn cài XAMPP có
+  thể khác nhau giữa các máy và không cần giống máy phát triển.
 
 ### 10.2 Lấy mã nguồn và dependency
 
 ```powershell
-cd C:\DDrive\xampp\htdocs
+# Mở PowerShell ngay trong thư mục htdocs của XAMPP, sau đó chạy:
 git clone https://github.com/lvhoaa01/SystemRoomBookingManagement.git DuAnNhom
-cd DuAnNhom
+Set-Location .\DuAnNhom
 composer install
 Copy-Item .env.example .env
 ```
@@ -266,7 +266,7 @@ chưa có.
 
 ### 10.3 Cấu hình môi trường
 
-Mặc định dự án dùng MariaDB XAMPP ở cổng `3307`:
+MySQL/MariaDB của XAMPP thường dùng cổng mặc định `3306`:
 
 ```dotenv
 APP_ENV=local
@@ -275,7 +275,7 @@ APP_URL=http://localhost/DuAnNhom/public
 APP_TIMEZONE=Asia/Ho_Chi_Minh
 
 DB_HOST=127.0.0.1
-DB_PORT=3307
+DB_PORT=3306
 DB_DATABASE=hotel_booking
 DB_USERNAME=root
 DB_PASSWORD=
@@ -285,49 +285,68 @@ MAIL_FROM_ADDRESS=no-reply@staybooking.local
 MAIL_FROM_NAME=StayBooking
 ```
 
-Nếu MySQL của bạn chạy cổng khác hoặc có mật khẩu, sửa các biến `DB_*` tương ứng.
+Nếu `3306` đang bị một MySQL khác chiếm dụng, có thể cấu hình XAMPP dùng `3307`
+và đổi `DB_PORT=3307`. Mã nguồn không khóa cứng cổng database; chỉ cần `.env` và
+cổng dùng trong lệnh import bên dưới giống nhau. Nếu MySQL có mật khẩu, sửa các
+biến `DB_*` tương ứng.
 
 ### 10.4 Tạo database và import dữ liệu
 
-Bật Apache và MySQL trong XAMPP, sau đó chạy từ thư mục gốc dự án:
+Bật Apache và MySQL trong XAMPP, mở PowerShell tại thư mục gốc dự án rồi chạy.
+Đoạn đầu tiên yêu cầu nhập thư mục cài XAMPP, vì vị trí này khác nhau giữa các
+máy:
 
 ```powershell
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 `
+$xamppRoot = Read-Host "Nhập đường dẫn thư mục XAMPP (ví dụ C:\xampp)"
+$mysqlPort = 3306
+$mysql = Join-Path $xamppRoot "mysql\bin\mysql.exe"
+
+if (-not (Test-Path -LiteralPath $mysql)) {
+    throw "Không tìm thấy mysql.exe tại $mysql"
+}
+
+& $mysql -u root -P $mysqlPort `
   -e "CREATE DATABASE hotel_booking CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
 
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/migrations/001_create_schema.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/migrations/002_add_stay_check_in.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/migrations/003_add_property_payment_transactions.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/migrations/004_add_invoices.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/migrations/005_add_notification_outbox.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/migrations/006_add_revenue_settlements.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/migrations/007_widen_settlement_booking_code.sql"
 
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/seeds/001_reference.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/seeds/002_accounts_partners.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/seeds/003_properties.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/seeds/004_products_policies.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/seeds/005_inventory_prices.sql"
-& "C:\DDrive\xampp\mysql\bin\mysql.exe" -u root -P 3307 hotel_booking `
+& $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/seeds/006_operational.sql"
 ```
+
+Nếu máy dùng cổng `3307`, đổi `$mysqlPort = 3307` trong đoạn lệnh trên và bảo
+đảm `.env` cũng đặt `DB_PORT=3307`.
 
 Không đổi thứ tự migration/seed. Các migration mở rộng được thiết kế chạy một lần
 trên database mới tạo từ migration `001`.
 
 ### 10.5 Mở ứng dụng
+
+Các URL dưới đây giả sử repository được clone với tên thư mục `DuAnNhom`. Nếu
+dùng tên thư mục khác, đổi `DuAnNhom` trong `APP_URL` và URL truy cập cho khớp.
 
 ```text
 Trang chủ:    http://localhost/DuAnNhom/public/
