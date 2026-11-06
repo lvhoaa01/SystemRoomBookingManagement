@@ -106,6 +106,29 @@ final class SearchServiceTest extends TestCase
         );
     }
 
+    public function test_seeded_capacity_segments_produce_distinct_customer_search_results(): void
+    {
+        $cases = [
+            'một khách' => [[new RoomParty(1, 1)], 27],
+            'hai người lớn' => [[new RoomParty(1, 2)], 24],
+            'gia đình có một trẻ em' => [[new RoomParty(1, 2, [7])], 19],
+            'gia đình có hai trẻ em' => [[new RoomParty(1, 2, [7, 10])], 13],
+            'ba người lớn' => [[new RoomParty(1, 3)], 12],
+            'bốn người lớn' => [[new RoomParty(1, 4)], 7],
+            'năm người lớn' => [[new RoomParty(1, 5)], 3],
+        ];
+
+        foreach ($cases as $label => [$parties, $expectedTotal]) {
+            $page = $this->service->search($this->criteria(parties: $parties));
+
+            self::assertSame(
+                $expectedTotal,
+                $page->total,
+                "Kịch bản {$label} phải phản ánh đúng phân khúc sức chứa của seed.",
+            );
+        }
+    }
+
     /** @param array<string, mixed> $filters @param list<RoomParty>|null $parties */
     private function criteria(array $filters = [], string $sort = 'RECOMMENDED', ?array $parties = null): SearchCriteria
     {
