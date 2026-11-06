@@ -350,6 +350,8 @@ if (-not (Test-Path -LiteralPath $mysql)) {
   -e "source database/seeds/005_inventory_prices.sql"
 & $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/seeds/006_operational.sql"
+& $mysql -u root -P $mysqlPort hotel_booking `
+  -e "source database/seeds/007_search_demo_diversity.sql"
 ```
 
 Nếu máy dùng cổng `3307`, đổi `$mysqlPort = 3307` trong đoạn lệnh trên và bảo
@@ -357,6 +359,30 @@ Nếu máy dùng cổng `3307`, đổi `$mysqlPort = 3307` trong đoạn lệnh 
 
 Không đổi thứ tự migration/seed. Các migration mở rộng được thiết kế chạy một lần
 trên database mới tạo từ migration `001`.
+
+### 10.4.1 Dữ liệu tìm kiếm dùng khi demo
+
+Seed `007_search_demo_diversity.sql` chia 27 cơ sở đang hoạt động thành các phân
+khúc khách đơn, cặp đôi, gia đình nhỏ, gia đình lớn và nhóm đông. Seed giữ nguyên
+khóa chính và số lượng bản ghi, đồng thời điều chỉnh tồn phòng theo cơ sở và cuối
+tuần để kết quả tìm kiếm không còn lặp lại một con số cho hầu hết cấu hình khách.
+
+Có thể kiểm tra nhanh bằng điểm đến Thành phố Hồ Chí Minh, ngày nhận phòng
+`10/12/2026` và ngày trả phòng `12/12/2026`:
+
+| Cấu hình một phòng | Tổng cơ sở dự kiến |
+|---|---:|
+| 1 người lớn | 27 |
+| 2 người lớn | 24 |
+| 2 người lớn, 1 trẻ em 7 tuổi | 19 |
+| 2 người lớn, 2 trẻ em 7 và 10 tuổi | 13 |
+| 3 người lớn | 12 |
+| 4 người lớn | 7 |
+| 5 người lớn | 3 |
+
+Các con số trên là kết quả cố định của fixture và được bảo vệ bằng integration
+test. Khi kiểm thử trên database đã có dữ liệu thao tác thủ công, tổng có thể thay
+đổi nếu tồn phòng hoặc trạng thái danh mục đã được cập nhật.
 
 ### 10.5 Mở ứng dụng
 
