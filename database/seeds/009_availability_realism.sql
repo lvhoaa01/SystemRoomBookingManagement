@@ -59,4 +59,36 @@ SET rate_day.DongBan = CASE
     rate_day.CapNhatLuc = '2026-11-06 13:00:00.000000'
 WHERE room_type.CoSoLuuTruID BETWEEN 1 AND 27;
 
+-- Booking được phép đổi ngày phải có ít nhất một cửa sổ dịch +1 ngày khả dụng.
+-- Đây là dữ liệu nghiệp vụ cho luồng date-change, không phải ngoại lệ dành riêng
+-- cho test: chỉ booking CONFIRMED, trả tại cơ sở và chưa thu tiền được bảo vệ.
+UPDATE GiaPhongNgay rate_day
+INNER JOIN HangMucDatCho item ON item.SanPhamPhongID = rate_day.SanPhamPhongID
+INNER JOIN DatCho booking ON booking.DatChoID = item.DatChoID
+INNER JOIN ThanhToan payment ON payment.DatChoID = booking.DatChoID
+SET rate_day.DongBan = 0,
+    rate_day.SoDemToiThieu = 1,
+    rate_day.SoDemToiDa = GREATEST(rate_day.SoDemToiDa, DATEDIFF(booking.NgayTraPhong, booking.NgayNhanPhong)),
+    rate_day.SoNgayDatTruoc = 0,
+    rate_day.PhienBan = rate_day.PhienBan + 1,
+    rate_day.CapNhatLuc = '2026-11-06 13:00:00.000000'
+WHERE booking.TrangThai = 'CONFIRMED'
+  AND booking.ThoiDiemThanhToan = 'PAY_AT_PROPERTY'
+  AND payment.TrangThai = 'NOT_TRACKED'
+  AND rate_day.NgayLuuTru >= DATE_ADD(booking.NgayNhanPhong, INTERVAL 1 DAY)
+  AND rate_day.NgayLuuTru < DATE_ADD(booking.NgayTraPhong, INTERVAL 1 DAY);
+
+UPDATE TonPhongNgay inventory
+INNER JOIN HangMucDatCho item ON item.LoaiPhongID = inventory.LoaiPhongID
+INNER JOIN DatCho booking ON booking.DatChoID = item.DatChoID
+INNER JOIN ThanhToan payment ON payment.DatChoID = booking.DatChoID
+SET inventory.TongSoLuong = GREATEST(inventory.TongSoLuong, inventory.SoLuongDaGiu + 1),
+    inventory.PhienBan = inventory.PhienBan + 1,
+    inventory.CapNhatLuc = '2026-11-06 13:00:00.000000'
+WHERE booking.TrangThai = 'CONFIRMED'
+  AND booking.ThoiDiemThanhToan = 'PAY_AT_PROPERTY'
+  AND payment.TrangThai = 'NOT_TRACKED'
+  AND inventory.NgayLuuTru >= DATE_ADD(booking.NgayNhanPhong, INTERVAL 1 DAY)
+  AND inventory.NgayLuuTru < DATE_ADD(booking.NgayTraPhong, INTERVAL 1 DAY);
+
 COMMIT;

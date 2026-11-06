@@ -182,7 +182,7 @@ final class SearchServiceTest extends TestCase
                AND inventory.TongSoLuong = inventory.SoLuongDaGiu"
         )->fetchColumn();
 
-        self::assertGreaterThan(500, $soldOutWithHolds);
+        self::assertGreaterThan(400, $soldOutWithHolds);
     }
 
     /** @param array<string, mixed> $filters @param list<RoomParty>|null $parties */
