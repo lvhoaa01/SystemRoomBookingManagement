@@ -352,6 +352,10 @@ if (-not (Test-Path -LiteralPath $mysql)) {
   -e "source database/seeds/006_operational.sql"
 & $mysql -u root -P $mysqlPort hotel_booking `
   -e "source database/seeds/007_search_demo_diversity.sql"
+& $mysql -u root -P $mysqlPort hotel_booking `
+  -e "source database/seeds/008_customer_filter_diversity.sql"
+& $mysql -u root -P $mysqlPort hotel_booking `
+  -e "source database/seeds/009_availability_realism.sql"
 ```
 
 Nếu máy dùng cổng `3307`, đổi `$mysqlPort = 3307` trong đoạn lệnh trên và bảo
@@ -362,23 +366,32 @@ trên database mới tạo từ migration `001`.
 
 ### 10.4.1 Dữ liệu tìm kiếm dùng khi demo
 
-Seed `007_search_demo_diversity.sql` chia 27 cơ sở đang hoạt động thành các phân
-khúc khách đơn, cặp đôi, gia đình nhỏ, gia đình lớn và nhóm đông. Seed giữ nguyên
-khóa chính và số lượng bản ghi, đồng thời điều chỉnh tồn phòng theo cơ sở và cuối
-tuần để kết quả tìm kiếm không còn lặp lại một con số cho hầu hết cấu hình khách.
+Ba seed `007`–`009` chia 27 cơ sở đang hoạt động thành các phân khúc khách khác
+nhau, đa dạng sao/review/sản phẩm/chính sách và đưa tổng tồn về sát các booking đã
+giữ trong ledger. Seed giữ nguyên khóa chính và số lượng bản ghi. Một phần loại
+phòng vì vậy hết thật khi `TongSoLuong = SoLuongDaGiu`; các ngày khác có tồn thấp,
+đóng bán, minimum stay và yêu cầu đặt trước khác nhau.
 
 Có thể kiểm tra nhanh bằng điểm đến Thành phố Hồ Chí Minh, ngày nhận phòng
 `10/12/2026` và ngày trả phòng `12/12/2026`:
 
 | Cấu hình một phòng | Tổng cơ sở dự kiến |
 |---|---:|
-| 1 người lớn | 27 |
-| 2 người lớn | 24 |
-| 2 người lớn, 1 trẻ em 7 tuổi | 19 |
-| 2 người lớn, 2 trẻ em 7 và 10 tuổi | 13 |
-| 3 người lớn | 12 |
-| 4 người lớn | 7 |
+| 1 người lớn | 24 |
+| 2 người lớn | 21 |
+| 2 người lớn, 1 trẻ em 7 tuổi | 17 |
+| 2 người lớn, 2 trẻ em 7 và 10 tuổi | 10 |
+| 3 người lớn | 11 |
+| 4 người lớn | 6 |
 | 5 người lớn | 3 |
+
+Với phòng đôi hai người lớn, tăng yêu cầu từ một lên năm phòng làm kết quả giảm
+từ 21 xuống 10 cơ sở. Với phòng gia đình hai người lớn và hai trẻ em, một đến năm
+phòng lần lượt còn `10, 6, 4, 3, 3` cơ sở.
+
+Các bộ lọc cũng có thị trường riêng: thanh toán trực tuyến 15, bữa sáng 14, hủy
+miễn phí 20, ba sao 5, bốn sao 7 và năm sao 12 cơ sở. Số sao là dữ liệu tổng hợp
+phục vụ phát triển, không phải xếp hạng chính thức của các khách sạn có thật.
 
 Các con số trên là kết quả cố định của fixture và được bảo vệ bằng integration
 test. Khi kiểm thử trên database đã có dữ liệu thao tác thủ công, tổng có thể thay
